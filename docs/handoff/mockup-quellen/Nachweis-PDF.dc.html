@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Nachweis-PDF Teilnahme und Kenntnisnahme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 595px; height: 842px; box-sizing: border-box; background: #FFFFFF; font-family: Inter, system-ui, sans-serif; color: #0F172A; padding: 36px 40px; display: flex; flex-direction: column; gap: 14px; font-size: 9.5px; line-height: 1.45">
+  <header style="display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid #0F172A; padding-bottom: 12px">
+    <div>
+      <div style="font-size: 9px; color: #5B6474">Muster Elektrotechnik GmbH · Musterstraße 1 · 10115 Berlin</div>
+      <h1 style="margin: 6px 0 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; line-height: 1.2">Nachweis über Unterweisung und Kenntnisnahme</h1>
+      <div style="margin-top: 4px; color: #334155">Nachweis-Nr. N-2026-1047-0003 · erstellt 05.11.2026 07:16</div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none">
+      <div role="img" aria-label="Prüf-QR-Code" style="display: grid; grid-template-columns: repeat(21, 3px); grid-auto-rows: 3px; padding: 4px; border: 1px solid #E3E6EB">
+        <sc-for list="{{qr}}" as="c" hint-placeholder-count="441"><div style="background: {{c.col}}"></div></sc-for>
+      </div>
+      <div style="font-size: 8px; color: #5B6474">Echtheit prüfen</div>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+    <div>
+      <h2 style="margin: 0 0 4px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Schulung</h2>
+      <div><strong>Sicherheitsunterweisung 2026</strong>, Version 3</div>
+      <div>Rechtsgrundlage: DGUV Vorschrift 1 § 4, ArbSchG § 12</div>
+      <div>Format: Online mit Wissenscheck · 14 Seiten</div>
+      <div>Unterweisender: Dennis Hofmann</div>
+      <div style="color: #5B6474">Dokument SHA-256: 9f3c2e…b84d0a71e</div>
+    </div>
+    <div>
+      <h2 style="margin: 0 0 4px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Teilnehmerin</h2>
+      <div><strong>Lea Wagner</strong>, Pers.-Nr. 1047</div>
+      <div>Team Service Nord · Elektrofachkraft</div>
+      <div>Eingeladen: 03.11.2026 08:02</div>
+      <div>Bearbeitet: 03.11.–05.11.2026 in 3 Sitzungen</div>
+      <div>Lesezeit gesamt: 11:48 min (Mindestzeit 6:22 min)</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin: 0 0 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Seitenprotokoll</h2>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+      <sc-for list="{{pages}}" as="p" hint-placeholder-count="14">
+        <div style="border: 1px solid #D0D5DD; border-radius: 3px; padding: 4px 5px; font-size: 8.5px; line-height: 1.35">
+          <div style="font-weight: 700">S. {{p.n}} <span style="color: #157347">✓</span></div>
+          <div>{{p.ist}} / {{p.soll}}</div>
+          <div style="color: #5B6474">{{p.seen}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: 4px; font-size: 8.5px; color: #5B6474">Ist-Verweildauer / Soll · erstmals vollständig angezeigt (Datum). Gezählt nur bei sichtbarer Seite, aktivem Fenster und Interaktion.</div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+    <div>
+      <h2 style="margin: 0 0 4px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Wissenscheck</h2>
+      <div>Versuch 1: 7 von 10 (70 %) – nicht bestanden</div>
+      <div>Versuch 2: 9 von 10 (90 %) – <strong>bestanden</strong></div>
+      <div style="color: #5B6474">Bestehensgrenze 80 %, max. 3 Versuche</div>
+    </div>
+    <div>
+      <h2 style="margin: 0 0 4px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Gültigkeit</h2>
+      <div>Gültig bis: <strong>05.11.2027</strong></div>
+      <div>Wiederholung: jährlich, automatische Einladung</div>
+    </div>
+  </section>
+
+  <section style="border: 1px solid #0F172A; border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+    <h2 style="margin: 0; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em">Bestätigung</h2>
+    <div style="font-size: 10px">„Ich habe die Unterweisung ‚Sicherheitsunterweisung 2026, Version 3‘ vollständig gelesen und verstanden. Rückfragen konnte ich an Dennis Hofmann richten.“</div>
+    <div style="display: flex; gap: 20px; align-items: flex-end">
+      <div style="flex: 1">
+        <svg width="200" height="56" viewBox="0 0 358 100" role="img" aria-label="Unterschrift Lea Wagner"><path d="M40 78c8-30 18-52 24-50s-6 44-4 52 16-30 24-30-4 26 4 26 14-22 20-20-2 18 6 18 12-24 18-20 0 22 8 20c10-2 14-30 22-26s-4 24 6 24 16-14 24-18c10-4 4 16 14 14 12-2 24-18 40-20" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="border-top: 1px solid #0F172A; padding-top: 3px">Lea Wagner · 05.11.2026 07:16:09</div>
+      </div>
+      <div style="flex: 1; color: #334155">
+        <div>Authentifizierung: Passwort (Re-Auth)</div>
+        <div>Gerät: PC, Chrome · IP-Hash a41f…</div>
+        <div>Best.-Text SHA-256: 3d07…e19c</div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top: auto; border-top: 1px solid #D0D5DD; padding-top: 8px; font-size: 8.5px; color: #5B6474; display: flex; flex-direction: column; gap: 2px">
+    <div>Elektronisch versiegelt (PAdES) mit Zertifikat der Muster Elektrotechnik GmbH · qualifizierter Zeitstempel 05.11.2026 07:16:22 MEZ</div>
+    <div>Jede nachträgliche Änderung macht die Versiegelung ungültig. Prüfung über den QR-Code oben rechts.</div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":595,"height":842}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const N = 21;
+    const fin = (x, y, ox, oy) => {
+      const dx = x - ox, dy = y - oy;
+      if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null;
+      const r = Math.max(Math.abs(dx - 3), Math.abs(dy - 3));
+      return r === 3 || r <= 1;
+    };
+    const qr = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let v = fin(x, y, 0, 0); if (v === null) v = fin(x, y, N - 7, 0); if (v === null) v = fin(x, y, 0, N - 7);
+      if (v === null) v = (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8) ? false : ((x * 5 + y * 11 + x * y) % 3) === 0;
+      qr.push({ col: v ? '#0F172A' : '#FFFFFF' });
+    }
+    const soll = [18, 31, 42, 27, 4, 36, 45, 39, 22, 4, 33, 28, 41, 12];
+    const ist = [34, 52, 71, 40, 9, 63, 88, 61, 30, 6, 58, 47, 66, 20];
+    const day = ['03.11.', '03.11.', '03.11.', '03.11.', '03.11.', '04.11.', '04.11.', '04.11.', '04.11.', '04.11.', '05.11.', '05.11.', '05.11.', '05.11.'];
+    const f = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    const pages = soll.map((s, i) => ({ n: i + 1, ist: f(ist[i]), soll: f(s), seen: day[i] }));
+    return { qr, pages };
+  }
+}
+</script>
+</body>
+</html>

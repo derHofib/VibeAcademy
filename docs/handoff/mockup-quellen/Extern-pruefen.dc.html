@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Externe Nachweise prüfen und freigeben</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #1D2433; background: #F4F6FB; min-height: 900px; padding: 24px 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+      <a href="Main.dc.html" aria-label="Zum Dashboard" style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.06); display: flex; align-items: center; justify-content: center; color: #1D2433"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3.5L5.5 9l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <h1 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700">Externe Nachweise</h1>
+      <div role="tablist" style="display: inline-flex; background: #FFFFFF; border-radius: 999px; padding: 4px; box-shadow: 0 2px 8px rgba(29,36,51,0.05)">
+        <button role="tab" aria-selected="true" style="height: 38px; padding: 0 16px; border-radius: 999px; border: none; background: #3D63DD; color: #FFFFFF; font: inherit; font-size: 13.5px; font-weight: 600">Zu prüfen · {{openCount}}</button>
+        <button role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 999px; border: none; background: transparent; color: #3A4456; font: inherit; font-size: 13.5px; font-weight: 600">Freigegeben</button>
+        <button role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 999px; border: none; background: transparent; color: #3A4456; font: inherit; font-size: 13.5px; font-weight: 600">Zurückgegeben</button>
+      </div>
+    </div>
+    <a href="Extern-erfassen.dc.html" style="height: 48px; padding: 0 22px; border-radius: 999px; background: #3D63DD; color: #FFFFFF; font-size: 14.5px; font-weight: 600; text-decoration: none; display: flex; align-items: center; box-shadow: 0 8px 20px rgba(61,99,221,0.25)">+ Externe Schulung erfassen</a>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <nav aria-label="Eingereichte Nachweise" style="flex: 1 1 280px; max-width: 320px; display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{queue}}" as="q" hint-placeholder-count="3">
+        <button onClick="{{q.pick}}" style="font: inherit; text-align: left; border: 2px solid {{q.border}}; background: #FFFFFF; border-radius: 22px; padding: 16px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 8px 24px rgba(29,36,51,0.05); cursor: pointer; display: flex; flex-direction: column; gap: 6px; color: #1D2433">
+          <span style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 8px; align-items: center"><strong style="font-size: 14.5px">{{q.who}}</strong><span style="font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: {{q.tagBg}}; color: {{q.tagFg}}; white-space: nowrap">{{q.tag}}</span></span>
+          <span style="font-size: 13.5px; color: #3A4456">{{q.what}}</span>
+          <span style="font-size: 12px; color: #5F6B7D">{{q.meta}}</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <section aria-label="Beleg" style="flex: 999 1 420px; min-width: 0; background: #2A3142; border-radius: 28px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px">
+      <div style="width: 100%; display: flex; justify-content: space-between; color: #CBD5E1; font-size: 13px"><span>{{cur.file}}</span><span>Seite 1 von 1 · 100 %</span></div>
+      <div style="width: 100%; max-width: 440px; background: #FFFDF8; border-radius: 6px; box-shadow: 0 12px 30px rgba(0,0,0,0.35); padding: 26px 28px 30px; font-size: 12.5px; line-height: 1.6; color: #3A3A3A; display: flex; flex-direction: column; gap: 6px; min-height: 420px; box-sizing: border-box">
+        <div style="font-size: 10px; letter-spacing: 0.08em; color: #7A7A7A">{{cur.issuer}}</div>
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 19px; font-weight: 700; color: #1D2433; margin-bottom: 6px">{{cur.docTitle}}</div>
+        <sc-for list="{{cur.lines}}" as="l" hint-placeholder-count="4">
+          <div><span style="outline: {{l.outline}}; outline-offset: 2px; border-radius: 3px; font-weight: {{l.weight}}; color: {{l.color}}">{{l.text}}</span></div>
+        </sc-for>
+        <sc-if value="{{cur.hasList}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 8px; border-top: 1px solid #D8D2C4">
+            <sc-for list="{{cur.rows}}" as="r" hint-placeholder-count="5">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid #E6E0D2"><span style="width: 150px">{{r.name}}</span><svg width="120" height="22" viewBox="0 0 120 22" aria-hidden="true"><path d="{{r.sig}}" fill="none" stroke="#34458A" stroke-width="1.6" stroke-linecap="round"/></svg><span style="margin-left: auto; font-size: 11px; font-weight: 700; color: {{r.flagColor}}">{{r.flag}}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="margin-top: auto; padding-top: 14px; display: flex; justify-content: space-between; align-items: flex-end"><span style="font-family: cursive; font-size: 15px; color: #34458A">{{cur.signer}}</span><span style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #C0504D; color: #C0504D; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; transform: rotate(-12deg)">STEMPEL</span></div>
+      </div>
+    </section>
+
+    <aside aria-label="Prüfung" style="flex: 1 1 300px; max-width: 360px; background: #FFFFFF; border-radius: 26px; padding: 22px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.06); display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 700">Angaben prüfen</h2>
+      <sc-for list="{{cur.checks}}" as="c" hint-placeholder-count="5">
+        <div style="display: flex; gap: 12px; align-items: flex-start">
+          <span aria-hidden="true" style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: {{c.bg}}; color: {{c.fg}}; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px">{{c.icon}}</span>
+          <div style="flex: 1; min-width: 0"><div style="font-size: 12px; color: #5F6B7D">{{c.label}}</div><div style="font-size: 14.5px; font-weight: 500">{{c.value}}</div><div style="font-size: 12.5px; color: {{c.noteColor}}">{{c.note}}</div></div>
+        </div>
+      </sc-for>
+      <div style="background: #E6F4EC; border-radius: 18px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5; color: #1E5A3C">{{cur.effect}}</div>
+
+      <sc-if value="{{undecided}}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{noteOpen}}" hint-placeholder-val="{{ false }}">
+          <textarea rows="3" aria-label="Begründung für die Rückgabe" value="{{note}}" onChange="{{onNote}}" placeholder="Was fehlt oder ist unklar?" style="font: inherit; font-size: 14px; color: #1D2433; padding: 12px 14px; border: none; border-radius: 16px; background: #F4F6FB; resize: none"></textarea>
+        </sc-if>
+        <div style="display: flex; gap: 10px">
+          <button onClick="{{reject}}" style="flex: 1; height: 50px; border-radius: 999px; border: none; background: #FFF4DF; color: #6B4500; font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer">{{rejectLabel}}</button>
+          <button onClick="{{approve}}" style="flex: 1.2; height: 50px; border-radius: 999px; border: none; background: #3D63DD; color: #FFFFFF; font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(61,99,221,0.25)">Freigeben</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{decided}}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="border-radius: 18px; padding: 14px 16px; background: {{decBg}}; color: {{decFg}}; font-size: 14px; line-height: 1.5"><strong>{{decHead}}</strong> {{decText}}</div>
+        <button onClick="{{undo}}" style="height: 44px; border-radius: 999px; border: none; background: #F4F6FB; color: #3A4456; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Rückgängig</button>
+      </sc-if>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  ITEMS = [
+    { who: 'Lea Wagner', what: 'Erste-Hilfe-Fortbildung', meta: 'heute, 21:04 · selbst eingereicht · Foto', file: 'Foto_Bescheinigung.jpg',
+      issuer: 'ERSTE-HILFE-AUSBILDUNG MUSTER E. V.', docTitle: 'Teilnahmebescheinigung', signer: 'M. Muster', flags: 0,
+      lines: [['Hiermit wird bestätigt, dass', 0], ['Lea Wagner', 1], ['am 04.12.2026 an der', 1], ['Erste-Hilfe-Fortbildung (9 UE)', 1], ['gemäß DGUV Grundsatz 304-001 teilgenommen hat.', 0]],
+      checks: [['ok', 'Person', 'Lea Wagner · Pers.-Nr. 1047', 'Name stimmt mit Beleg überein'], ['ok', 'Datum', '04.12.2026', 'auf dem Beleg erkannt'], ['ok', 'Umfang', '9 UE', 'entspricht Fortbildung Ersthelfer'], ['ok', 'Anbieter', 'Erste-Hilfe-Ausbildung Muster e. V.', ''], ['info', 'Gültigkeit', 'bis 04.12.2028', 'Vorschlag aus Intervall 2 Jahre']],
+      effect: 'Lea Wagner: Ersthelfer gültig bis 04.12.2028 (bisher bis 05/2027).' },
+    { who: 'Mehmet Aydın', what: 'Unterweisung Flurförderzeuge', meta: 'gestern · selbst eingereicht · PDF', file: 'Stapler_Unterweisung.pdf',
+      issuer: 'LOGISTIKPARTNER BEISPIEL GMBH', docTitle: 'Bestätigung der Unterweisung', signer: 'K. Beispiel', flags: 1,
+      lines: [['Teilnehmer: Mehmet Aydın', 1], ['Thema: Sicherer Umgang mit Gabelstaplern', 1], ['Datum: ____________', 2], ['Unterweisender: K. Beispiel', 0]],
+      checks: [['ok', 'Person', 'Mehmet Aydın · Pers.-Nr. 1012', 'Name stimmt mit Beleg überein'], ['warn', 'Datum', 'nicht erkannt', 'Feld auf dem Beleg ist leer – bitte nachfragen'], ['ok', 'Thema', 'Unterweisung Flurförderzeuge', ''], ['info', 'Gültigkeit', '–', 'erst mit Datum berechenbar']],
+      effect: 'Nach Freigabe: Flurförderzeuge gültig für 1 Jahr ab Schulungsdatum.' },
+    { who: 'Tiefbau Muster GmbH · 5 Personen', what: 'Baustellen-Unterweisung (Papierliste)', meta: '23.11. · von Verwaltung erfasst · Scan', file: 'Anwesenheitsliste_23-11.pdf',
+      issuer: 'MUSTER ELEKTROTECHNIK GMBH · BAUSTELLE LADEPARK NORD', docTitle: 'Unterweisung vor Arbeitsbeginn', signer: 'D. Hofmann', flags: 2, list: true,
+      lines: [['23.11.2026 · Thema: Arbeiten im Bereich der Ladeinfrastruktur', 1]],
+      rows: ['Kemal Arslan', 'Piotr Nowak', 'Jan Fischer', 'Ali Demir', 'Marco Russo'],
+      checks: [['ok', 'Datum', '23.11.2026', 'auf dem Beleg erkannt'], ['ok', 'Personen', '5 auf der Liste, 5 erfasst', ''], ['warn', 'Unterschriften', '2 unleserlich', 'Zeilen 2 und 4 prüfen'], ['info', 'Gültigkeit', 'bis Ende der Baustelle', 'Fremdfirmen-Einweisung']],
+      effect: 'Alle 5 Personen erhalten den Nachweis „Einweisung Fremdfirma“.' }
+  ];
+  state = { sel: 0, decisions: {}, noteOpen: false, note: '' };
+  renderVals() {
+    const s = this.state;
+    const it = this.ITEMS[s.sel];
+    const outline = h => h === 1 ? '2px solid #7FA2FF' : h === 2 ? '2px solid #F2B544' : 'none';
+    const SIG = ['M4 15c8-12 12 4 20-6s10 8 18 2 12-6 18 0', 'M6 14c4-2 6-2 9 0s8-8 12-1 6 2 10-3', 'M4 12c10-8 18 6 30-2s14 4 24-2 10 2 16 0', 'M8 16c2-4 5-4 7 0', 'M4 13c12-6 20 4 30-4s12 6 22-2'];
+    const ICON = { ok: ['#E6F4EC', '#1E7A50', '✓', '#5F6B7D'], warn: ['#FFF4DF', '#8A4B00', '!', '#8A4B00'], info: ['#EAF0FE', '#2E4FB8', 'i', '#5F6B7D'] };
+    const cur = {
+      file: it.file, issuer: it.issuer, docTitle: it.docTitle, signer: it.signer, effect: it.effect, hasList: !!it.list,
+      lines: it.lines.map(([text, h]) => ({ text, outline: outline(h), weight: h === 1 ? 600 : 400, color: h ? '#1D2433' : '#3A3A3A' })),
+      rows: (it.rows || []).map((name, k) => ({ name, sig: SIG[k], flag: k === 1 || k === 3 ? 'prüfen' : '', flagColor: '#8A4B00' })),
+      checks: it.checks.map(([k, label, value, note]) => ({ label, value, note, bg: ICON[k][0], fg: ICON[k][1], icon: ICON[k][2], noteColor: ICON[k][3] }))
+    };
+    const dec = s.decisions[s.sel];
+    const queue = this.ITEMS.map((x, i) => {
+      const d = s.decisions[i];
+      const tag = d === 'ok' ? '✓ freigegeben' : d === 'back' ? 'zurückgegeben' : x.flags === 1 ? 'Datum fehlt' : x.flags === 2 ? '2 Unterschriften prüfen' : 'alles passt';
+      const tagBg = d === 'ok' ? '#E6F4EC' : d === 'back' ? '#FFF4DF' : x.flags ? '#FFF4DF' : '#E6F4EC';
+      const tagFg = d === 'ok' ? '#1E6A45' : d === 'back' ? '#6B4500' : x.flags ? '#6B4500' : '#1E6A45';
+      return { who: x.who, what: x.what, meta: x.meta, tag, tagBg, tagFg, border: i === s.sel ? '#3D63DD' : 'transparent', pick: () => this.setState({ sel: i, noteOpen: false, note: '' }) };
+    });
+    const set = v => { const decisions = Object.assign({}, s.decisions); if (v) decisions[s.sel] = v; else delete decisions[s.sel]; return decisions; };
+    return {
+      queue, cur,
+      openCount: this.ITEMS.length - Object.keys(s.decisions).length,
+      undecided: !dec, decided: !!dec,
+      noteOpen: s.noteOpen, note: s.note, onNote: e => this.setState({ note: e.target.value }),
+      rejectLabel: s.noteOpen ? 'Zurückgeben senden' : 'Zurückgeben',
+      reject: () => { if (!s.noteOpen) this.setState({ noteOpen: true }); else this.setState({ decisions: set('back'), noteOpen: false }); },
+      approve: () => this.setState({ decisions: set('ok'), noteOpen: false }),
+      undo: () => this.setState({ decisions: set(null) }),
+      decBg: dec === 'ok' ? '#E6F4EC' : '#FFF4DF', decFg: dec === 'ok' ? '#1E5A3C' : '#5A3A00',
+      decHead: dec === 'ok' ? 'Freigegeben.' : 'Zurückgegeben.',
+      decText: dec === 'ok' ? 'Nachweis versiegelt, Beleg angehängt, Pflichtmatrix aktualisiert.' : 'Die Person wird benachrichtigt' + (s.note ? ': „' + s.note + '“' : '.')
+    };
+  }
+}
+</script>
+</body>
+</html>

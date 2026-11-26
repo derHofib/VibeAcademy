@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Externe Schulung live: Organisator-Ansicht</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #1D2433; background: #F4F6FB; min-height: 900px; padding: 24px 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative">
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <a href="Extern-pruefen.dc.html" aria-label="Zurück zu externen Nachweisen" style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.06); display: flex; align-items: center; justify-content: center; color: #1D2433"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3.5L5.5 9l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div>
+        <div style="font-size: 13px; color: #5F6B7D">Erste-Hilfe-Ausbildung Muster e. V. · 04.12.2026 · 08:00–15:30 · Schulungsraum Lager</div>
+        <h1 style="margin: 2px 0 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700">Erste-Hilfe-Fortbildung · Live</h1>
+      </div>
+    </div>
+    <span style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: {{statusBg}}; color: {{statusFg}}; font-size: 14px; font-weight: 600"><span style="width: 9px; height: 9px; border-radius: 50%; background: {{statusDot}}"></span>{{statusText}}</span>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="QR-Codes" style="flex: 1 1 360px; max-width: 420px; background: #FFFFFF; border-radius: 28px; padding: 22px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.07); display: flex; flex-direction: column; gap: 18px; align-items: center">
+      <div role="tablist" style="display: flex; width: 100%; background: #F4F6FB; border-radius: 999px; padding: 4px; box-sizing: border-box">
+        <button role="tab" onClick="{{tabStart}}" aria-selected="{{startSel}}" style="flex: 1; height: 44px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 600; background: {{startBg}}; color: {{startFg}}; box-shadow: {{startSh}}; cursor: pointer">Start-QR · Einchecken</button>
+        <button role="tab" onClick="{{tabEnd}}" aria-selected="{{endSel}}" style="flex: 1; height: 44px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 600; background: {{endBg}}; color: {{endFg}}; box-shadow: {{endSh}}; cursor: pointer">Ende-QR · Auschecken</button>
+      </div>
+      <sc-if value="{{live}}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 14px; border-radius: 30px; background: {{qrFrame}}">
+          <div role="img" aria-label="{{qrAria}}" style="display: grid; grid-template-columns: repeat(25, 11px); grid-auto-rows: 11px; padding: 16px; background: #FFFFFF; border-radius: 20px">
+            <sc-for list="{{qr}}" as="c" hint-placeholder-count="625"><div style="background: {{c.col}}"></div></sc-for>
+          </div>
+        </div>
+        <div style="text-align: center"><div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700">{{qrTitle}}</div><div style="font-size: 13px; color: #5F6B7D; margin-top: 4px">Neuer Code alle 30 s · nur heute 07:30–16:30 gültig</div></div>
+        <div style="display: flex; gap: 10px; width: 100%">
+          <button style="flex: 1; height: 46px; border-radius: 999px; border: none; background: #F4F6FB; font: inherit; font-size: 14px; font-weight: 600; color: #1D2433; cursor: pointer">Vollbild für Beamer</button>
+          <button style="flex: 1; height: 46px; border-radius: 999px; border: none; background: #F4F6FB; font: inherit; font-size: 14px; font-weight: 600; color: #1D2433; cursor: pointer">Aushang drucken</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ended}}" hint-placeholder-val="{{ false }}">
+        <div style="width: 100%; height: 360px; border-radius: 24px; background: #F4F6FB; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: #5F6B7D">
+          <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7.5a4 4 0 018 0V10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <div style="font-size: 15px; font-weight: 600; color: #1D2433">Codes deaktiviert</div>
+          <div style="font-size: 13px; max-width: 240px">Schulung offiziell beendet um 15:30. Ein- und Auschecken ist nicht mehr möglich.</div>
+        </div>
+      </sc-if>
+    </section>
+
+    <section aria-label="Anwesenheit" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border-radius: 28px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.07); display: flex; flex-direction: column; gap: 14px">
+      <div role="tablist" style="display: inline-flex; align-self: flex-start; background: #F4F6FB; border-radius: 999px; padding: 4px">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <button role="tab" onClick="{{t.go}}" aria-selected="{{t.sel}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 600; background: {{t.bg}}; color: {{t.fg}}; box-shadow: {{t.sh}}; cursor: pointer; display: inline-flex; align-items: center; gap: 8px">{{t.label}}<span style="font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: {{t.badgeBg}}; color: {{t.badgeFg}}">{{t.badge}}</span></button>
+        </sc-for>
+      </div>
+      <sc-if value="{{tabAtt}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-wrap: wrap; gap: 6px">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><span style="font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}">{{k.label}}</span></sc-for>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.7fr); gap: 8px; padding: 0 12px; font-size: 12px; font-weight: 600; color: #5F6B7D">
+        <span>Person</span><span>Eingecheckt</span><span>Ausgecheckt</span><span>Dauer</span><span>Status</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+          <div style="border-radius: 18px; background: {{r.rowBg}}; padding: 10px 12px">
+            <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.7fr); gap: 8px; align-items: center; font-size: 14px">
+              <span style="display: flex; align-items: center; gap: 10px; min-width: 0"><span aria-hidden="true" style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: #EAF0FE; color: #2E4FB8; font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{r.ini}}</span><span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span></span>
+              <span>{{r.inT}} <span style="font-size: 12px; color: #5F6B7D">{{r.inM}}</span></span>
+              <span>{{r.outT}} <span style="font-size: 12px; color: #5F6B7D">{{r.outM}}</span></span>
+              <span style="font-variant-numeric: tabular-nums">{{r.dur}}</span>
+              <span><span style="display: inline-block; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: {{r.stBg}}; color: {{r.stFg}}; white-space: nowrap">{{r.status}}</span></span>
+            </div>
+            <sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 2px 42px">
+                <span style="flex: 1 1 260px; font-size: 13.5px; line-height: 1.45; color: #5A3A00"><strong>{{r.reason}}:</strong> „{{r.note}}“</span>
+                <sc-if value="{{r.open}}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{r.ask}}" style="height: 38px; padding: 0 14px; border-radius: 999px; border: none; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; color: #6B4500; cursor: pointer">Nachfragen</button>
+                  <button onClick="{{r.accept}}" style="height: 38px; padding: 0 14px; border-radius: 999px; border: none; background: #3D63DD; font: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF; cursor: pointer">Vermerk akzeptieren</button>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{tabQa}}" hint-placeholder-val="{{ false }}">
+        <div style="font-size: 13.5px; color: #5F6B7D">Fragen der Teilnehmer, sortiert nach Unterstützung. Anonyme Fragen ohne Namen.</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{qa}}" as="q" hint-placeholder-count="4">
+            <div style="display: flex; gap: 14px; align-items: center; border-radius: 18px; background: {{q.bg}}; padding: 12px 14px">
+              <span style="flex: none; width: 52px; height: 52px; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; color: #2E4FB8; line-height: 1.1"><span style="font-size: 11px">▲</span><span style="font-size: 17px">{{q.votes}}</span></span>
+              <div style="flex: 1; min-width: 0"><div style="font-size: 15px; line-height: 1.4; color: {{q.fg}}">{{q.text}}</div><div style="font-size: 12.5px; color: #5F6B7D; margin-top: 3px">{{q.meta}}</div></div>
+              <sc-if value="{{q.open}}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{q.mail}}" style="height: 40px; padding: 0 14px; border-radius: 999px; border: none; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; color: #3A4456; cursor: pointer">Per Mail</button>
+                <button onClick="{{q.done}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: none; background: #3D63DD; font: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF; cursor: pointer">Beantwortet</button>
+              </sc-if>
+              <sc-if value="{{q.closed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: #E6F4EC; color: #1E6A45; white-space: nowrap">{{q.closedLabel}}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tabQuiz}}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{hasActive}}" hint-placeholder-val="{{ true }}">
+          <div style="border-radius: 22px; background: #EAF0FE; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px"><span style="font-size: 12px; font-weight: 700; color: #2E4FB8; letter-spacing: 0.03em">LÄUFT · WISSENSCHECK</span><span style="font-size: 13px; font-weight: 600; color: #223C8F">{{answeredLabel}}</span></div>
+            <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700">{{active.q}}</div>
+            <sc-for list="{{bars}}" as="b" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 5px">
+                <div style="display: flex; justify-content: space-between; font-size: 14px"><span>{{b.text}} <strong style="color: #1E7A50">{{b.mark}}</strong></span><span style="font-weight: 600">{{b.n}}</span></div>
+                <div style="height: 12px; border-radius: 6px; background: #FFFFFF; overflow: hidden"><div style="width: {{b.pct}}%; height: 12px; border-radius: 6px; background: {{b.color}}"></div></div>
+              </div>
+            </sc-for>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-size: 14px; color: #223C8F"><strong>{{rightPct}} % richtig</strong> · Ergebnis wird je Person im Nachweis vermerkt</span><button onClick="{{closePoll}}" style="height: 42px; padding: 0 18px; border-radius: 999px; border: none; background: #FFFFFF; font: inherit; font-size: 13.5px; font-weight: 600; color: #1D2433; cursor: pointer">Frage schließen</button></div>
+          </div>
+        </sc-if>
+        <div style="font-size: 13.5px; color: #5F6B7D; margin-top: 4px">Aus dem Fragenpool „Erste Hilfe“ oder spontan anlegen</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{pool}}" as="p" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; align-items: center; border-radius: 18px; background: #F8F9FC; padding: 12px 14px">
+              <div style="flex: 1; min-width: 0"><div style="font-size: 14.5px; font-weight: 500">{{p.q}}</div><div style="font-size: 12.5px; color: #5F6B7D; margin-top: 2px">{{p.meta}}</div></div>
+              <button onClick="{{p.send}}" disabled="{{p.disabled}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: none; background: {{p.bg}}; color: {{p.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap">{{p.label}}</button>
+            </div>
+          </sc-for>
+          <button style="height: 46px; border-radius: 999px; border: 2px dashed #C9D1E0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #2E4FB8; cursor: pointer">+ Spontane Frage anlegen</button>
+        </div>
+      </sc-if>
+    </section>
+  </div>
+
+  <div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center">
+    <span style="font-size: 13.5px; color: #5F6B7D">{{footHint}}</span>
+    <sc-if value="{{live}}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{openEnd}}" style="height: 54px; padding: 0 26px; border-radius: 999px; border: none; background: #1D2433; color: #FFFFFF; font: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 24px rgba(29,36,51,0.22)">Schulung offiziell beenden</button>
+    </sc-if>
+    <sc-if value="{{ended}}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{reopen}}" style="height: 50px; padding: 0 22px; border-radius: 999px; border: none; background: #FFFFFF; color: #1D2433; font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(29,36,51,0.08)">Demo zurücksetzen</button>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(29,36,51,0.3); display: flex; align-items: center; justify-content: center; padding: 24px">
+      <section role="dialog" aria-label="Schulung beenden" style="width: 100%; max-width: 460px; background: #FFFFFF; border-radius: 30px; padding: 28px; box-shadow: 0 24px 60px rgba(29,36,51,0.25); display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 21px; font-weight: 700">Schulung jetzt offiziell beenden?</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3A4456"><strong>{{stillIn}} Personen</strong> sind noch eingecheckt. Für sie wird <strong>15:30</strong> als Ende übernommen. Alle bekommen eine Nachricht, um ihre Teilnahme zu bestätigen. Danach werden beide QR-Codes deaktiviert.</p>
+        <div style="display: flex; gap: 10px">
+          <button onClick="{{closeEnd}}" style="flex: 1; height: 50px; border-radius: 999px; border: none; background: #F4F6FB; font: inherit; font-size: 15px; font-weight: 600; color: #1D2433; cursor: pointer">Abbrechen</button>
+          <button onClick="{{doEnd}}" style="flex: 1.3; height: 50px; border-radius: 999px; border: none; background: #3D63DD; font: inherit; font-size: 15px; font-weight: 600; color: #FFFFFF; cursor: pointer">Jetzt beenden</button>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  P = [
+    { name: 'Anna Schulz', inT: '07:56', inM: 'QR', outT: '15:26', outM: 'Ende-QR' },
+    { name: 'Julia Becker', inT: '08:01', inM: 'QR', outT: '15:27', outM: 'Ende-QR' },
+    { name: 'Tobias Meier', inT: '07:58', inM: 'QR' },
+    { name: 'Kai Neumann', inT: '08:02', inM: 'QR' },
+    { name: 'Lea Wagner', inT: '08:02', inM: 'QR' },
+    { name: 'Paul Weber', inT: '08:05', inM: 'QR' },
+    { name: 'Mehmet Aydın', inT: '07:59', inM: 'Tablet' },
+    { name: 'Sven Albrecht', inT: '08:03', inM: 'QR', outT: '12:53', outM: 'manuell', reason: 'Vorzeitig gegangen', note: 'Notdienst-Einsatz beim Kunden ab 13 Uhr' },
+    { name: 'Jonas Krüger' }
+  ];
+  QA = [
+    { text: 'Wie oft muss der Defibrillator im Betrieb geprüft werden?', votes: 5, who: 'Kai Neumann', at: '12:41' },
+    { text: 'Darf ich als Ersthelfer Medikamente ausgeben, z. B. Kopfschmerztabletten?', votes: 3, who: 'anonym', at: '13:10' },
+    { text: 'Gilt die stabile Seitenlage auch bei Verdacht auf Wirbelsäulenverletzung?', votes: 2, who: 'anonym', at: '10:22', answered: true },
+    { text: 'Wo hängt bei uns der nächste Verbandkasten im Lager?', votes: 1, who: 'Paul Weber', at: '14:05' }
+  ];
+  POOL = [
+    { q: 'Was tust du bei einem Stromunfall zuerst?', opts: ['Sofort mit der Herzdruckmassage beginnen', 'Den Stromkreis unterbrechen', 'Die Person vom Gerät wegziehen'], ok: 1, counts: [1, 4, 0] },
+    { q: 'Wie viele Herzdruckmassagen kommen auf zwei Beatmungen?', opts: ['15', '30', '50'], ok: 1, counts: [0, 0, 0] },
+    { q: 'Welche Notrufnummer gilt europaweit?', opts: ['110', '112', '116 117'], ok: 1, counts: [0, 0, 0] }
+  ];
+  state = { tab: 'end', ended: false, confirmOpen: false, review: {}, right: 'att', qa: {}, active: 0, sent: { 0: true }, closed: {} };
+  renderVals() {
+    const s = this.state;
+    const NOW = '15:28', END = '15:30';
+    const min = t => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+    const dur = m => Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+    const PLAN = 450;
+    const B = { blue: ['#EAF0FE', '#223C8F'], green: ['#E6F4EC', '#1E6A45'], amber: ['#FFF4DF', '#6B4500'], grey: ['#F4F6FB', '#5F6B7D'] };
+    let stillIn = 0, present = 0, outQr = 0, manual = 0, missing = 0;
+    const rows = this.P.map((p, i) => {
+      const ini = p.name.split(' ').map(w => w[0]).join('');
+      if (!p.inT) { missing++; return { name: p.name, ini, inT: '–', inM: '', outT: '–', outM: '', dur: '–', status: s.ended ? 'nicht teilgenommen' : 'nicht eingecheckt', stBg: B.grey[0], stFg: B.grey[1], rowBg: 'transparent', hasNote: false }; }
+      let outT = p.outT, outM = p.outM, status, st;
+      if (!outT) { stillIn++; present++; if (s.ended) { outT = END; outM = 'offizielles Ende'; status = 'Bestätigung offen'; st = B.blue; } else { outT = '–'; outM = ''; status = 'anwesend'; st = B.green; } }
+      else if (outM === 'manuell') { manual++; const r = s.review[i]; status = r === 'ok' ? 'Vermerk akzeptiert' : r === 'ask' ? 'Rückfrage gesendet' : 'Vermerk prüfen'; st = r === 'ok' ? B.green : B.amber; }
+      else { outQr++; status = s.ended ? 'Bestätigung offen' : 'ausgecheckt'; st = s.ended ? B.blue : B.grey; }
+      const endMin = outT === '–' ? min(NOW) : min(outT);
+      const m = endMin - min(p.inT);
+      return { name: p.name, ini, inT: p.inT, inM: p.inM, outT, outM, dur: dur(m) + (m < PLAN * 0.9 ? ' ⚠' : ''), status, stBg: st[0], stFg: st[1],
+        rowBg: p.note ? '#FFFAF0' : '#F8F9FC', hasNote: !!p.note, reason: p.reason, note: p.note, open: !s.review[i],
+        accept: () => this.setState({ review: Object.assign({}, s.review, { [i]: 'ok' }) }),
+        ask: () => this.setState({ review: Object.assign({}, s.review, { [i]: 'ask' }) }) };
+    });
+    const N = 25;
+    const fin = (x, y, ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const r = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return r === 3 || r <= 1; };
+    const seed = s.tab === 'end' ? 7 : 3;
+    const qr = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let v = fin(x, y, 0, 0); if (v === null) v = fin(x, y, N - 7, 0); if (v === null) v = fin(x, y, 0, N - 7);
+      if (v === null) v = (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8) ? false : ((x * seed + y * 13 + x * y * 3) % 5) < 2;
+      qr.push({ col: v ? '#1D2433' : '#FFFFFF' });
+    }
+    const tab = on => on ? { bg: '#FFFFFF', fg: '#1D2433', sh: '0 2px 8px rgba(29,36,51,0.08)' } : { bg: 'transparent', fg: '#5F6B7D', sh: 'none' };
+    const ts = tab(s.tab === 'start'), te = tab(s.tab === 'end');
+    const kpis = s.ended
+      ? [{ label: '8 teilgenommen', bg: B.green[0], fg: B.green[1] }, { label: (stillIn + outQr) + ' Bestätigungen offen', bg: B.blue[0], fg: B.blue[1] }, { label: manual + ' Vermerk', bg: B.amber[0], fg: B.amber[1] }, { label: missing + ' fehlt', bg: B.grey[0], fg: B.grey[1] }]
+      : [{ label: present + ' anwesend', bg: B.green[0], fg: B.green[1] }, { label: outQr + ' per Ende-QR aus', bg: B.blue[0], fg: B.blue[1] }, { label: manual + ' manuell mit Vermerk', bg: B.amber[0], fg: B.amber[1] }, { label: missing + ' fehlt', bg: B.grey[0], fg: B.grey[1] }];
+    return {
+      live: !s.ended, ended: s.ended,
+      statusText: s.ended ? 'Beendet um ' + END : 'Läuft · ' + NOW + ' Uhr',
+      statusBg: s.ended ? '#F4F6FB' : '#E6F4EC', statusFg: s.ended ? '#3A4456' : '#1E6A45', statusDot: s.ended ? '#8790A0' : '#1E7A50',
+      tabStart: () => this.setState({ tab: 'start' }), tabEnd: () => this.setState({ tab: 'end' }),
+      startSel: s.tab === 'start' ? 'true' : 'false', endSel: s.tab === 'end' ? 'true' : 'false',
+      startBg: ts.bg, startFg: ts.fg, startSh: ts.sh, endBg: te.bg, endFg: te.fg, endSh: te.sh,
+      qr, qrFrame: s.tab === 'end' ? '#FDE7C2' : '#DCE5FC',
+      qrTitle: s.tab === 'end' ? 'Zum Auschecken scannen' : 'Zum Einchecken scannen',
+      qrAria: s.tab === 'end' ? 'Ende-QR-Code zum Auschecken' : 'Start-QR-Code zum Einchecken',
+      kpis, rows, stillIn,
+      footHint: s.ended ? 'Nachweise werden nach Bestätigung erstellt.' : 'Geplantes Ende 15:30',
+      openEnd: () => this.setState({ confirmOpen: true }), closeEnd: () => this.setState({ confirmOpen: false }),
+      doEnd: () => this.setState({ ended: true, confirmOpen: false }),
+      confirmOpen: s.confirmOpen,
+      reopen: () => this.setState({ ended: false, review: {}, tab: 'end' }),
+      tabAtt: s.right === 'att', tabQa: s.right === 'qa', tabQuiz: s.right === 'quiz',
+      tabs: [['att', 'Anwesenheit', String(present + outQr + manual)], ['qa', 'Fragen', String(this.QA.filter((q, i) => !q.answered && !s.qa[i]).length)], ['quiz', 'Kontrollfragen', s.active !== null ? 'live' : String(this.POOL.length)]].map(([id, label, badge]) => {
+        const on = s.right === id; return { label, badge, sel: on ? 'true' : 'false', go: () => this.setState({ right: id }), bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#1D2433' : '#5F6B7D', sh: on ? '0 2px 8px rgba(29,36,51,0.08)' : 'none',
+          badgeBg: id === 'quiz' && s.active !== null ? '#3D63DD' : on ? '#EAF0FE' : '#E3E8F2', badgeFg: id === 'quiz' && s.active !== null ? '#FFFFFF' : '#2E4FB8' }; }),
+      qa: this.QA.map((q, i) => ({ q, i })).sort((a, b) => ((a.q.answered || s.qa[a.i]) ? 1 : 0) - ((b.q.answered || s.qa[b.i]) ? 1 : 0) || b.q.votes - a.q.votes).map(({ q, i }) => {
+        const st = q.answered ? 'done' : s.qa[i]; const closed = !!st;
+        return { text: q.text, votes: q.votes, meta: q.who + ' · ' + q.at, open: !closed, closed, closedLabel: st === 'mail' ? 'per Mail' : 'beantwortet',
+          bg: closed ? '#F8F9FC' : '#F1F5FE', fg: closed ? '#5F6B7D' : '#1D2433',
+          done: () => this.setState({ qa: Object.assign({}, s.qa, { [i]: 'done' }) }), mail: () => this.setState({ qa: Object.assign({}, s.qa, { [i]: 'mail' }) }) }; }),
+      hasActive: s.active !== null,
+      active: s.active !== null ? this.POOL[s.active] : this.POOL[0],
+      ...(() => { const P = s.active !== null ? this.POOL[s.active] : this.POOL[0]; const tot = P.counts.reduce((a, b) => a + b, 0); const max = Math.max(1, ...P.counts);
+        return { bars: P.opts.map((text, k) => ({ text, n: P.counts[k], pct: Math.round(P.counts[k] / Math.max(1, tot) * 100), color: k === P.ok ? '#1E7A50' : '#AFC0EE', mark: k === P.ok ? '✓' : '' })),
+          answeredLabel: tot + ' von ' + present + ' Eingecheckten haben geantwortet', rightPct: tot ? Math.round(P.counts[P.ok] / tot * 100) : 0 }; })(),
+      closePoll: () => this.setState({ active: null, closed: Object.assign({}, s.closed, { [s.active]: true }) }),
+      pool: this.POOL.map((p, i) => { const live = s.active === i, done = s.closed[i];
+        return { q: p.q, meta: p.opts.length + ' Antworten · Wissenscheck' + (done ? ' · ' + Math.round(p.counts[p.ok] / Math.max(1, p.counts.reduce((a, b) => a + b, 0)) * 100) + ' % richtig' : ''),
+          label: live ? 'läuft' : done ? 'ausgewertet' : 'Jetzt senden', disabled: live || done || (s.active !== null),
+          bg: live ? '#EAF0FE' : done ? '#E6F4EC' : s.active !== null ? '#F4F6FB' : '#3D63DD', fg: live ? '#2E4FB8' : done ? '#1E6A45' : s.active !== null ? '#8790A0' : '#FFFFFF',
+          send: () => { if (s.active === null && !done) { this.POOL[i].counts = [0, Math.max(1, Math.round(present * 0.7)), 1]; this.setState({ active: i }); } } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

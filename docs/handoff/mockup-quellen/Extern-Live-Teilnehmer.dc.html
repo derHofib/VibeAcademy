@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Externe Schulung live: ein- und auschecken</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F4F6FB; font-family: Inter, system-ui, sans-serif; color: #1D2433; display: flex; flex-direction: column; position: relative; overflow: hidden">
+
+  <sc-if value="{{isScan}}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; background: #161B26; color: #FFFFFF; display: flex; flex-direction: column; padding: 18px 20px 26px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div><div style="font-size: 12px; color: #AAB3C5">{{scanKicker}}</div><div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700">{{scanTitle}}</div></div>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center">
+        <div style="position: relative; width: 260px; height: 260px; border-radius: 34px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center">
+          <div role="img" aria-label="QR-Code im Sucher" style="display: grid; grid-template-columns: repeat(21, 7px); grid-auto-rows: 7px; padding: 12px; background: #FFFFFF; border-radius: 12px; opacity: 0.92">
+            <sc-for list="{{qr}}" as="c" hint-placeholder-count="441"><div style="background: {{c.col}}"></div></sc-for>
+          </div>
+          <span aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 46px; height: 46px; border-left: 5px solid {{scanColor}}; border-top: 5px solid {{scanColor}}; border-radius: 30px 0 0 0"></span>
+          <span aria-hidden="true" style="position: absolute; right: 0; top: 0; width: 46px; height: 46px; border-right: 5px solid {{scanColor}}; border-top: 5px solid {{scanColor}}; border-radius: 0 30px 0 0"></span>
+          <span aria-hidden="true" style="position: absolute; left: 0; bottom: 0; width: 46px; height: 46px; border-left: 5px solid {{scanColor}}; border-bottom: 5px solid {{scanColor}}; border-radius: 0 0 0 30px"></span>
+          <span aria-hidden="true" style="position: absolute; right: 0; bottom: 0; width: 46px; height: 46px; border-right: 5px solid {{scanColor}}; border-bottom: 5px solid {{scanColor}}; border-radius: 0 0 30px 0"></span>
+        </div>
+      </div>
+      <p style="margin: 0 0 18px; text-align: center; font-size: 15px; line-height: 1.5; color: #D5DBE6">{{scanHint}}</p>
+      <button onClick="{{scanned}}" style="height: 56px; border-radius: 999px; border: none; background: {{scanColor}}; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">QR-Code erkannt (Demo)</button>
+      <sc-if value="{{isScanEnd}}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{cancelScan}}" style="margin-top: 10px; height: 48px; border-radius: 999px; border: none; background: rgba(255,255,255,0.1); color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Abbrechen – weiter eingecheckt</button>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isIn}}" hint-placeholder-val="{{ false }}">
+    <header style="padding: 14px 16px 6px">
+      <div style="font-size: 12px; color: #5F6B7D">Externe Schulung · 08:00–15:30 · Schulungsraum Lager</div>
+      <h1 style="margin: 2px 0 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 700">Erste-Hilfe-Fortbildung</h1>
+    </header>
+    <main style="flex: 1; min-height: 0; overflow-y: auto; padding: 8px 16px 4px; display: flex; flex-direction: column; gap: 12px">
+      <section aria-label="Anwesenheit" style="background: #FFFFFF; border-radius: 24px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.07); display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: #E6F4EC; color: #1E6A45; font-size: 12.5px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #1E7A50; box-shadow: 0 0 0 4px rgba(30,122,80,0.18)"></span>Eingecheckt 08:02</span>
+          <span style="font-size: 12.5px; color: #5F6B7D">jetzt {{nowLabel}} Uhr</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1">{{clock}}</span><span style="font-size: 13.5px; color: #5F6B7D">dabei · {{pct}} %</span></div>
+        <div style="height: 8px; border-radius: 4px; background: #E3E8F2; overflow: hidden"><div style="width: {{pct}}%; height: 8px; border-radius: 4px; background: #3D63DD; transition: width 1s linear"></div></div>
+      </section>
+
+      <sc-if value="{{pollOpen}}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Kontrollfrage" style="background: #EAF0FE; border-radius: 24px; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; border: 2px solid #C9D6F8">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 12px; font-weight: 700; color: #2E4FB8; letter-spacing: 0.03em">KONTROLLFRAGE · VOM ORGANISATOR</span><span style="font-size: 11.5px; font-weight: 600; color: #2E4FB8; background: #FFFFFF; padding: 4px 9px; border-radius: 999px">Wissenscheck</span></div>
+          <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16.5px; font-weight: 700; line-height: 1.35">{{poll.q}}</div>
+          <sc-for list="{{pollOpts}}" as="o" hint-placeholder-count="3">
+            <button onClick="{{o.pick}}" disabled="{{o.locked}}" style="font: inherit; text-align: left; font-size: 14.5px; padding: 12px 14px; min-height: 46px; border-radius: 16px; border: 2px solid {{o.border}}; background: {{o.bg}}; color: #1D2433; opacity: {{o.opacity}}; cursor: pointer; display: flex; gap: 8px; align-items: center"><span style="flex: 1">{{o.text}}</span><span style="font-weight: 700; color: {{o.markColor}}">{{o.mark}}</span></button>
+          </sc-for>
+          <sc-if value="{{pollAnswered}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13.5px; line-height: 1.45; color: {{pollFbFg}}"><strong>{{pollFbHead}}</strong> {{poll.why}} Antwort gespeichert.</div></sc-if>
+        </section>
+      </sc-if>
+
+      <section aria-label="Fragen an den Trainer" style="background: #FFFFFF; border-radius: 24px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 8px 24px rgba(29,36,51,0.05); display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px"><h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15.5px; font-weight: 700">Fragen an den Trainer</h2><button onClick="{{openAsk}}" style="height: 36px; padding: 0 14px; border-radius: 999px; border: none; background: #3D63DD; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">+ Frage</button></div>
+        <sc-for list="{{questions}}" as="q" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #EEF1F6">
+            <button onClick="{{q.vote}}" aria-label="{{q.voteLabel}}" style="flex: none; width: 44px; height: 44px; border-radius: 14px; border: none; background: {{q.voteBg}}; color: {{q.voteFg}}; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1"><span>▲</span>{{q.votes}}</button>
+            <div style="flex: 1; min-width: 0"><div style="font-size: 14px; line-height: 1.4">{{q.text}}</div><div style="font-size: 12px; color: #5F6B7D; margin-top: 2px">{{q.meta}} <span style="font-weight: 600; color: {{q.stColor}}">{{q.status}}</span></div></div>
+          </div>
+        </sc-for>
+      </section>
+    </main>
+    <footer style="padding: 10px 16px 20px; display: flex; gap: 10px">
+      <button onClick="{{openManual}}" style="flex: 1; height: 54px; border-radius: 999px; border: none; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.08); color: #1D2433; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Ohne QR beenden</button>
+      <button onClick="{{toScanEnd}}" style="flex: 1.3; height: 54px; border-radius: 999px; border: none; background: #3D63DD; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; box-shadow: 0 8px 20px rgba(61,99,221,0.28); cursor: pointer">Ende-QR scannen</button>
+    </footer>
+
+    <sc-if value="{{askOpen}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(29,36,51,0.32); display: flex; flex-direction: column; justify-content: flex-end">
+        <section role="dialog" aria-label="Frage stellen" style="margin: 0 10px 10px; background: #FFFFFF; border-radius: 30px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -10px 30px rgba(29,36,51,0.12)">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700">Frage an den Trainer</h2>
+            <button onClick="{{closeAsk}}" style="font: inherit; font-size: 14px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; border: none; border-radius: 999px; padding: 10px 16px; cursor: pointer">Abbrechen</button>
+          </div>
+          <textarea rows="3" aria-label="Deine Frage" value="{{draft}}" onChange="{{onDraft}}" placeholder="Was möchtest du wissen?" style="font: inherit; font-size: 15px; color: #1D2433; padding: 12px 14px; border: none; border-radius: 18px; background: #F4F6FB; resize: none"></textarea>
+          <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{anon}}" onChange="{{toggleAnon}}" style="width: 20px; height: 20px; accent-color: #3D63DD">Anonym stellen <span style="font-size: 12px; color: #5F6B7D">(Trainer sieht keinen Namen)</span></label>
+          <button onClick="{{sendQ}}" disabled="{{sendDisabled}}" style="height: 52px; border-radius: 999px; border: none; background: {{sendBg}}; color: {{sendFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Frage senden</button>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{manualOpen}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(29,36,51,0.32); display: flex; flex-direction: column; justify-content: flex-end">
+        <section role="dialog" aria-label="Ohne QR-Code ausloggen" style="margin: 0 10px 10px; background: #FFFFFF; border-radius: 30px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -10px 30px rgba(29,36,51,0.12)">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700">Ohne QR-Code ausloggen</h2>
+            <button onClick="{{closeManual}}" style="font: inherit; font-size: 14px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; border: none; border-radius: 999px; padding: 10px 16px; cursor: pointer">Abbrechen</button>
+          </div>
+          <div style="font-size: 13.5px; line-height: 1.5; color: #3A4456">Deine Zeit endet jetzt um <strong>{{nowLabel}} Uhr</strong>. Der Vermerk wird dem Organisator zur Prüfung angezeigt.</div>
+          <div role="radiogroup" aria-label="Grund" style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{reasons}}" as="r" hint-placeholder-count="4">
+              <button onClick="{{r.pick}}" role="radio" aria-checked="{{r.sel}}" style="height: 40px; padding: 0 14px; border-radius: 999px; border: none; font: inherit; font-size: 13.5px; font-weight: 600; background: {{r.bg}}; color: {{r.fg}}; cursor: pointer">{{r.label}}</button>
+            </sc-for>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D">Vermerk (Pflicht)
+            <textarea rows="3" value="{{note}}" onChange="{{onNote}}" placeholder="z. B. Notdienst-Einsatz beim Kunden ab 13 Uhr" style="font: inherit; font-size: 15px; color: #1D2433; padding: 12px 14px; border: none; border-radius: 18px; background: #F4F6FB; resize: none"></textarea>
+          </label>
+          <button onClick="{{manualOut}}" disabled="{{manualDisabled}}" style="height: 52px; border-radius: 999px; border: none; background: {{manualBg}}; color: {{manualFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Jetzt ausloggen</button>
+        </section>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{isConfirm}}" hint-placeholder-val="{{ false }}">
+    <header style="padding: 16px 16px 8px">
+      <div style="font-size: 12px; color: #5F6B7D">Ausgecheckt</div>
+      <h1 style="margin: 2px 0 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 21px; font-weight: 700">Teilnahme bestätigen</h1>
+    </header>
+    <main style="flex: 1; padding: 8px 16px 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="background: #FFFFFF; border-radius: 26px; padding: 20px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.07); display: flex; flex-direction: column; gap: 4px; font-size: 14.5px">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px"><strong style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px">Erste-Hilfe-Fortbildung</strong><span style="font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: {{compBg}}; color: {{compFg}}">{{compLabel}}</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #EEF1F6"><span style="color: #5F6B7D">Eingecheckt</span><span>08:02 · Start-QR</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #EEF1F6"><span style="color: #5F6B7D">Ausgecheckt</span><span>{{endLabel}} · {{endMethod}}</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #EEF1F6"><span style="color: #5F6B7D">Dauer</span><strong>{{durLabel}}</strong></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #EEF1F6"><span style="color: #5F6B7D">Geplant</span><span>7 h 30 min</span></div>
+      </section>
+      <sc-if value="{{wasManual}}" hint-placeholder-val="{{ false }}">
+        <section style="background: #FFF4DF; border-radius: 22px; padding: 14px 16px; font-size: 14px; line-height: 1.5; color: #5A3A00"><strong>Vermerk · {{reasonLabel}}</strong><br>„{{note}}“<br><span style="font-size: 12.5px">Wird vom Organisator geprüft.</span></section>
+      </sc-if>
+      <label style="display: flex; gap: 14px; align-items: flex-start; background: #FFFFFF; border-radius: 22px; padding: 16px; font-size: 14px; line-height: 1.5; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 8px 24px rgba(29,36,51,0.05); cursor: pointer">
+        <input type="checkbox" checked="{{agree}}" onChange="{{toggleAgree}}" style="width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: #3D63DD">
+        <span>Ich bestätige, dass ich wie angegeben an der Schulung teilgenommen habe.</span>
+      </label>
+    </main>
+    <footer style="padding: 14px 16px 22px">
+      <button onClick="{{confirm}}" disabled="{{confirmDisabled}}" style="width: 100%; height: 56px; border-radius: 999px; border: none; background: {{confirmBg}}; color: {{confirmFg}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Teilnahme bestätigen</button>
+    </footer>
+  </sc-if>
+
+  <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+    <main style="flex: 1; padding: 24px 16px; display: flex; flex-direction: column; justify-content: center; gap: 16px">
+      <section style="background: #FFFFFF; border-radius: 30px; padding: 32px 22px; box-shadow: 0 10px 30px rgba(29,36,51,0.07); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px">
+        <div style="width: 88px; height: 88px; border-radius: 50%; background: #E6F4EC; display: flex; align-items: center; justify-content: center"><svg width="42" height="42" viewBox="0 0 40 40" aria-hidden="true"><path d="M11 21l6 6 13-14" fill="none" stroke="#1E7A50" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700">Bestätigt</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #3A4456">{{doneText}}</p>
+      </section>
+      <button onClick="{{restart}}" style="height: 52px; border-radius: 999px; border: none; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.08); color: #1D2433; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Demo neu starten</button>
+    </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  START = 8 * 3600 + 2 * 60 + 10;
+  PLANNED = 27000;
+  REASONS = ['Vorzeitig gegangen', 'Ende-QR nicht verfügbar', 'Technisches Problem', 'Sonstiges'];
+  POLL = { q: 'Was tust du bei einem Stromunfall zuerst?', opts: ['Sofort mit der Herzdruckmassage beginnen', 'Den Stromkreis unterbrechen', 'Die Person vom Gerät wegziehen'], ok: 1, why: 'Eigenschutz zuerst – sonst wirst du selbst durchströmt.' };
+  state = { step: 'scanStart', elapsed: 17460, endAt: null, method: null, manualOpen: false, reason: null, note: '', agree: false,
+    pollOpen: true, pollPick: null, askOpen: false, draft: '', anon: false, voted: {},
+    qs: [ { id: 1, text: 'Wie oft muss der Defibrillator im Betrieb geprüft werden?', votes: 4, who: 'Kai N.', status: 'open' }, { id: 2, text: 'Gilt die stabile Seitenlage auch bei Verdacht auf Wirbelsäulenverletzung?', votes: 2, who: 'anonym', status: 'answered' } ] };
+  componentDidMount() { this.timer = setInterval(() => { if (this.state.step === 'in' || this.state.step === 'scanEnd') this.setState(s => ({ elapsed: s.elapsed + 1 })); }, 1000); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const s = this.state;
+    const hm = t => { const h = Math.floor(t / 3600) % 24, m = Math.floor(t / 60) % 60; return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); };
+    const clock = (() => { const e = s.elapsed; return Math.floor(e / 3600) + ':' + String(Math.floor(e / 60) % 60).padStart(2, '0') + ':' + String(e % 60).padStart(2, '0'); })();
+    const dur = t => Math.floor(t / 3600) + ' h ' + Math.floor(t / 60) % 60 + ' min';
+    const now = this.START + s.elapsed;
+    const N = 21;
+    const fin = (x, y, ox, oy) => { const dx = x - ox, dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; const r = Math.max(Math.abs(dx - 3), Math.abs(dy - 3)); return r === 3 || r <= 1; };
+    const seed = s.step === 'scanEnd' ? 7 : 3;
+    const qr = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let v = fin(x, y, 0, 0); if (v === null) v = fin(x, y, N - 7, 0); if (v === null) v = fin(x, y, 0, N - 7);
+      if (v === null) v = (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8) ? false : ((x * seed + y * 11 + x * y) % 3) === 0;
+      qr.push({ col: v ? '#161B26' : '#FFFFFF' });
+    }
+    const isEnd = s.step === 'scanEnd';
+    const noteOk = s.note.trim().length >= 10 && s.reason !== null;
+    const dEnd = s.endAt !== null ? s.endAt - this.START : 0;
+    const comp = dEnd / this.PLANNED;
+    const full = comp >= 0.9;
+    return {
+      isScan: s.step === 'scanStart' || isEnd, isScanEnd: isEnd, isIn: s.step === 'in', isConfirm: s.step === 'confirm', isDone: s.step === 'done',
+      qr,
+      scanKicker: isEnd ? 'Auschecken' : 'Einchecken',
+      scanTitle: isEnd ? 'Ende-QR scannen' : 'Start-QR scannen',
+      scanHint: isEnd ? 'Halte die Kamera auf den Ende-Code, den der Organisator am Schluss zeigt.' : 'Halte die Kamera auf den Start-Code am Bildschirm oder Aushang im Schulungsraum.',
+      scanColor: isEnd ? '#F2A93B' : '#3D63DD',
+      scanned: () => {
+        if (isEnd) { const endAt = Math.max(now, 15 * 3600 + 31 * 60); this.setState({ step: 'confirm', endAt, method: 'qr' }); }
+        else this.setState({ step: 'in' });
+      },
+      cancelScan: () => this.setState({ step: 'in' }),
+      clock, nowLabel: hm(now), pct: Math.min(100, Math.round(s.elapsed / this.PLANNED * 100)),
+      toScanEnd: () => this.setState({ step: 'scanEnd' }),
+      openManual: () => this.setState({ manualOpen: true }),
+      closeManual: () => this.setState({ manualOpen: false }),
+      manualOpen: s.manualOpen,
+      reasons: this.REASONS.map((label, i) => ({ label, sel: s.reason === i ? 'true' : 'false', bg: s.reason === i ? '#3D63DD' : '#F4F6FB', fg: s.reason === i ? '#FFFFFF' : '#3A4456', pick: () => this.setState({ reason: i }) })),
+      note: s.note, onNote: e => this.setState({ note: e.target.value }),
+      manualDisabled: !noteOk, manualBg: noteOk ? '#3D63DD' : '#E4EAF8', manualFg: noteOk ? '#FFFFFF' : '#2E3F6E',
+      manualOut: () => { if (noteOk) this.setState({ step: 'confirm', endAt: now, method: 'manual', manualOpen: false }); },
+      endLabel: s.endAt !== null ? hm(s.endAt) : '', endMethod: s.method === 'manual' ? 'manuell' : 'Ende-QR',
+      durLabel: dur(dEnd), wasManual: s.method === 'manual', reasonLabel: s.reason !== null ? this.REASONS[s.reason] : '',
+      compLabel: full ? '✓ vollständig' : 'teilweise · ' + Math.round(comp * 100) + ' %',
+      compBg: full ? '#E6F4EC' : '#FFF4DF', compFg: full ? '#1E6A45' : '#6B4500',
+      agree: s.agree, toggleAgree: () => this.setState({ agree: !s.agree }),
+      confirmDisabled: !s.agree, confirmBg: s.agree ? '#3D63DD' : '#E4EAF8', confirmFg: s.agree ? '#FFFFFF' : '#2E3F6E',
+      confirm: () => { if (s.agree) this.setState({ step: 'done' }); },
+      doneText: full ? 'Dein Nachweis „Erste-Hilfe-Fortbildung“ ist erstellt und wird auf „Ersthelfer“ angerechnet.' : 'Deine Teilnahme ist erfasst. Wegen der Teilzeit entscheidet der Organisator über die Anrechnung.',
+      restart: () => this.setState({ step: 'scanStart', elapsed: 17460, endAt: null, method: null, reason: null, note: '', agree: false, pollPick: null }),
+      pollOpen: s.pollOpen, poll: this.POLL, pollAnswered: s.pollPick !== null,
+      pollOpts: this.POLL.opts.map((text, k) => { const ans = s.pollPick !== null, ok = k === this.POLL.ok, me = k === s.pollPick;
+        let border = '#FFFFFF', bg = '#FFFFFF', mark = '', markColor = '#1E7A50', opacity = 1;
+        if (ans) { if (ok) { border = '#9ED3B5'; bg = '#E6F4EC'; mark = '✓'; } else if (me) { border = '#F0C08A'; bg = '#FFF4DF'; mark = '✕'; markColor = '#8A4B00'; } else opacity = 0.55; }
+        return { text, border, bg, mark, markColor, opacity, locked: ans, pick: () => { if (s.pollPick === null) this.setState({ pollPick: k }); } }; }),
+      pollFbHead: s.pollPick === this.POLL.ok ? 'Richtig.' : 'Nicht ganz.', pollFbFg: s.pollPick === this.POLL.ok ? '#1E5A3C' : '#5A3A00',
+      questions: s.qs.slice().sort((x, y) => (x.status === 'answered') - (y.status === 'answered') || y.votes - x.votes).map(q => ({
+        text: q.text, votes: q.votes + (s.voted[q.id] ? 1 : 0), meta: q.who + ' ·',
+        status: q.status === 'answered' ? 'beantwortet' : q.mine ? 'gesendet' : 'offen', stColor: q.status === 'answered' ? '#1E7A50' : '#2E4FB8',
+        voteBg: s.voted[q.id] ? '#3D63DD' : '#F4F6FB', voteFg: s.voted[q.id] ? '#FFFFFF' : '#3A4456',
+        voteLabel: 'Ich auch, ' + q.votes + ' Stimmen',
+        vote: () => { if (q.mine) return; const voted = Object.assign({}, s.voted); voted[q.id] = !voted[q.id]; this.setState({ voted }); } })),
+      askOpen: s.askOpen, openAsk: () => this.setState({ askOpen: true, draft: '' }), closeAsk: () => this.setState({ askOpen: false }),
+      draft: s.draft, onDraft: e => this.setState({ draft: e.target.value }),
+      anon: s.anon, toggleAnon: () => this.setState({ anon: !s.anon }),
+      sendDisabled: !s.draft.trim(), sendBg: s.draft.trim() ? '#3D63DD' : '#E4EAF8', sendFg: s.draft.trim() ? '#FFFFFF' : '#2E3F6E',
+      sendQ: () => { if (!s.draft.trim()) return; this.setState({ askOpen: false, qs: [{ id: Date.now(), text: s.draft.trim(), votes: 0, who: s.anon ? 'du (anonym)' : 'du', status: 'open', mine: true }, ...s.qs] }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

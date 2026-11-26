@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lesenachweis je Teilnehmer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #F5F6F8; min-height: 920px; padding: 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <div style="display: flex; gap: 16px; align-items: center">
+      <div aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: #E8EEFC; color: #1F4FD8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">LW</div>
+      <div>
+        <a href="Main.dc.html" style="font-size: 13px; text-decoration: none">← Personen</a>
+        <h1 style="margin: 2px 0 0; font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600">Lea Wagner</h1>
+        <div style="font-size: 13px; color: #5B6474">Pers.-Nr. 1047 · Elektrofachkraft · Team Service Nord</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      <button style="font: inherit; font-size: 14px; font-weight: 600; padding: 11px 14px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; cursor: pointer">Ausnahme erfassen</button>
+      <button style="font: inherit; font-size: 14px; font-weight: 600; padding: 11px 14px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; cursor: pointer">Erneut einladen</button>
+      <a href="Nachweis-PDF.dc.html" style="font-size: 14px; font-weight: 600; padding: 11px 14px; border-radius: 8px; background: #1F4FD8; color: #FFFFFF; text-decoration: none">Nachweis-PDF öffnen</a>
+    </div>
+  </header>
+
+  <section aria-label="Zusammenfassung" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center">
+      <div><div style="font-weight: 600; font-size: 16px">Sicherheitsunterweisung 2026 · Version 3</div><div style="font-size: 12px; color: #5B6474; margin-top: 2px">Dokument-Hash 9f3c…a71e · 14 Seiten · gültig bis 05.11.2027</div></div>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #E6F4EC; color: #157347; font-size: 13px; font-weight: 600">✓ Gelesen, bestanden, unterschrieben</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Eingeladen</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">03.11. 08:02</div></div>
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Erstmals geöffnet</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">03.11. 12:47</div></div>
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Sitzungen</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">3 (Handy, PC)</div></div>
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Lesezeit Ist / Soll</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">11:48 / 6:22 min</div></div>
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Wissenscheck</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">90 % · 2. Versuch</div></div>
+      <div style="background: #F8FAFC; border-radius: 8px; padding: 10px 12px"><div style="font-size: 12px; color: #5B6474">Unterschrift</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px">05.11. 07:16</div></div>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="Seitenprotokoll" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #E3E6EB; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600">Seitenprotokoll</h2>
+        <div style="display: flex; gap: 14px; font-size: 12px; color: #5B6474; align-items: center"><span style="display: inline-flex; gap: 6px; align-items: center"><span style="width: 14px; height: 6px; background: #1F4FD8; border-radius: 3px"></span>Verweildauer</span><span style="display: inline-flex; gap: 6px; align-items: center"><span style="width: 2px; height: 12px; background: #0F172A"></span>Soll</span></div>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px">
+          <thead><tr style="text-align: left; color: #5B6474; font-size: 12px"><th style="padding: 10px 20px; font-weight: 600">Seite</th><th style="padding: 10px 8px; font-weight: 600">Erstmals gesehen</th><th style="padding: 10px 8px; font-weight: 600; width: 44%">Verweildauer gegen Soll</th><th style="padding: 10px 8px; font-weight: 600">Ist / Soll</th><th style="padding: 10px 20px 10px 8px; font-weight: 600">Status</th></tr></thead>
+          <tbody>
+            <sc-for list="{{pages}}" as="p" hint-placeholder-count="14">
+              <tr style="border-top: 1px solid #EEF0F3">
+                <td style="padding: 7px 20px; font-weight: 600">{{p.n}}</td>
+                <td style="padding: 7px 8px; color: #334155; white-space: nowrap">{{p.seen}}</td>
+                <td style="padding: 7px 8px"><div style="position: relative; height: 10px; background: #EEF0F3; border-radius: 5px"><div style="width: {{p.w}}%; height: 10px; background: #1F4FD8; border-radius: 5px"></div><div style="position: absolute; top: -3px; left: {{p.soll}}%; width: 2px; height: 16px; background: #0F172A"></div></div></td>
+                <td style="padding: 7px 8px; color: #334155; white-space: nowrap">{{p.ist}} / {{p.sollS}}</td>
+                <td style="padding: 7px 20px 7px 8px; color: #157347; font-weight: 600">✓ erfüllt</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-label="Audit-Trail" style="flex: 1 1 340px; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 16px 20px">
+      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 600">Audit-Trail</h2>
+      <div style="font-size: 12px; color: #5B6474; margin-bottom: 10px">Hash-Kette verifiziert · Tagesanker 05.11. zeitgestempelt</div>
+      <ol style="list-style: none; margin: 0; padding: 0">
+        <sc-for list="{{events}}" as="e" hint-placeholder-count="10">
+          <li style="display: flex; gap: 12px; padding: 8px 0; border-top: 1px solid #EEF0F3">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: {{e.dot}}; margin-top: 6px; flex: none"></span>
+            <div style="flex: 1; min-width: 0"><div style="font-size: 13px; font-weight: 600">{{e.what}}</div><div style="font-size: 12px; color: #5B6474">{{e.when}} · {{e.detail}}</div></div>
+          </li>
+        </sc-for>
+      </ol>
+      <p style="margin: 12px 0 0; padding: 10px 12px; background: #F8FAFC; border-radius: 8px; font-size: 12px; color: #5B6474; line-height: 1.45">Seitendetails sehen nur Schulungsverantwortliche und Auditoren. Vorgesetzte sehen den Status.</p>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const soll = [18, 31, 42, 27, 4, 36, 45, 39, 22, 4, 33, 28, 41, 12];
+    const ist = [34, 52, 71, 40, 9, 63, 88, 61, 30, 6, 58, 47, 66, 20];
+    const seen = ['03.11. 12:47', '03.11. 12:48', '03.11. 12:49', '03.11. 12:50', '03.11. 12:51', '04.11. 06:58', '04.11. 06:59', '04.11. 07:01', '04.11. 07:02', '04.11. 07:03', '05.11. 07:02', '05.11. 07:03', '05.11. 07:04', '05.11. 07:05'];
+    const max = 100;
+    const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    const pages = soll.map((s, i) => ({ n: i + 1, seen: seen[i], w: Math.min(100, ist[i] / max * 100), soll: s / max * 100, ist: fmt(ist[i]), sollS: fmt(s) }));
+    const B = '#1F4FD8', G = '#157347', O = '#C77A0A', N = '#94A3B8';
+    const events = [
+      { what: 'Nachweis-PDF versiegelt', when: '05.11. 07:16', detail: 'PAdES + Zeitstempel', dot: G },
+      { what: 'Unterschrift geleistet', when: '05.11. 07:16', detail: 'Passwort, Signaturbild', dot: G },
+      { what: 'Wissenscheck bestanden', when: '05.11. 07:12', detail: '9 von 10 richtig', dot: G },
+      { what: 'Wissenscheck nicht bestanden', when: '05.11. 07:08', detail: '7 von 10 richtig', dot: O },
+      { what: 'Alle Seiten erfüllt', when: '05.11. 07:06', detail: 'Sitzung 3 · PC', dot: B },
+      { what: 'Sitzung 2', when: '04.11. 06:58', detail: 'Handy · Seiten 6–10', dot: B },
+      { what: 'Sitzung 1', when: '03.11. 12:47', detail: 'Handy · Seiten 1–5', dot: B },
+      { what: 'Einladung zugestellt', when: '03.11. 08:02', detail: 'E-Mail + Push', dot: N }
+    ];
+    return { pages, events };
+  }
+}
+</script>
+</body>
+</html>

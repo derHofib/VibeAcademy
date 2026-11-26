@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Schulung anlegen: Dokument und Regeln</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #F5F6F8; min-height: 980px; padding: 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+    <div>
+      <a href="Main.dc.html" style="font-size: 13px; text-decoration: none">← Dashboard</a>
+      <h1 style="margin: 6px 0 0; font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600">Sicherheitsunterweisung 2026</h1>
+    </div>
+    <ol aria-label="Schritte" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px">
+      <li style="padding: 8px 12px; border-radius: 999px; background: #E6F4EC; color: #157347; font-weight: 600">✓ Grunddaten</li>
+      <li style="padding: 8px 12px; border-radius: 999px; background: #1F4FD8; color: #FFFFFF; font-weight: 600">2 Dokument &amp; Regeln</li>
+      <li style="padding: 8px 12px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E3E6EB; color: #5B6474">3 Zielgruppe</li>
+      <li style="padding: 8px 12px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E3E6EB; color: #5B6474">4 Prüfen &amp; einladen</li>
+    </ol>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="Dokument" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">Dokument</h2>
+      <div style="display: flex; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid #C9D6F7; background: #F4F7FE; border-radius: 10px">
+        <svg width="36" height="44" viewBox="0 0 36 44" aria-hidden="true"><path d="M2 2h22l10 10v30H2z" fill="#FFFFFF" stroke="#1F4FD8" stroke-width="2"/><path d="M24 2v10h10" fill="none" stroke="#1F4FD8" stroke-width="2"/><text x="8" y="34" font-size="9" font-weight="700" fill="#1F4FD8" font-family="Inter">PDF</text></svg>
+        <div style="flex: 1; min-width: 0">
+          <div style="font-weight: 600; font-size: 14px">Sicherheitsunterweisung_2026_v3.pdf</div>
+          <div style="font-size: 12px; color: #5B6474; margin-top: 2px">14 Seiten · 4,2 MB · SHA-256 9f3c…a71e · hochgeladen 25.11.2026 10:12</div>
+        </div>
+        <button style="font: inherit; font-size: 13px; font-weight: 600; padding: 9px 12px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; cursor: pointer">Ersetzen</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <div style="background: #F8FAFC; border-radius: 8px; padding: 12px"><div style="font-size: 12px; color: #5B6474">Wörter gesamt</div><div style="font-size: 20px; font-weight: 600; margin-top: 2px">2.090</div></div>
+        <div style="background: #F8FAFC; border-radius: 8px; padding: 12px"><div style="font-size: 12px; color: #5B6474">Mindest-Lesezeit</div><div style="font-size: 20px; font-weight: 600; margin-top: 2px">6 min 22 s</div></div>
+        <div style="background: #F8FAFC; border-radius: 8px; padding: 12px"><div style="font-size: 12px; color: #5B6474">Seiten ohne Text</div><div style="font-size: 20px; font-weight: 600; margin-top: 2px">2 <span style="font-size: 12px; font-weight: 500; color: #8A4D05">manuell prüfen</span></div></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px">Seitenanalyse · Mindestverweildauer je Seite</div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{pages}}" as="p" hint-placeholder-count="14">
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+              <div style="width: 100%; aspect-ratio: 0.71; background: #FFFFFF; border: 1px solid {{p.border}}; border-radius: 4px; box-sizing: border-box; padding: 10% 12%; display: flex; flex-direction: column; gap: 5px">
+                <div style="height: 6px; width: 70%; background: #CBD5E1; border-radius: 2px"></div>
+                <div style="height: 3px; background: #E2E8F0; border-radius: 2px"></div>
+                <div style="height: 3px; background: #E2E8F0; border-radius: 2px"></div>
+                <div style="height: 3px; width: 80%; background: #E2E8F0; border-radius: 2px"></div>
+                <div style="flex: 1; background: {{p.fill}}; border-radius: 2px"></div>
+              </div>
+              <div style="font-size: 11px; color: #334155; text-align: center">S. {{p.n}} · <strong>{{p.t}}</strong></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <fieldset style="border: 1px solid #E3E6EB; border-radius: 10px; padding: 12px 16px; margin: 0">
+        <legend style="font-size: 13px; font-weight: 600; padding: 0 6px">Art der Änderung gegenüber v2</legend>
+        <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 6px 0"><input type="radio" name="chg" checked style="margin-top: 3px"><span><strong>Inhaltlich</strong> – alle mit gültigem Nachweis v2 werden neu eingeladen (nur geänderte Seiten 3, 7, 8 lesen)</span></label>
+        <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 6px 0"><input type="radio" name="chg" style="margin-top: 3px"><span><strong>Redaktionell</strong> – bestehende Nachweise bleiben gültig</span></label>
+      </fieldset>
+    </section>
+
+    <section aria-label="Regeln" style="flex: 1 1 360px; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">Regeln für den Lesenachweis</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <label style="font-size: 12px; color: #5B6474">Lesegeschwindigkeit<input value="200 Wörter/min" style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"></label>
+        <label style="font-size: 12px; color: #5B6474">Faktor (Überfliegen)<input value="0,6" style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"></label>
+        <label style="font-size: 12px; color: #5B6474">Minimum je Seite<input value="4 s" style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"></label>
+        <label style="font-size: 12px; color: #5B6474">Maximum je Seite<input value="90 s" style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"></label>
+      </div>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid #EEF0F3">
+        <label style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EEF0F3; font-size: 14px"><input type="checkbox" checked style="margin-top: 3px; width: 16px; height: 16px"><span><strong>Strenger Modus</strong><br><span style="font-size: 12px; color: #5B6474">Nächste Seite erst nach Erfüllung der aktuellen</span></span></label>
+        <label style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EEF0F3; font-size: 14px"><input type="checkbox" checked style="margin-top: 3px; width: 16px; height: 16px"><span><strong>Abschluss-Quiz</strong><br><span style="font-size: 12px; color: #5B6474">10 aus 25 Fragen · Bestehen ab 80 % · max. 3 Versuche</span></span></label>
+        <label style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EEF0F3; font-size: 14px"><input type="checkbox" checked style="margin-top: 3px; width: 16px; height: 16px"><span><strong>Unterschrift mit Re-Authentifizierung</strong><br><span style="font-size: 12px; color: #5B6474">Passwort/SSO, bei Externen OTP per SMS</span></span></label>
+        <label style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EEF0F3; font-size: 14px"><input type="checkbox" style="margin-top: 3px; width: 16px; height: 16px"><span><strong>PDF-Download nach Abschluss</strong><br><span style="font-size: 12px; color: #5B6474">Mit Wasserzeichen Name + Datum</span></span></label>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <label style="font-size: 12px; color: #5B6474">Bearbeitungsfrist<select style="display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"><option>14 Tage</option></select></label>
+        <label style="font-size: 12px; color: #5B6474">Gültigkeit / Wiederholung<select style="display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 14px; color: #0F172A; padding: 9px 10px; border: 1px solid #D0D5DD; border-radius: 8px"><option>12 Monate</option></select></label>
+      </div>
+      <div style="font-size: 12px; color: #5B6474">Erinnerungen: 7 und 2 Tage vor Frist, 1 Tag danach · danach Eskalation an Vorgesetzten</div>
+      <label style="font-size: 12px; color: #5B6474">Bestätigungstext<textarea rows="4" style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: inherit; font-size: 13px; line-height: 1.45; color: #0F172A; padding: 10px; border: 1px solid #D0D5DD; border-radius: 8px; resize: vertical">Ich habe die Unterweisung „Sicherheitsunterweisung 2026, Version 3“ vollständig gelesen und verstanden. Rückfragen konnte ich an Dennis Hofmann richten.</textarea></label>
+      <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 4px">
+        <a href="Main.dc.html" style="font-size: 14px; font-weight: 600; padding: 11px 16px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; text-decoration: none">Zurück</a>
+        <a href="#" style="font-size: 14px; font-weight: 600; padding: 11px 16px; border-radius: 8px; background: #1F4FD8; color: #FFFFFF; text-decoration: none">Weiter: Zielgruppe</a>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const t = [18, 31, 42, 27, 4, 36, 45, 39, 22, 4, 33, 28, 41, 12];
+    const pages = t.map((s, i) => ({
+      n: i + 1,
+      t: s + ' s',
+      border: s === 4 ? '#C77A0A' : '#D0D5DD',
+      fill: s === 4 ? '#FDF3E2' : '#F1F5F9'
+    }));
+    return { pages };
+  }
+}
+</script>
+</body>
+</html>

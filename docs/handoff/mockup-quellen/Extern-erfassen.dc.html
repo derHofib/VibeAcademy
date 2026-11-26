@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Externe Schulung erfassen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #1D2433; background: #F4F6FB; min-height: 900px; padding: 24px 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <a href="Extern-pruefen.dc.html" aria-label="Zurück zu externen Nachweisen" style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.06); display: flex; align-items: center; justify-content: center; color: #1D2433"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3.5L5.5 9l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div>
+        <div style="font-size: 13px; color: #5F6B7D">Externe Nachweise</div>
+        <h1 style="margin: 2px 0 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700">Externe Schulung erfassen</h1>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px">
+      <button style="height: 48px; padding: 0 20px; border-radius: 999px; border: none; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.06); font: inherit; font-size: 14.5px; font-weight: 600; color: #1D2433; cursor: pointer">Als Entwurf speichern</button>
+      <button onClick="{{save}}" style="height: 48px; padding: 0 22px; border-radius: 999px; border: none; background: {{saveBg}}; box-shadow: 0 8px 20px rgba(61,99,221,0.25); font: inherit; font-size: 14.5px; font-weight: 600; color: #FFFFFF; cursor: pointer">{{saveLabel}}</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="Angaben" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border-radius: 26px; padding: 26px 28px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.06); display: flex; flex-direction: column; gap: 22px">
+      <div role="group" aria-label="Erfassung für" style="display: inline-flex; align-self: flex-start; background: #F4F6FB; border-radius: 999px; padding: 4px">
+        <button onClick="{{setEinzel}}" style="height: 40px; padding: 0 18px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 600; background: {{einzelBg}}; color: {{einzelFg}}; box-shadow: {{einzelShadow}}; cursor: pointer">Einzelperson</button>
+        <button onClick="{{setGruppe}}" style="height: 40px; padding: 0 18px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 600; background: {{gruppeBg}}; color: {{gruppeFg}}; box-shadow: {{gruppeShadow}}; cursor: pointer">Gruppe</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D; grid-column: span 2">Zuordnung zur Pflichtschulung
+          <select onChange="{{onTraining}}" value="{{trainingIdx}}" style="font: inherit; font-size: 15px; color: #1D2433; height: 48px; padding: 0 14px; border: none; border-radius: 14px; background: #F4F6FB">
+            <option value="0">Erste-Hilfe-Fortbildung · Qualifikation Ersthelfer · alle 2 Jahre</option>
+            <option value="1">Unterweisung Flurförderzeuge · jährlich</option>
+            <option value="2">Herstellerschulung Ladeinfrastruktur · alle 3 Jahre</option>
+            <option value="3">Ohne Zuordnung (nur dokumentieren)</option>
+          </select>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D">Anbieter
+          <input value="Erste-Hilfe-Ausbildung Muster e. V." style="font: inherit; font-size: 15px; color: #1D2433; height: 48px; padding: 0 14px; border: none; border-radius: 14px; background: #F4F6FB">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D">Ort
+          <input value="Schulungsraum Lager" style="font: inherit; font-size: 15px; color: #1D2433; height: 48px; padding: 0 14px; border: none; border-radius: 14px; background: #F4F6FB">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D">Datum
+          <input type="date" value="{{date}}" onChange="{{onDate}}" style="font: inherit; font-size: 15px; color: #1D2433; height: 48px; padding: 0 14px; border: none; border-radius: 14px; background: #F4F6FB">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5F6B7D">Umfang
+          <input value="9 UE (1 Tag)" style="font: inherit; font-size: 15px; color: #1D2433; height: 48px; padding: 0 14px; border: none; border-radius: 14px; background: #F4F6FB">
+        </label>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 13px; color: #5F6B7D">Teilnehmer</span><span style="font-size: 13px; color: #5F6B7D">{{countLabel}}</span></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+          <sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 6px; border-radius: 999px; background: #EAF0FE; color: #223C8F; font-size: 14px; font-weight: 500"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; background: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{p.ini}}</span>{{p.name}}<button onClick="{{p.remove}}" aria-label="{{p.removeLabel}}" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; color: #223C8F; font-size: 16px; cursor: pointer">×</button></span>
+          </sc-for>
+          <sc-if value="{{canAdd}}" hint-placeholder-val="{{ true }}">
+            <select onChange="{{onAdd}}" value="" aria-label="Person hinzufügen" style="font: inherit; font-size: 14px; height: 40px; padding: 0 12px; border: 1.5px dashed #C9D1E0; border-radius: 999px; background: #FFFFFF; color: #2E4FB8">
+              <option value="">+ Person hinzufügen</option>
+              <sc-for list="{{addable}}" as="a" hint-placeholder-count="3"><option value="{{a.id}}">{{a.name}}</option></sc-for>
+            </select>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 13px; color: #5F6B7D">Belege</span>
+        <div style="border: 2px dashed #D5DCEA; border-radius: 20px; padding: 18px; display: flex; align-items: center; gap: 14px; background: #FAFBFE">
+          <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 14px; background: #EAF0FE; color: #2E4FB8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 15V4M6.5 8.5L11 4l4.5 4.5M4 15v2a2 2 0 002 2h10a2 2 0 002-2v-2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div style="flex: 1; font-size: 14px; line-height: 1.45"><strong>Dateien hierher ziehen</strong> oder <span style="color: #2E4FB8; font-weight: 600">auswählen</span><br><span style="font-size: 12.5px; color: #5F6B7D">PDF, JPG oder Foto der Teilnahmeliste · max. 20 MB</span></div>
+        </div>
+        <sc-for list="{{files}}" as="f" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; background: #F4F6FB">
+            <span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; color: {{f.color}}; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{f.ext}}</span>
+            <div style="flex: 1; min-width: 0"><div style="font-size: 14px; font-weight: 600">{{f.name}}</div><div style="font-size: 12.5px; color: #5F6B7D">{{f.meta}}</div></div>
+            <span style="font-size: 12.5px; font-weight: 600; color: #1E6A45">✓ hochgeladen</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{isGruppe}}" hint-placeholder-val="{{ true }}">
+          <div role="radiogroup" aria-label="Belegart" style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button onClick="{{setOneList}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: none; font: inherit; font-size: 13.5px; font-weight: 600; background: {{oneBg}}; color: {{oneFg}}; cursor: pointer">Eine Liste für alle</button>
+            <button onClick="{{setPerPerson}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: none; font: inherit; font-size: 13.5px; font-weight: 600; background: {{perBg}}; color: {{perFg}}; cursor: pointer">Zertifikat je Person</button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <aside aria-label="Auswirkung" style="flex: 1 1 340px; max-width: 420px; display: flex; flex-direction: column; gap: 16px">
+      <section style="background: #FFFFFF; border-radius: 26px; padding: 22px 22px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 30px rgba(29,36,51,0.06); display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 700">Was sich ändert</h2>
+        <div style="background: {{validBg}}; border-radius: 20px; padding: 16px 18px">
+          <div style="font-size: 13px; color: {{validFg}}">{{validHead}}</div>
+          <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700; color: {{validFg}}; margin-top: 2px">{{validUntil}}</div>
+          <div style="font-size: 12.5px; color: {{validFg}}; margin-top: 4px">{{validNote}}</div>
+        </div>
+        <sc-for list="{{effects}}" as="e" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+            <span style="flex: 1; white-space: nowrap">{{e.name}}</span>
+            <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: {{e.fromBg}}; color: {{e.fromFg}}; white-space: nowrap">{{e.from}}</span>
+            <span aria-hidden="true" style="color: #8790A0">→</span>
+            <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #E6F4EC; color: #1E6A45; white-space: nowrap">{{e.to}}</span>
+          </div>
+        </sc-for>
+      </section>
+      <section style="background: #EAF0FE; border-radius: 22px; padding: 16px 18px; font-size: 13.5px; line-height: 1.55; color: #223C8F">Für jede Person entsteht ein versiegelter Nachweis mit dem Beleg als Anlage. Die Fristen-Engine erinnert rechtzeitig vor Ablauf – mit dem Hinweis, einen neuen Kurs zu buchen.</section>
+      <sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+        <section role="status" style="background: #E6F4EC; border-radius: 22px; padding: 16px 18px; font-size: 14px; line-height: 1.5; color: #1E5A3C"><strong>Gespeichert.</strong> {{savedText}}</section>
+      </sc-if>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  TRAININGS = [
+    { years: 2, label: 'Ersthelfer' },
+    { years: 1, label: 'Flurförderzeuge' },
+    { years: 3, label: 'Herstellerschulung' },
+    { years: 0, label: '' }
+  ];
+  ALL = [
+    { id: 'as', name: 'Anna Schulz', from: 'abgelaufen', kind: 'bad' },
+    { id: 'tm', name: 'Tobias Meier', from: 'läuft ab 12/26', kind: 'warn' },
+    { id: 'jb', name: 'Julia Becker', from: 'neu', kind: 'none' },
+    { id: 'kn', name: 'Kai Neumann', from: 'läuft ab 01/27', kind: 'warn' },
+    { id: 'lw', name: 'Lea Wagner', from: 'gültig bis 05/27', kind: 'ok' },
+    { id: 'pw', name: 'Paul Weber', from: 'abgelaufen', kind: 'bad' }
+  ];
+  state = { mode: 'gruppe', training: 0, date: '2026-12-04', ids: ['as', 'tm', 'jb', 'kn'], evidence: 'one', saved: false };
+  renderVals() {
+    const s = this.state;
+    const T = this.TRAININGS[s.training];
+    const sel = this.ALL.filter(p => s.ids.includes(p.id));
+    const shown = s.mode === 'einzel' ? sel.slice(0, 1) : sel;
+    const ini = n => n.split(' ').map(w => w[0]).join('');
+    const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
+    const until = T.years ? (Number(s.date.slice(0, 4)) + T.years) + s.date.slice(4) : null;
+    const C = { bad: ['#FDECEA', '#A1271B'], warn: ['#FFF4DF', '#6B4500'], ok: ['#E6F4EC', '#1E6A45'], none: ['#F4F6FB', '#5F6B7D'] };
+    const on = (a) => a ? { bg: '#FFFFFF', fg: '#1D2433', sh: '0 2px 8px rgba(29,36,51,0.08)' } : { bg: 'transparent', fg: '#5F6B7D', sh: 'none' };
+    const ei = on(s.mode === 'einzel'), gr = on(s.mode === 'gruppe');
+    const files = s.mode === 'einzel' || s.evidence === 'per'
+      ? shown.map(p => ({ ext: 'PDF', color: '#A1271B', name: 'Bescheinigung_' + p.name.split(' ')[1] + '.pdf', meta: '1 Seite · zugeordnet: ' + p.name }))
+      : [{ ext: 'PDF', color: '#A1271B', name: 'Teilnahmebescheinigungen_04-12.pdf', meta: '4 Seiten · für alle Teilnehmer' }, { ext: 'JPG', color: '#2E4FB8', name: 'Anwesenheitsliste_Scan.jpg', meta: 'Foto · 2,1 MB' }];
+    const pill = a => a ? { bg: '#3D63DD', fg: '#FFFFFF' } : { bg: '#F4F6FB', fg: '#3A4456' };
+    return {
+      setEinzel: () => this.setState({ mode: 'einzel', saved: false }),
+      setGruppe: () => this.setState({ mode: 'gruppe', saved: false }),
+      einzelBg: ei.bg, einzelFg: ei.fg, einzelShadow: ei.sh, gruppeBg: gr.bg, gruppeFg: gr.fg, gruppeShadow: gr.sh,
+      isGruppe: s.mode === 'gruppe',
+      trainingIdx: String(s.training),
+      onTraining: e => this.setState({ training: Number(e.target.value), saved: false }),
+      date: s.date, onDate: e => e.target.value && this.setState({ date: e.target.value, saved: false }),
+      people: shown.map(p => ({ name: p.name, ini: ini(p.name), removeLabel: p.name + ' entfernen', remove: () => this.setState({ ids: s.ids.filter(i => i !== p.id), saved: false }) })),
+      countLabel: shown.length + (shown.length === 1 ? ' Person' : ' Personen'),
+      canAdd: s.mode === 'gruppe' || shown.length === 0,
+      addable: this.ALL.filter(p => !s.ids.includes(p.id)),
+      onAdd: e => { const v = e.target.value; if (v) this.setState({ ids: [...s.ids, v], saved: false }); },
+      files,
+      setOneList: () => this.setState({ evidence: 'one' }), setPerPerson: () => this.setState({ evidence: 'per' }),
+      oneBg: pill(s.evidence === 'one').bg, oneFg: pill(s.evidence === 'one').fg, perBg: pill(s.evidence === 'per').bg, perFg: pill(s.evidence === 'per').fg,
+      validHead: until ? T.label + ' gültig bis' : 'Keine Anrechnung',
+      validUntil: until ? fmt(until) : 'nur Dokumentation',
+      validNote: until ? 'Vorschlag aus dem Intervall (' + T.years + (T.years === 1 ? ' Jahr' : ' Jahre') + '), änderbar' : 'Zählt nicht für die Pflichtmatrix',
+      validBg: until ? '#E6F4EC' : '#F4F6FB', validFg: until ? '#1E5A3C' : '#3A4456',
+      effects: until ? shown.map(p => ({ name: p.name, from: p.from, fromBg: C[p.kind][0], fromFg: C[p.kind][1], to: 'bis ' + until.slice(5, 7) + '/' + until.slice(2, 4) })) : [],
+      save: () => this.setState({ saved: true }),
+      saveLabel: s.saved ? '✓ Gespeichert' : 'Speichern und anrechnen',
+      saveBg: s.saved ? '#1E7A50' : '#3D63DD',
+      saved: s.saved,
+      savedText: shown.length + ' Nachweise angelegt und versiegelt. Status im Dashboard aktualisiert.'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Admin-Dashboard Schulungen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #F5F6F8; min-height: 920px; display: flex; flex-wrap: wrap">
+  <nav aria-label="Hauptnavigation" style="flex: 1 1 220px; max-width: 240px; background: #0F172A; color: #E2E8F0; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; color: #FFFFFF; padding: 0 12px 24px">Schulungsnachweis</div>
+    <a href="#" style="display: block; padding: 10px 12px; border-radius: 8px; background: #1F4FD8; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 14px">Dashboard</a>
+    <a href="Schulung-anlegen.dc.html" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Schulungen</a>
+    <a href="#" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Termine</a>
+    <a href="Teilnehmer-Nachweis.dc.html" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Personen</a>
+    <a href="#" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Pflichtmatrix</a>
+    <a href="Nachweis-PDF.dc.html" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Nachweise</a>
+    <a href="Extern-pruefen.dc.html" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Externe Nachweise <span style="margin-left: 6px; font-size: 11px; font-weight: 700; background: #F2B544; color: #1D2433; padding: 2px 7px; border-radius: 999px">3</span></a>
+    <a href="#" style="display: block; padding: 10px 12px; border-radius: 8px; color: #CBD5E1; text-decoration: none; font-size: 14px">Einstellungen</a>
+    <div style="margin-top: auto; padding: 16px 12px 0; border-top: 1px solid #1E293B; font-size: 12px; color: #94A3B8">Mandant<br><span style="color: #E2E8F0; font-weight: 600">Muster Elektrotechnik GmbH</span></div>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between">
+      <div>
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600">Dashboard</h1>
+        <p style="margin: 4px 0 0; color: #5B6474; font-size: 14px">Stand heute, 25.11.2026 · 64 Personen in 5 Teams</p>
+      </div>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <button style="font: inherit; font-size: 14px; font-weight: 600; padding: 11px 16px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; cursor: pointer">Nachweismappe exportieren</button>
+        <a href="Schulung-anlegen.dc.html" style="font-size: 14px; font-weight: 600; padding: 11px 16px; border-radius: 8px; background: #1F4FD8; color: #FFFFFF; text-decoration: none">+ Neue Schulung</a>
+      </div>
+    </header>
+
+    <section aria-label="Kennzahlen" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+        <div style="font-size: 13px; color: #5B6474">Erfüllungsquote Pflichtschulungen</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; margin-top: 6px">87 %</div>
+        <div style="height: 6px; background: #E8EEFC; border-radius: 3px; margin-top: 10px"><div style="width: 87%; height: 6px; background: #1F4FD8; border-radius: 3px"></div></div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+        <div style="font-size: 13px; color: #5B6474">Überfällig</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; margin-top: 6px; color: #B42318">6</div>
+        <div style="font-size: 13px; color: #5B6474; margin-top: 6px">Personen, 4 davon eskaliert</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+        <div style="font-size: 13px; color: #5B6474">Läuft in 30 Tagen ab</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; margin-top: 6px; color: #A15C07">14</div>
+        <div style="font-size: 13px; color: #5B6474; margin-top: 6px">Wiedereinladung automatisch am 01.12.</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+        <div style="font-size: 13px; color: #5B6474">Offene Einladungen</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; margin-top: 6px">23</div>
+        <div style="font-size: 13px; color: #5B6474; margin-top: 6px">9 geöffnet, 14 ungelesen</div>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <section aria-label="Laufende Schulungen" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px">
+        <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E3E6EB">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600">Laufende Schulungen</h2>
+          <label style="font-size: 13px; color: #5B6474">Filter <select style="font: inherit; font-size: 13px; margin-left: 6px; padding: 6px 8px; border: 1px solid #D0D5DD; border-radius: 6px"><option>Alle Formate</option><option>Online</option><option>Präsenz</option></select></label>
+        </div>
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px">
+            <thead>
+              <tr style="text-align: left; color: #5B6474; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em">
+                <th style="padding: 12px 20px; font-weight: 600">Schulung</th>
+                <th style="padding: 12px 8px; font-weight: 600">Format</th>
+                <th style="padding: 12px 8px; font-weight: 600">Zielgruppe</th>
+                <th style="padding: 12px 8px; font-weight: 600; width: 180px">Fortschritt</th>
+                <th style="padding: 12px 8px; font-weight: 600">Frist</th>
+                <th style="padding: 12px 20px 12px 8px; font-weight: 600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="row" hint-placeholder-count="6">
+                <tr style="border-top: 1px solid #EEF0F3">
+                  <td style="padding: 14px 20px"><div style="font-weight: 600">{{row.title}}</div><div style="font-size: 12px; color: #5B6474; margin-top: 2px">{{row.meta}}</div></td>
+                  <td style="padding: 14px 8px; color: #334155">{{row.format}}</td>
+                  <td style="padding: 14px 8px; color: #334155">{{row.group}}</td>
+                  <td style="padding: 14px 8px">
+                    <div style="display: flex; align-items: center; gap: 10px"><div style="flex: 1; height: 6px; background: #EEF0F3; border-radius: 3px"><div style="width: {{row.pct}}%; height: 6px; background: {{row.bar}}; border-radius: 3px"></div></div><span style="font-size: 12px; color: #334155; white-space: nowrap">{{row.done}}</span></div>
+                  </td>
+                  <td style="padding: 14px 8px; color: #334155; white-space: nowrap">{{row.due}}</td>
+                  <td style="padding: 14px 20px 14px 8px"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{row.chipBg}}; color: {{row.chipFg}}; white-space: nowrap">{{row.status}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 16px">
+        <section aria-label="Überfällig" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+          <h2 style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Überfällig</h2>
+          <sc-for list="{{overdue}}" as="o" hint-placeholder-count="4">
+            <div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F3">
+              <div><div style="font-weight: 600; font-size: 14px">{{o.name}}</div><div style="font-size: 12px; color: #5B6474">{{o.what}}</div></div>
+              <span style="font-size: 12px; font-weight: 600; color: #B42318; white-space: nowrap">{{o.days}}</span>
+            </div>
+          </sc-for>
+          <button style="font: inherit; font-size: 14px; font-weight: 600; width: 100%; margin-top: 12px; padding: 11px; border-radius: 8px; border: 1px solid #D0D5DD; background: #FFFFFF; color: #0F172A; cursor: pointer">Alle erinnern</button>
+        </section>
+        <section aria-label="Nächste Termine" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 18px 20px">
+          <h2 style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Nächste Präsenztermine</h2>
+          <div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F3">
+            <div style="width: 44px; text-align: center; background: #E8EEFC; color: #1F4FD8; border-radius: 8px; padding: 6px 0; font-weight: 700; font-size: 13px; line-height: 1.2">04<br><span style="font-weight: 500; font-size: 11px">DEZ</span></div>
+            <div><div style="font-weight: 600; font-size: 14px">Erste Hilfe Auffrischung</div><div style="font-size: 12px; color: #5B6474">08:00 · Schulungsraum Lager · 11/12 Plätze</div></div>
+          </div>
+          <div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F3">
+            <div style="width: 44px; text-align: center; background: #E8EEFC; color: #1F4FD8; border-radius: 8px; padding: 6px 0; font-weight: 700; font-size: 13px; line-height: 1.2">11<br><span style="font-weight: 500; font-size: 11px">DEZ</span></div>
+            <div><div style="font-weight: 600; font-size: 14px">EFK-Unterweisung Praxisteil</div><div style="font-size: 12px; color: #5B6474">07:30 · Werkstatt · Trainer: VEFK</div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = {
+      run: { chipBg: '#E8EEFC', chipFg: '#1F4FD8', bar: '#1F4FD8' },
+      ok: { chipBg: '#E6F4EC', chipFg: '#157347', bar: '#157347' },
+      warn: { chipBg: '#FDF3E2', chipFg: '#8A4D05', bar: '#C77A0A' },
+      bad: { chipBg: '#FDECEA', chipFg: '#B42318', bar: '#B42318' }
+    };
+    const rows = [
+      { title: 'Sicherheitsunterweisung 2026', meta: 'v3 · 14 Seiten · Quiz 10 Fragen', format: 'Online + Quiz', group: 'Gewerbliche MA', done: '41 / 48', pct: 85, due: '15.12.2026', status: 'Läuft', s: 'run' },
+      { title: 'Elektrotechnische Unterweisung EFK', meta: 'v2 · 22 Seiten · mit Praxisteil', format: 'Hybrid', group: 'Elektrofachkräfte', done: '18 / 22', pct: 82, due: '11.12.2026', status: '4 überfällig', s: 'bad' },
+      { title: 'Eichrecht: Instandsetzung § 54 MessEV', meta: 'v3 · 9 Seiten · Arbeitsanweisung', format: 'Online', group: 'Servicetechnik', done: '9 / 9', pct: 100, due: '—', status: 'Abgeschlossen', s: 'ok' },
+      { title: 'Erste Hilfe Auffrischung', meta: 'Termin 04.12. · 2 UE', format: 'Präsenz', group: 'Ersthelfer', done: '0 / 12', pct: 0, due: '04.12.2026', status: 'Geplant', s: 'run' },
+      { title: 'IT- und Datenschutzrichtlinie', meta: 'v1 · 6 Seiten · Kenntnisnahme', format: 'Online', group: 'Alle', done: '52 / 64', pct: 81, due: '30.11.2026', status: 'Frist in 5 Tagen', s: 'warn' },
+      { title: 'Einweisung Fremdfirma Tiefbau', meta: 'v1 · 4 Seiten · Magic Link', format: 'Online', group: 'Extern (Sub)', done: '3 / 5', pct: 60, due: '27.11.2026', status: 'Frist in 2 Tagen', s: 'warn' }
+    ].map(r => ({ ...r, ...S[r.s] }));
+    const overdue = [
+      { name: 'Jonas Krüger', what: 'EFK-Unterweisung · eskaliert an TL', days: '+12 Tage' },
+      { name: 'Mehmet Aydın', what: 'EFK-Unterweisung · 2 Erinnerungen', days: '+9 Tage' },
+      { name: 'Sven Albrecht', what: 'Sicherheitsunterweisung 2025', days: '+6 Tage' },
+      { name: 'Lea Wagner', what: 'EFK-Unterweisung · Quiz 2× nicht bestanden', days: '+3 Tage' }
+    ];
+    return { rows, overdue };
+  }
+}
+</script>
+</body>
+</html>

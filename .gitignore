@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+infra/dev-certs/out/
+*.p12
+*.pem
+playwright-report/
+test-results/

@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Schulungsansicht Desktop mit Kapitel-Leiste und Lese-Dock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #1D2433; background: #F4F6FB; min-height: 900px; position: relative; display: flex; flex-direction: column">
+  <header style="padding: 18px 28px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 260px; min-width: 0">
+      <a href="Viewer-Start.dc.html" aria-label="Unterbrechen und schließen" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.06); display: flex; align-items: center; justify-content: center; color: #1D2433"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+      <div style="min-width: 0"><div style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px">Sicherheitsunterweisung 2026</div><div style="font-size: 13px; color: #5F6B7D">{{headSub}}</div></div>
+    </div>
+    <div style="flex: 1 1 320px; max-width: 460px; display: flex; flex-direction: column; gap: 7px">
+      <div style="display: flex; gap: 4px">
+        <sc-for list="{{segs}}" as="g" hint-placeholder-count="14">
+          <div style="flex: 1; height: 6px; border-radius: 3px; background: #E3E8F2; overflow: hidden; box-shadow: {{g.ring}}"><div style="width: {{g.fill}}%; height: 6px; border-radius: 3px; background: #3D63DD; transition: width 0.9s linear"></div></div>
+        </sc-for>
+      </div>
+      <div style="font-size: 12.5px; color: #5F6B7D">{{doneCount}} von 14 Seiten erfasst</div>
+    </div>
+    <div style="flex: 1 1 220px; display: flex; justify-content: flex-end">
+      <span style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 2px 8px rgba(29,36,51,0.05); font-size: 13px; color: {{statusColor}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{statusDot}}"></span>{{statusText}}</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; gap: 32px; padding: 10px 28px 0; align-items: flex-start">
+    <nav aria-label="Kapitel" style="position: sticky; top: 20px; flex: none; width: 88px; background: #FFFFFF; border-radius: 44px; padding: 16px 0; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 10px 28px rgba(29,36,51,0.07); display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <sc-for list="{{rail}}" as="c" hint-placeholder-count="4">
+        <button onClick="{{c.go}}" disabled="{{c.disabled}}" aria-label="{{c.aria}}" style="width: 76px; border: none; border-radius: 26px; background: {{c.bg}}; padding: 8px 0 6px; font: inherit; color: {{c.fg}}; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: {{c.opacity}}">
+          <span style="position: relative; width: 48px; height: 48px">
+            <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="#FFFFFF" stroke="#E3E8F2" stroke-width="4"/><circle cx="24" cy="24" r="20" fill="none" stroke="{{c.ringColor}}" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="{{c.offset}}" transform="rotate(-90 24 24)" style="transition: stroke-dashoffset 0.9s linear"/></svg>
+            <span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700">{{c.mark}}</span>
+          </span>
+          <span style="font-size: 11px; font-weight: 600">{{c.short}}</span>
+        </button>
+      </sc-for>
+      <span style="width: 40px; height: 1px; background: #E3E8F2; margin: 6px 0"></span>
+      <div aria-label="Wissenscheck {{quizState}}" style="width: 76px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; color: {{quizFg}}">
+        <span style="width: 44px; height: 44px; border-radius: 50%; background: {{quizBg}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700">{{quizMark}}</span>
+        <span style="font-size: 11px; font-weight: 600">Quiz</span>
+      </div>
+      <div aria-label="Unterschrift {{signState}}" style="width: 76px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; color: {{signFg}}">
+        <span style="width: 44px; height: 44px; border-radius: 50%; background: {{signBg}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-1 4-6 6-6s1 4 3 4 3-3 4-3 1 2 3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span style="font-size: 11px; font-weight: 600">Abschluss</span>
+      </div>
+    </nav>
+
+    <main style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 32px">
+      <div style="width: 100%; max-width: 720px; background: #FFFFFF; border-radius: 30px; box-shadow: 0 1px 2px rgba(29,36,51,0.04), 0 12px 36px rgba(29,36,51,0.07); padding: 38px 52px 44px; box-sizing: border-box; min-height: 600px; display: flex; flex-direction: column; gap: 18px">
+        <sc-if value="{{isRead}}" hint-placeholder-val="{{ true }}">
+          <span style="align-self: flex-start; font-size: 13px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; padding: 6px 12px; border-radius: 999px">{{cur.num}} · Seite {{pageNo}} von 14</span>
+          <h1 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: {{h1Size}}; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em">{{cur.title}}</h1>
+          <p style="margin: 0; font-size: {{bodySize}}; line-height: 1.7; color: #3A4456">{{cur.intro}}</p>
+          <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}">
+            <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px">
+              <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+                <li style="display: flex; gap: 14px; align-items: flex-start; font-size: {{itemSize}}; line-height: 1.55"><span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: #EAF0FE; color: #2E4FB8; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{it.mark}}</span><span style="padding-top: 3px">{{it.text}}</span></li>
+              </sc-for>
+            </ul>
+          </sc-if>
+          <sc-if value="{{hasWarn}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 14px; align-items: flex-start; background: #FFF4DF; border-radius: 20px; padding: 16px 20px">
+              <svg width="24" height="22" viewBox="0 0 22 20" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M9.3 2.6a2 2 0 013.4 0l7.6 13.2a2 2 0 01-1.7 3H3.4a2 2 0 01-1.7-3z" fill="#F2B544"/><path d="M11 7v5" stroke="#5A3A00" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="15" r="1.2" fill="#5A3A00"/></svg>
+              <div style="font-size: {{calloutSize}}; line-height: 1.55; color: #5A3A00">{{cur.callout}}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{hasInfo}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 14px; align-items: flex-start; background: #EAF0FE; border-radius: 20px; padding: 16px 20px">
+              <svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="10" cy="10" r="9" fill="#3D63DD"/><path d="M10 9v5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="6" r="1.2" fill="#FFFFFF"/></svg>
+              <div style="font-size: {{calloutSize}}; line-height: 1.55; color: #223C8F">{{cur.callout}}</div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{isQuiz}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; padding: 6px 12px; border-radius: 999px">Wissenscheck</span><span style="font-size: 13px; color: #5F6B7D">Frage {{qNo}} von 3 · Versuch {{attempt}}</span></div>
+          <h1 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; line-height: 1.3; font-weight: 700">{{q.text}}</h1>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+              <button onClick="{{o.pick}}" disabled="{{o.locked}}" style="font: inherit; text-align: left; font-size: 16px; line-height: 1.4; padding: 16px 20px; min-height: 56px; border-radius: 20px; border: 2px solid {{o.border}}; background: {{o.bg}}; color: #1D2433; cursor: pointer; opacity: {{o.opacity}}; display: flex; gap: 12px; align-items: center"><span style="flex: 1">{{o.text}}</span><span style="font-weight: 700; color: {{o.markColor}}">{{o.mark}}</span></button>
+            </sc-for>
+          </div>
+          <sc-if value="{{hasFeedback}}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius: 20px; padding: 16px 20px; background: {{fbBg}}; color: {{fbFg}}; font-size: 15px; line-height: 1.55"><strong>{{fbHead}}</strong> {{q.why}}</div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{isResult}}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 40px 0">
+            <div style="width: 96px; height: 96px; border-radius: 50%; background: {{resBg}}; display: flex; align-items: center; justify-content: center">
+              <sc-if value="{{passed}}" hint-placeholder-val="{{ true }}"><svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true"><path d="M11 21l6 6 13-14" fill="none" stroke="#1E7A50" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+              <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}"><svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 11v12" stroke="#8A4B00" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="29" r="2.4" fill="#8A4B00"/></svg></sc-if>
+            </div>
+            <h1 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 700">{{resTitle}}</h1>
+            <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #3A4456; max-width: 420px">{{resText}}</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <nav aria-label="Lese-Dock" style="position: sticky; bottom: 24px; margin-top: 24px; background: #FFFFFF; border-radius: 999px; box-shadow: 0 2px 6px rgba(29,36,51,0.06), 0 16px 40px rgba(29,36,51,0.14); height: 76px; padding: 0 10px; display: flex; align-items: center; gap: 4px">
+        <button onClick="{{toggleToc}}" style="height: 56px; padding: 0 16px; border: none; border-radius: 999px; background: {{tocBtnBg}}; font: inherit; font-size: 14px; font-weight: 600; color: #1D2433; display: flex; align-items: center; gap: 8px; cursor: pointer"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="11" y="3" width="6" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="11" width="6" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="11" y="11" width="6" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>Inhalt</button>
+        <button onClick="{{back}}" disabled="{{backDisabled}}" style="height: 56px; padding: 0 16px; border: none; border-radius: 999px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #1D2433; display: flex; align-items: center; gap: 6px; cursor: pointer; opacity: {{backOpacity}}"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4.5L6.5 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Zurück</button>
+
+        <div style="width: 96px; display: flex; justify-content: center; margin-top: -34px">
+          <sc-if value="{{showPrimaryBtn}}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{primary}}" disabled="{{primaryDisabled}}" aria-label="{{primaryLabel}}" title="{{primaryLabel}}" style="position: relative; box-sizing: border-box; width: 84px; height: 84px; border-radius: 50%; border: 6px solid #F4F6FB; padding: 0; background: {{centerBg}}; color: {{centerFg}}; box-shadow: 0 12px 28px rgba(61,99,221,{{centerShadow}}); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s, color 0.3s">
+              <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="position: absolute; inset: 0"><circle cx="36" cy="36" r="32" fill="none" stroke="{{ringTrack}}" stroke-width="4"/><circle cx="36" cy="36" r="32" fill="none" stroke="#3D63DD" stroke-width="4" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="{{ringOffset}}" transform="rotate(-90 36 36)" style="transition: stroke-dashoffset 0.9s linear"/></svg>
+              <sc-if value="{{cCount}}" hint-placeholder-val="{{ true }}"><span style="position: relative; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 700; line-height: 1">{{left}}<span style="font-size: 12px; font-weight: 600">s</span></span></sc-if>
+              <sc-if value="{{cArrow}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+              <sc-if value="{{cRetry}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><path d="M19 12a7 7 0 11-2.1-5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M17.5 3v4.2h-4.2" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+              <sc-if value="{{cWait}}" hint-placeholder-val="{{ false }}"><span style="position: relative; font-size: 24px; font-weight: 700">?</span></sc-if>
+            </button>
+          </sc-if>
+          <sc-if value="{{showSignLink}}" hint-placeholder-val="{{ false }}">
+            <a href="Abschluss-Signatur.dc.html" aria-label="Weiter zur Unterschrift" title="Weiter zur Unterschrift" style="box-sizing: border-box; width: 84px; height: 84px; border-radius: 50%; border: 6px solid #F4F6FB; background: #1E7A50; color: #FFFFFF; box-shadow: 0 12px 28px rgba(30,122,80,0.35); display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-1 4-6 6-6s1 4 3 4 3-3 4-3 1 2 3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </sc-if>
+        </div>
+
+        <button onClick="{{toggleAsk}}" style="height: 56px; padding: 0 16px; border: none; border-radius: 999px; background: {{askBtnBg}}; font: inherit; font-size: 14px; font-weight: 600; color: #1D2433; display: flex; align-items: center; gap: 8px; cursor: pointer"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H8.5L5 17v-3a2 2 0 01-2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Frage</button>
+        <div role="group" aria-label="Schriftgröße" style="display: flex; align-items: center; height: 56px; border-radius: 999px; background: #F4F6FB; padding: 0 4px">
+          <button onClick="{{zoomOut}}" aria-label="Schrift kleiner" style="width: 44px; height: 44px; border-radius: 50%; border: none; background: transparent; font: inherit; font-size: 13px; font-weight: 700; color: #1D2433; cursor: pointer">A−</button>
+          <span style="min-width: 44px; text-align: center; font-size: 12px; color: #5F6B7D">{{zoomLabel}}</span>
+          <button onClick="{{zoomIn}}" aria-label="Schrift größer" style="width: 44px; height: 44px; border-radius: 50%; border: none; background: transparent; font: inherit; font-size: 16px; font-weight: 700; color: #1D2433; cursor: pointer">A+</button>
+        </div>
+      </nav>
+    </main>
+  </div>
+
+  <sc-if value="{{tocOpen}}" hint-placeholder-val="{{ false }}">
+    <section role="dialog" aria-label="Inhaltsverzeichnis" style="position: absolute; left: 136px; top: 92px; width: 340px; max-height: 640px; overflow-y: auto; background: #FFFFFF; border-radius: 28px; box-shadow: 0 2px 6px rgba(29,36,51,0.06), 0 24px 56px rgba(29,36,51,0.18); padding: 18px 12px 16px">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px 4px">
+        <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 700">Inhalt</h2>
+        <button onClick="{{closePanel}}" style="font: inherit; font-size: 13px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; border: none; border-radius: 999px; padding: 9px 14px; cursor: pointer">Schließen</button>
+      </div>
+      <sc-for list="{{toc}}" as="r" hint-placeholder-count="18">
+        <sc-if value="{{r.header}}" hint-placeholder-val="{{ false }}"><div style="font-size: 11.5px; font-weight: 700; color: #5F6B7D; padding: 14px 10px 4px; letter-spacing: 0.03em">{{r.text}}</div></sc-if>
+        <sc-if value="{{r.isPage}}" hint-placeholder-val="{{ true }}"><button onClick="{{r.go}}" disabled="{{r.disabled}}" style="width: 100%; font: inherit; text-align: left; display: flex; align-items: center; gap: 8px; padding: 0 12px; min-height: 40px; border: none; border-radius: 14px; background: {{r.bg}}; color: {{r.fg}}; font-size: 14px; cursor: pointer"><span style="flex: 1">{{r.text}}</span><span style="font-size: 12px; font-weight: 600; color: {{r.sColor}}">{{r.status}}</span></button></sc-if>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{askOpen}}" hint-placeholder-val="{{ false }}">
+    <section role="dialog" aria-label="Frage stellen" style="position: absolute; right: 28px; top: 92px; width: 340px; background: #FFFFFF; border-radius: 28px; box-shadow: 0 2px 6px rgba(29,36,51,0.06), 0 24px 56px rgba(29,36,51,0.18); padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <h2 style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 700">Frage zu {{askRef}}</h2>
+        <button onClick="{{closePanel}}" style="font: inherit; font-size: 13px; font-weight: 600; color: #2E4FB8; background: #EAF0FE; border: none; border-radius: 999px; padding: 9px 14px; cursor: pointer">Schließen</button>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 50%; background: #EAF0FE; color: #2E4FB8; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">DH</span><div><div style="font-size: 14px; font-weight: 600">Dennis Hofmann</div><div style="font-size: 12.5px; color: #5F6B7D">Unterweisender · antwortet per Mail</div></div></div>
+      <sc-if value="{{askForm}}" hint-placeholder-val="{{ true }}">
+        <textarea rows="4" aria-label="Deine Frage" value="{{question}}" onChange="{{onQuestion}}" placeholder="Was ist unklar?" style="font: inherit; font-size: 14.5px; color: #1D2433; padding: 12px 14px; border: none; border-radius: 18px; background: #F4F6FB; resize: none"></textarea>
+        <button onClick="{{send}}" disabled="{{sendDisabled}}" style="height: 46px; border-radius: 999px; border: none; font: inherit; font-size: 14.5px; font-weight: 600; background: {{sendBg}}; color: #FFFFFF; cursor: pointer">Frage senden</button>
+      </sc-if>
+      <sc-if value="{{askSent}}" hint-placeholder-val="{{ false }}">
+        <div style="background: #E6F4EC; color: #1E5A3C; border-radius: 18px; padding: 14px 16px; font-size: 14px; line-height: 1.5">Gesendet – die Frage wird im Nachweis vermerkt. Du kannst weiterlesen.</div>
+      </sc-if>
+      <div style="font-size: 12px; line-height: 1.5; color: #5F6B7D">Erfasst wird nur, welche Seite wie lange sichtbar war. Wechselst du den Tab, pausiert die Erfassung.</div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+CH = ['Grundlagen und Verantwortung', 'Elektrische Gefährdungen', 'Brand- und Explosionsschutz', 'Erste Hilfe und Notfall'];
+PAGES = [
+  { ch: 0, num: '1.1', t: 5, title: 'Warum diese Unterweisung?', intro: 'Einmal im Jahr frischen wir gemeinsam auf, welche Gefahren bei unserer Arbeit bestehen und wie wir uns schützen. Die Unterweisung ist gesetzlich vorgeschrieben.', items: ['Gefahren auf Baustelle und an Ladeinfrastruktur erkennen', 'Im Notfall richtig handeln', 'Rechte und Pflichten kennen'], kind: 'info', callout: 'Lies in Ruhe – du kannst jederzeit unterbrechen. Dein Fortschritt bleibt gespeichert.' },
+  { ch: 0, num: '1.2', t: 6, title: 'Pflichten auf beiden Seiten', intro: 'Arbeitsschutz funktioniert nur, wenn alle mitmachen.', items: ['Der Betrieb beurteilt Gefährdungen, unterweist und stellt Schutzausrüstung bereit.', 'Du befolgst Weisungen und benutzt die Schutzausrüstung bestimmungsgemäß.', 'Du meldest Mängel und gefährliche Situationen sofort deiner Führungskraft.'] },
+  { ch: 0, num: '1.3', t: 6, title: 'Persönliche Schutzausrüstung', intro: 'PSA ist die letzte Schutzebene. Sie wirkt nur, wenn sie passt und intakt ist.', items: ['Sicherheitsschuhe auf jeder Baustelle', 'Schutzhelm bei Gefahr von Kopfverletzungen', 'Bei Störlichtbogengefahr Gesichtsschutz und Schutzkleidung', 'Isolierende Handschuhe nach Arbeitsanweisung'], kind: 'warn', callout: 'Beschädigte PSA nicht benutzen – sofort austauschen lassen.' },
+  { ch: 1, num: '2.1', t: 5, title: 'Gefahren durch elektrischen Strom', intro: 'Strom ist unsichtbar. Gefährlich wird er durch Körperdurchströmung, Störlichtbögen und Folgeunfälle.', items: ['Durchströmung: Verkrampfung, Herzrhythmusstörungen, Verbrennungen', 'Störlichtbogen: extreme Hitze, Blendung, Druckwelle', 'Folgeunfälle: zum Beispiel Sturz von der Leiter'] },
+  { ch: 1, num: '2.2', t: 6, title: 'Wirkung auf den Körper', intro: 'Schon wenige zehn Milliampere durch den Körper können Herzkammerflimmern auslösen. Entscheidend sind Stromstärke, Weg durch den Körper und Einwirkdauer.', items: [], kind: 'warn', callout: 'Nach jedem Stromunfall ärztlich untersuchen lassen – auch wenn du dich gut fühlst. Rhythmusstörungen können verzögert auftreten.' },
+  { ch: 1, num: '2.3', t: 6, title: 'Schutzmaßnahmen im Alltag', intro: 'Die meisten Unfälle passieren an Geräten, die man täglich nutzt.', items: ['Geräte vor Benutzung auf sichtbare Schäden prüfen', 'Prüfplakette beachten – abgelaufen heißt: nicht benutzen', 'Auf Baustellen nur über Fehlerstrom-Schutzeinrichtung (RCD) arbeiten', 'Defekte Geräte kennzeichnen und aussortieren'] },
+  { ch: 1, num: '2.4', t: 8, title: 'Die fünf Sicherheitsregeln', intro: 'Vor jeder Arbeit an elektrischen Anlagen – immer in dieser Reihenfolge:', numbered: true, items: ['Freischalten', 'Gegen Wiedereinschalten sichern', 'Spannungsfreiheit allpolig feststellen', 'Erden und kurzschließen', 'Benachbarte, unter Spannung stehende Teile abdecken oder abschranken'], kind: 'warn', callout: 'Spannungsprüfer vor und nach der Messung auf Funktion prüfen.' },
+  { ch: 1, num: '2.5', t: 6, title: 'Arbeiten unter Spannung', intro: 'Arbeiten an unter Spannung stehenden Teilen sind grundsätzlich verboten.', items: ['Ausnahmen nur mit besonderer Ausbildung, schriftlichem Auftrag und geeigneter Ausrüstung', 'Im Zweifel: freischalten und die Führungskraft fragen'], kind: 'warn', callout: 'Zeitdruck ist nie ein Grund, unter Spannung zu arbeiten.' },
+  { ch: 2, num: '3.1', t: 5, title: 'Brände vermeiden', intro: 'Viele Brände entstehen durch Unachtsamkeit.', items: ['Ordnung halten, Brennbares von Zündquellen fernhalten', 'Schweiß-, Schneid- und Trennarbeiten nur mit Erlaubnisschein', 'Kabeltrommeln vollständig abrollen, Mehrfachsteckdosen nicht überlasten'] },
+  { ch: 2, num: '3.2', t: 6, title: 'Feuerlöscher richtig einsetzen', intro: 'Kenne die Standorte der Feuerlöscher an deinem Arbeitsplatz und im Fahrzeug.', items: ['Feuer in Windrichtung angreifen', 'Von vorne nach hinten und von unten nach oben löschen', 'Mehrere Löscher gleichzeitig statt nacheinander einsetzen'], kind: 'warn', callout: 'Brennende Lithium-Ionen-Akkus: Abstand halten, Feuerwehr rufen, Bereich absperren.' },
+  { ch: 2, num: '3.3', t: 6, title: 'Verhalten im Brandfall', intro: 'Ruhe bewahren und in dieser Reihenfolge handeln:', numbered: true, items: ['Melden – Notruf 112', 'Retten – Personen warnen und in Sicherheit bringen', 'Löschen – nur ohne dich selbst zu gefährden', 'Sammelplatz aufsuchen und Vollzähligkeit melden'] },
+  { ch: 3, num: '4.1', t: 5, title: 'Notruf absetzen', intro: 'Notruf 112 – die Leitstelle führt dich durch das Gespräch.', items: ['Wo ist es passiert?', 'Was ist passiert?', 'Wie viele Verletzte?', 'Welche Verletzungen?', 'Warten auf Rückfragen – nicht auflegen'] },
+  { ch: 3, num: '4.2', t: 6, title: 'Erste Hilfe beim Stromunfall', intro: 'Bei einem Stromunfall gilt:', numbered: true, items: ['Eigenschutz: Stromkreis unterbrechen, erst dann die Person berühren', 'Bewusstsein und Atmung prüfen', 'Keine normale Atmung: Notruf, Herzdruckmassage, Defibrillator holen lassen'], kind: 'warn', callout: 'Niemals eine Person berühren, die noch mit dem Stromkreis verbunden ist.' },
+  { ch: 3, num: '4.3', t: 5, title: 'Ersthelfer und Verbandbuch', intro: 'Wisse, wer in deinem Team Ersthelfer ist und wo Verbandkasten und Defibrillator hängen.', items: ['Jede Erste-Hilfe-Leistung ins Verbandbuch – auch kleine Verletzungen', 'Die Ersthelfer-Liste hängt aus und steht in der App'], kind: 'info', callout: 'Geschafft! Als Nächstes folgt ein kurzer Wissenscheck.' }
+];
+QUIZ = [
+  { text: 'Welche Sicherheitsregel folgt direkt auf „Freischalten“?', opts: ['Erden und kurzschließen', 'Gegen Wiedereinschalten sichern', 'Spannungsfreiheit feststellen'], ok: 1, why: 'Erst sichern, dann prüfen: So kann niemand die Anlage versehentlich wieder einschalten.' },
+  { text: 'Was tust du bei einem Stromunfall zuerst?', opts: ['Sofort mit der Herzdruckmassage beginnen', 'Die Person vom Gerät wegziehen', 'Den Stromkreis unterbrechen'], ok: 2, why: 'Eigenschutz zuerst – sonst wirst du selbst durchströmt.' },
+  { text: 'Wie oft muss die Sicherheitsunterweisung mindestens stattfinden?', opts: ['Einmal jährlich', 'Alle zwei Jahre', 'Nur bei der Einstellung'], ok: 0, why: 'DGUV Vorschrift 1 verlangt die Unterweisung mindestens einmal jährlich.' }
+];
+  state = { page: 0, dwell: this.PAGES.map(() => 0), view: 'read', panel: null, hidden: false, qi: 0, picked: null, score: 0, attempt: 1, question: '', sent: false, zoom: 1 };
+  componentDidMount() { this.timer = setInterval(() => this.tick(), 1000); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  tick() {
+    const { PAGES } = this;
+    const s = this.state;
+    const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+    if (hidden !== s.hidden) this.setState({ hidden });
+    if (hidden || s.view !== 'read') return;
+    const p = s.page;
+    if (s.dwell[p] >= PAGES[p].t) return;
+    const dwell = s.dwell.slice();
+    dwell[p] += 1;
+    this.setState({ dwell });
+  }
+  renderVals() {
+    const { CH, PAGES, QUIZ } = this;
+    const s = this.state;
+    const ful = i => s.dwell[i] >= PAGES[i].t;
+    const firstOpen = (() => { const k = PAGES.findIndex((_, i) => !ful(i)); return k === -1 ? PAGES.length : k; })();
+    const allRead = firstOpen === PAGES.length;
+    const p = s.page, cur = PAGES[p];
+    const left = Math.max(0, cur.t - s.dwell[p]);
+    const curDone = ful(p);
+    const doneCount = PAGES.filter((_, i) => ful(i)).length;
+    const isRead = s.view === 'read', isQuiz = s.view === 'quiz', isResult = s.view === 'result';
+    const passed = isResult && s.score === QUIZ.length;
+    const segs = PAGES.map((pg, i) => ({ fill: Math.min(100, Math.round(s.dwell[i] / pg.t * 100)), ring: i === p && isRead ? '0 0 0 2px #C9D6F8' : 'none' }));
+    const go = i => () => this.setState({ page: i, view: 'read', panel: null });
+
+    const SHORT = ['Basis', 'Strom', 'Brand', 'Notfall'];
+    const rail = CH.map((name, c) => {
+      const idx = PAGES.map((pg, i) => (pg.ch === c ? i : -1)).filter(i => i >= 0);
+      const frac = idx.reduce((a, i) => a + Math.min(1, s.dwell[i] / PAGES[i].t), 0) / idx.length;
+      const complete = idx.every(ful);
+      const target = idx.find(i => !ful(i) && i <= firstOpen);
+      const dest = target !== undefined ? target : idx[0];
+      const reachable = idx[0] <= firstOpen;
+      const active = isRead && cur.ch === c;
+      return { short: SHORT[c], mark: complete ? '✓' : String(c + 1), go: go(dest), disabled: !reachable,
+        aria: 'Kapitel ' + (c + 1) + ': ' + name + (complete ? ', erledigt' : ''),
+        offset: (125.7 * (1 - frac)).toFixed(1), ringColor: complete ? '#1E7A50' : '#3D63DD',
+        bg: active ? '#EAF0FE' : 'transparent', fg: active ? '#2E4FB8' : complete ? '#1E6A45' : '#1D2433', opacity: reachable ? 1 : 0.45 };
+    });
+
+    const toc = [];
+    CH.forEach((name, c) => {
+      toc.push({ header: true, isPage: false, text: (c + 1) + ' · ' + name.toUpperCase() });
+      PAGES.forEach((pg, i) => {
+        if (pg.ch !== c) return;
+        const locked = i > firstOpen;
+        toc.push({ header: false, isPage: true, text: pg.num + '  ' + pg.title, go: go(i), disabled: locked,
+          status: ful(i) ? '✓' : i === p && isRead ? 'aktuell' : locked ? 'gesperrt' : '',
+          sColor: ful(i) ? '#1E7A50' : i === p ? '#2E4FB8' : '#8790A0',
+          bg: i === p && isRead ? '#EAF0FE' : 'transparent', fg: locked ? '#9AA3B2' : '#1D2433' });
+      });
+    });
+
+    let statusText = '', statusColor = '#3A4456', statusDot = '#3D63DD';
+    if (isRead) {
+      if (s.hidden) { statusText = 'Pausiert – Fenster nicht aktiv'; statusDot = '#F2B544'; }
+      else if (curDone) { statusText = 'Seite ' + (p + 1) + ' erfasst'; statusColor = '#1E6A45'; statusDot = '#1E7A50'; }
+      else statusText = 'Seite wird erfasst · noch ' + left + ' s';
+    } else if (isQuiz) statusText = s.picked === null ? 'Wähle eine Antwort' : 'Weiter mit dem Pfeil';
+    else { statusText = passed ? 'Bestanden – jetzt unterschreiben' : 'Noch nicht bestanden'; statusColor = passed ? '#1E6A45' : '#6B4500'; statusDot = passed ? '#1E7A50' : '#F2B544'; }
+
+    let primaryLabel = '', primaryDisabled = false, frac = 0, mode = 'arrow', primary = () => {};
+    if (isRead) {
+      primaryDisabled = !curDone;
+      frac = curDone ? 1 : s.dwell[p] / cur.t;
+      mode = curDone ? 'arrow' : 'count';
+      primaryLabel = !curDone ? 'Weiter in ' + left + ' Sekunden' : p === PAGES.length - 1 ? 'Zum Wissenscheck' : 'Nächste Seite';
+      primary = () => { if (!curDone) return; if (p === PAGES.length - 1) this.setState({ view: 'quiz', qi: 0, picked: null, score: 0 }); else this.setState({ page: p + 1 }); };
+    } else if (isQuiz) {
+      primaryDisabled = s.picked === null;
+      frac = (s.qi + (s.picked === null ? 0 : 1)) / QUIZ.length;
+      mode = s.picked === null ? 'wait' : 'arrow';
+      primaryLabel = s.qi === QUIZ.length - 1 ? 'Auswerten' : 'Nächste Frage';
+      primary = () => { if (s.picked === null) return; if (s.qi === QUIZ.length - 1) this.setState({ view: 'result' }); else this.setState({ qi: s.qi + 1, picked: null }); };
+    } else if (!passed) {
+      mode = 'retry'; frac = 1;
+      primaryLabel = 'Erneut versuchen';
+      primary = () => this.setState({ view: 'quiz', qi: 0, picked: null, score: 0, attempt: s.attempt + 1 });
+    }
+    const active = !primaryDisabled;
+
+    const q = QUIZ[s.qi];
+    const opts = q.opts.map((text, k) => {
+      const answered = s.picked !== null, isOk = k === q.ok, isPicked = k === s.picked;
+      let border = '#E3E8F2', bg = '#FFFFFF', mark = '', markColor = '#1E7A50', opacity = 1;
+      if (answered) {
+        if (isOk) { border = '#9ED3B5'; bg = '#E6F4EC'; mark = '✓'; }
+        else if (isPicked) { border = '#F0C08A'; bg = '#FFF4DF'; mark = '✕'; markColor = '#8A4B00'; }
+        else opacity = 0.55;
+      }
+      return { text, border, bg, mark, markColor, opacity, locked: answered,
+        pick: () => { if (s.picked !== null) return; this.setState({ picked: k, score: s.score + (k === q.ok ? 1 : 0) }); } };
+    });
+    const right = s.picked !== null && s.picked === q.ok;
+    const z = s.zoom;
+    const px = n => (Math.round(n * z * 10) / 10) + 'px';
+
+    return {
+      headSub: isRead ? 'Kapitel ' + (cur.ch + 1) + ' · ' + CH[cur.ch] : isQuiz ? 'Wissenscheck' : 'Ergebnis',
+      segs, doneCount, cur, pageNo: p + 1, rail, toc,
+      isRead, isQuiz, isResult,
+      items: (cur.items || []).map((text, k) => ({ text, mark: cur.numbered ? String(k + 1) : '•' })),
+      hasItems: (cur.items || []).length > 0, hasWarn: cur.kind === 'warn', hasInfo: cur.kind === 'info',
+      h1Size: px(30), bodySize: px(17), itemSize: px(16.5), calloutSize: px(15.5),
+      zoomLabel: Math.round(z * 100) + ' %',
+      zoomIn: () => this.setState({ zoom: Math.min(1.3, Math.round((z + 0.1) * 10) / 10) }),
+      zoomOut: () => this.setState({ zoom: Math.max(0.9, Math.round((z - 0.1) * 10) / 10) }),
+      statusText, statusColor, statusDot,
+      quizMark: passed ? '✓' : allRead ? '?' : '–', quizState: passed ? 'bestanden' : allRead ? 'freigeschaltet' : 'gesperrt',
+      quizBg: passed ? '#E6F4EC' : allRead ? '#EAF0FE' : '#F4F6FB', quizFg: passed ? '#1E6A45' : allRead ? '#2E4FB8' : '#8790A0',
+      signState: passed ? 'freigeschaltet' : 'gesperrt',
+      signBg: passed ? '#E6F4EC' : '#F4F6FB', signFg: passed ? '#1E6A45' : '#8790A0',
+      back: () => { if (isRead && p > 0) this.setState({ page: p - 1 }); else if (!isRead) this.setState({ view: 'read', page: PAGES.length - 1 }); },
+      backDisabled: isRead && p === 0, backOpacity: isRead && p === 0 ? 0.35 : 1,
+      showPrimaryBtn: !(isResult && passed), showSignLink: isResult && passed,
+      primary, primaryLabel, primaryDisabled, left,
+      ringOffset: (201.1 * (1 - Math.min(1, frac))).toFixed(1),
+      ringTrack: active ? 'rgba(255,255,255,0.35)' : '#E3E8F2',
+      centerBg: active ? '#3D63DD' : '#FFFFFF', centerFg: active ? '#FFFFFF' : '#1D2433', centerShadow: active ? 0.38 : 0.12,
+      cCount: mode === 'count', cArrow: mode === 'arrow', cRetry: mode === 'retry', cWait: mode === 'wait',
+      q, qNo: s.qi + 1, attempt: s.attempt, opts,
+      hasFeedback: s.picked !== null, fbHead: right ? 'Richtig.' : 'Nicht ganz.',
+      fbBg: right ? '#E6F4EC' : '#FFF4DF', fbFg: right ? '#1E5A3C' : '#5A3A00',
+      passed, failed: isResult && !passed, resBg: passed ? '#E6F4EC' : '#FFF4DF',
+      resTitle: passed ? 'Bestanden!' : 'Fast geschafft',
+      resText: passed ? s.score + ' von ' + QUIZ.length + ' Fragen richtig. Klicke auf den grünen Button im Dock, um zu unterschreiben.' : s.score + ' von ' + QUIZ.length + ' richtig. Bestanden ist ab 80 %. Lies die Erklärungen und versuch es noch einmal.',
+      tocOpen: s.panel === 'toc', askOpen: s.panel === 'ask',
+      tocBtnBg: s.panel === 'toc' ? '#EAF0FE' : 'transparent', askBtnBg: s.panel === 'ask' ? '#EAF0FE' : 'transparent',
+      toggleToc: () => this.setState({ panel: s.panel === 'toc' ? null : 'toc' }),
+      toggleAsk: () => this.setState({ panel: s.panel === 'ask' ? null : 'ask', sent: false, question: '' }),
+      closePanel: () => this.setState({ panel: null }),
+      askRef: isRead ? 'Seite ' + (p + 1) : 'Frage ' + (s.qi + 1),
+      question: s.question, onQuestion: e => this.setState({ question: e.target.value }),
+      askForm: !s.sent, askSent: s.sent,
+      send: () => { if (s.question.trim()) this.setState({ sent: true }); },
+      sendDisabled: !s.question.trim(), sendBg: s.question.trim() ? '#3D63DD' : '#AFC0EE'
+    };
+  }
+}
+</script>
+</body>
+</html>
