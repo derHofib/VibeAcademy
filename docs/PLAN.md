@@ -1,6 +1,6 @@
 # Umsetzungsplan – Schulungsnachweis
 
-Status: **Entwurf, wartet auf OK.** Annahmen und offene Rückfragen: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
+Status: **Rückfragen beantwortet (26.11.2026), Phase 0 in Arbeit.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
 Spezifikation: `docs/handoff/docs/SPEZIFIKATION.md` · Design: `docs/handoff/docs/DESIGN-UND-SCREENS.md`.
 
 Legende: `[ ]` offen · `[x]` erledigt · **→** Abhängigkeit · **Test:** was den Schritt abnimmt.
@@ -16,15 +16,18 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
   **Test:** `pnpm dev:infra` startet alle Dienste; Health-Checks grün.
 - [ ] **0.3 CI** (E-21): GitHub Actions mit Services Postgres/Redis/MinIO; Jobs Lint, Typecheck, Unit, Integration; E2E ab Phase 1.
 - [ ] **0.4 Datenbank-Basis + RLS-Rahmen** (E-03, E-04) → 0.1, 0.2
-  Migration 001: Rollen `app_migrator`/`app_user`, `tenant`, `app_user_account`, `role_assignment`, Hilfsfunktionen `app.current_tenant()`, `app.has_role()`, Policy-Vorlage, `FORCE RLS`.
+  Migration 001: Rollen `app_migrator`/`app_user`, `tenant`, `account` (mandantenunabhängig), `membership` (Konto ↔ Mandant + Rollen), Hilfsfunktionen `app.current_tenant()`, `app.has_role()`, Policy-Vorlage, `FORCE RLS`.
   NestJS: `DbModule` mit Request-Transaktion + `set_config`-Interceptor, `TenantContext` (AsyncLocalStorage), `Clock`-Service (E-14).
   **Test:** RLS-Rahmentest – zwei Mandanten, Abfrage ohne Kontext liefert 0 Zeilen, Kontext A sieht keine Zeilen von B, `app_user` kann RLS nicht umgehen.
 - [ ] **0.5 Audit-Hash-Kette** (E-11) → 0.4
   Migration: `audit_event` + Trigger (append-only), `AuditService.record()`, `GET /audit`, `GET /audit/verify`.
   **Test:** Kette über 1.000 Ereignisse gültig; geänderte Zeile → `verify` meldet genau diese ID; UPDATE/DELETE als `app_user` scheitert; parallele Inserts bleiben eine Kette.
-- [ ] **0.6 Auth und RBAC** (E-07, E-08) → 0.4
-  Login (argon2id), Redis-Sitzungen, CSRF, Rollen-Guard (`@Roles()`), Einladungslink-Sitzung, Magic Link + OTP, Step-up-Token; Rate-Limits auf Login/OTP.
-  **Test:** Rollen-Matrix aus SPEZIFIKATION Kap. 2 als Tabellen-Test; Step-up-Token einmalig und an Einladung gebunden; abgelaufener OTP abgelehnt.
+- [ ] **0.6 Auth und RBAC** (E-07, E-08, E-25) → 0.4
+  Dozenten-Registrierung (legt Konto + Mandant an), Login (argon2id), Redis-Sitzungen, CSRF, Rollen-Guard (`@Roles()`), Mitglieder einladen, Einladungslink-Sitzung für Teilnehmer ohne Konto, OTP, Step-up-Token; Rate-Limits auf Login/Registrierung/OTP.
+  **Test:** Rollen-Matrix aus SPEZIFIKATION Kap. 2 als Tabellen-Test; Registrierung erzeugt isolierten Mandanten; Step-up-Token einmalig und an Einladung gebunden; abgelaufener OTP abgelehnt.
+- [ ] **0.6b Benachrichtigungs-Outbox** (E-12) → 0.4
+  Tabelle `notification`, Job `notify`, Adapter `log`/`smtp`/`webpush`, `sms:log`; Vorschau-Route für Vorlagen (Dev).
+  **Test:** Nachricht landet in Outbox; Adapter `smtp` gegen Mailpit; Wiederholung nach Fehler mit Backoff.
 - [ ] **0.7 Frontend-Basis + Design-System** (E-19, E-20) → 0.1
   Tailwind-Theme aus den Design-Tokens, lokale Schriften, shadcn-Varianten: Button (Pille, primär/sekundär/dunkel/deaktiviert), Karte, Status-Chip, Status-Pille, Segment-Umschalter, Personen-Chip, Bottom-Sheet/Schwebe-Panel, Eingabefeld ohne Rahmen; App-Layout Verwaltung (helle Navigation statt dunkler Seitenleiste), Login-Seite, `de.ts`.
   **Test:** Storybook-freie Komponenten-Galerie-Route `/dev/komponenten` + Playwright-Screenshot; axe-Check ohne Verstöße (Kontrast, Labels, Fokus).
@@ -45,7 +48,7 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 - [ ] **1.3 Quiz-Fragenpool** → 1.2
   Migration: `quiz_question`; CRUD; Einstellungen (Anzahl, Bestehensgrenze, Versuche) in `training.settings`.
 - [ ] **1.4 Durchführung + Einladungen** → 1.2
-  Migration: `run`, `invitation`; `POST /runs`, `POST /runs/:id/invite` (Personen/Org-Einheiten), Einladungs-Token (Hash), Mail-Job mit Template nach Screen 4, `POST /invitations/:id/remind`, `GET /me/invitations`, Statusmaschine `offen → geoeffnet → gelesen → bestanden → bestaetigt` (+ `ueberfaellig`, `befreit`).
+  Migration: `run`, `invitation`; `POST /runs`, `POST /runs/:id/invite` (Personen/Org-Einheiten), Einladungs-Token (Hash), Benachrichtigung über die Outbox mit Vorlage nach Screen 4, Links zusätzlich kopierbar und als QR-Liste druckbar, `POST /invitations/:id/remind`, `GET /me/invitations`, Statusmaschine `offen → geoeffnet → gelesen → bestanden → bestaetigt` (+ `ueberfaellig`, `befreit`).
   **Test:** Statusübergänge nur in erlaubter Reihenfolge; Mail landet in Mailpit mit persönlichem Link.
 - [ ] **1.5 Tracking-Ingest** (Kern, E-06) → 1.4
   `packages/shared/rules/reading.ts` (reine Funktion: Heartbeat-Folge → Gutschrift je Seite); Migration `read_session`, `heartbeat_raw` (partitioniert nach Monat), `page_progress`; `POST /invitations/:id/sessions` (Lease), `POST /sessions/:id/heartbeat`, `GET /invitations/:id/progress`, `GET /invitations/:id/page/:n` (signierte URL, strenger Modus).
@@ -81,7 +84,10 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 - [ ] **1.17 E2E + Screenshots** → alle
   Playwright: vollständiger Durchlauf Einladung → Lesen → Quiz → Unterschrift → Nachweis → Verify. Screenshots 390 px + 1440 px für Screens 1, 3, 5a, 5b, 5c, 6, 8 nach `docs/screenshots/phase-1/`, nebeneinander mit den JPGs in `docs/screenshots/phase-1/VERGLEICH.md`.
   **Test (Abnahme 8).**
-- [ ] **1.18 Phasenabschluss:** Zusammenfassung (fertig / offen / Annahmen) in `docs/PHASE-1.md`.
+- [ ] **1.18 Meine Nachweise – optionales Teilnehmerkonto** (E-25) → 0.6, 1.8
+  Nach dem Abschluss Angebot „Nachweis in einem Konto sammeln“; Konto anlegen/anmelden, E-Mail per OTP bestätigen, Verknüpfung der Personen mit dieser E-Mail über alle Mandanten (je Verknüpfung bestätigen); Übersicht eigener Nachweise mit Gültigkeit und PDF-Download; neue Einladungen. Kein Mockup → Gestaltung im weichen Stil nach Screen 10b/5a.
+  **Test:** Konto sieht Nachweise aus zwei Mandanten, aber keine fremden Personen; Löschen trennt nur die Verknüpfung.
+- [ ] **1.19 Phasenabschluss:** Zusammenfassung (fertig / offen / Annahmen) in `docs/PHASE-1.md`.
 
 **Parallelisierbar** (nach 0.x): Paket A „Tracking-Ingest + Tests“ (1.5) · Paket B „Viewer-Komponenten“ (1.14, gegen Mock-API aus `packages/shared`-Schemas) · Paket C „Nachweis-PDF + Siegel“ (1.8 mit Fixture-Daten) · Paket D „Verwaltungs-Screens“ (1.11, 1.12).
 

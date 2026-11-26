@@ -6,17 +6,15 @@ Jede Entscheidung hat eine ID (E-xx), damit Code-Kommentare und PRs darauf verwe
 
 ---
 
-## 0. Offene Rückfragen (Annahme gilt, bis beantwortet)
+## 0. Rückfragen – beantwortet am 26.11.2026
 
-| # | Frage | Annahme bis zur Antwort |
-| --- | --- | --- |
-| R1 | Eigenständige App in `VibeAcademy` oder Modul im FieldVibe-Repo? | **Eigenständiges Monorepo** in `VibeAcademy` mit FieldVibe-Stack (siehe E-01). |
-| R2 | Anmeldung: eigene Konten (Passwort) oder gemeinsame Identität mit FieldVibe / OIDC-IdP? | Eigene Konten (Passwort + Magic Link/OTP), OIDC-Schnittstelle vorbereitet (E-07). |
-| R3 | Mail- und SMS-Anbieter? | SMTP (dev: Mailpit); OTP für Externe per **E-Mail**, SMS-Adapter nur als Schnittstelle (E-12). |
-| R4 | Zertifikat und TSA für das PDF-Siegel? | Dev-Zertifikat (selbstsigniert) + lokaler Test-TSA hinter austauschbarer Schnittstelle (E-10). |
-| R5 | Viewer: PDF als Seitenbild (Spezifikation) vs. umfließender Text mit Schriftgröße (Prototyp)? | PDF.js-Canvas, „Schriftgröße“ = Zoom 90–130 %, Kapitel aus PDF-Lesezeichen (E-05). |
-
----
+| # | Frage | Antwort | Folge |
+| --- | --- | --- | --- |
+| R1 | Eigenständig oder FieldVibe-Modul? | **Eigenständig** | E-01 bestätigt |
+| R2 | Konten / Anmeldung | **Dozenten erstellen selbst ein Konto. Teilnehmer brauchen keins, können aber eins anlegen, um ihre Schulungen zu sammeln.** | E-07 neu gefasst, E-25 (Teilnehmerkonto „Meine Nachweise“) |
+| R3 | Mail-/SMS-Anbieter | **Noch offen, nicht dringend – Versand soll weitgehend vorbereitet sein** | E-12 neu gefasst (Outbox + Adapter, Links zusätzlich kopier-/druckbar) |
+| R4 | Siegelzertifikat / TSA | **Gibt es nicht** | E-10 ergänzt (Start mit eigenem Siegelzertifikat, Prüfung über `/verify`) |
+| R5 | Viewer | **PDF-Seiten sind die Grundlage der Schulung** | E-05 bestätigt |
 
 ## 1. Projekt und Stack
 
@@ -66,10 +64,14 @@ Die zeitkritische Logik (Seitenerfüllung, Anwesenheitsintervalle, QR-Fenster, F
 
 ## 3. Auth, Unterschrift, Nachweis
 
-**E-07 Authentifizierung.** Server-Sitzungen per httpOnly-Cookie (SameSite=Lax, Secure), Sitzungsdaten in Redis; Passwörter mit argon2id. Persönlicher Einladungslink = Einmal-Token (nur SHA-256-Hash in `invitation.token_hash`), öffnet eine auf die Einladung beschränkte Sitzung. Externe Teilnehmer: Magic Link + 6-stelliger OTP. OIDC-Login als Schnittstelle vorbereitet, Umsetzung Phase 3 (SSO).
-CSRF: Double-Submit-Token für alle schreibenden Requests.
+**E-07 Konten und Authentifizierung.**
+- `account` ist **mandantenunabhängig** (E-Mail, argon2id-Passwort, verifiziert ja/nein). Rollen hängen nicht am Konto, sondern an `membership(account_id, tenant_id, roles[])`.
+- **Selbstregistrierung für Dozenten**: „Konto erstellen“ legt Konto + neuen Mandanten (Organisation) an; der Dozent erhält die Rollen Mandanten-Admin, Schulungsverantwortlicher und Trainer. Weitere Kollegen lädt er später als Mitglieder ein. In der Oberfläche heißt die Rolle „Dozent“.
+- **Teilnehmer ohne Konto**: Zugang über den persönlichen Einladungslink (Einmal-Token, nur SHA-256-Hash in `invitation.token_hash`) bzw. bei Live/Präsenz über Start-QR + Name/E-Mail (legt eine `person` im Mandanten an oder findet sie). Die Sitzung ist auf diese Einladung/diesen Termin beschränkt.
+- **Teilnehmer mit Konto** (optional): siehe E-25.
+- Sitzungen per httpOnly-Cookie (SameSite=Lax, Secure), Sitzungsdaten in Redis; CSRF per Double-Submit-Token; Rate-Limits auf Login, Registrierung, OTP. OIDC als Schnittstelle vorbereitet (Phase 3).
 
-**E-08 Step-up vor der Unterschrift.** `POST /auth/step-up` (Passwort, bei Magic-Link-Nutzern OTP) erzeugt ein Step-up-Token, gebunden an Person + Einladung, gültig 5 min, einmal verwendbar. `POST /invitations/:id/signature` verlangt dieses Token und prüft serverseitig: alle Seiten erfüllt, Quiz bestanden (falls verlangt), Bestätigungstext-Hash passt zur Version.
+**E-08 Step-up vor der Unterschrift.** `POST /auth/step-up` (Konto: Passwort; Teilnehmer ohne Konto: 6-stelliger OTP an die E-Mail-Adresse der Einladung) erzeugt ein Step-up-Token, gebunden an Person + Einladung, gültig 5 min, einmal verwendbar. `POST /invitations/:id/signature` verlangt dieses Token und prüft serverseitig: alle Seiten erfüllt, Quiz bestanden (falls verlangt), Bestätigungstext-Hash passt zur Version.
 
 **E-09 Nachweis-PDF: HTML-Template → Gotenberg (Chromium) → Siegel.** Gotenberg als Compose-Dienst; Template als serverseitig gerendertes HTML mit den Design-Tokens (Screen 8). Für externe Nachweise wird der Beleg als PDF-Anlage angehängt (Bilder werden vorher in PDF-Seiten umgewandelt).
 
@@ -77,13 +79,19 @@ CSRF: Double-Submit-Token für alle schreibenden Requests.
 - `SealProvider.seal(pdf) → pdf` (PAdES-B-T) und `TimestampProvider.timestamp(sha256) → RFC-3161-Token`.
 - Umsetzung: **pyHanko** im Worker-Container (ausgereifte PAdES-Implementierung inkl. Zeitstempel). Dev: selbstsigniertes Zertifikat aus `infra/dev-certs/generate.sh` (nicht im Repo) und lokaler Test-TSA auf Basis von `openssl ts` hinter einem kleinen HTTP-Endpunkt.
 - Produktiv austauschbar per Konfiguration (Firmen-Siegelzertifikat als PKCS#12, TSA-URL); optional später FES/QES-Anbieter (Phase 3).
+- **Da kein Zertifikat vorhanden ist (R4)**: Jede Installation erzeugt beim ersten Start eine eigene Siegel-CA und ein Siegelzertifikat (Schlüssel nur im Secret-Speicher, nie im Repo). PDF-Reader zeigen die Signatur dann als „Identität unbekannt“, die Unveränderbarkeit ist aber prüfbar. Maßgeblich für die Echtheit ist `/verify/:code` (Abgleich SHA-256 mit der Datenbank) plus Audit-Kette. Zeitstempel: konfigurierbare TSA-URL (z. B. ein öffentlicher kostenloser RFC-3161-Dienst), ohne Konfiguration der interne Test-TSA mit Hinweis „Zeitstempel nicht qualifiziert“ im Nachweis. Wechsel auf ein vertrauenswürdiges Siegel ist reine Konfiguration.
 - `/verify/:code` zeigt öffentlich nur Status, Nachweis-Nr., Datum und SHA-256 – keine Personendaten außer Initialen.
 
 **E-11 Audit-Trail als Hash-Kette.** `audit_event` nur per INSERT (Trigger verweigert UPDATE/DELETE, auch für `app_user`). `hash = SHA-256(prev_hash ‖ kanonisches JSON der Zeile)`, Kette je Mandant, serialisiert über `pg_advisory_xact_lock(tenant)`. `GET /audit/verify` rechnet die Kette nach und meldet die erste abweichende Zeile. Täglicher Anker: letzter Hash je Mandant wird per TSA gestempelt und gespeichert. Der Test „nachträglich geänderte Zeile“ ändert die Zeile als `app_migrator` (der Trigger wird dafür im Test kurz deaktiviert) und erwartet, dass `verify` sie findet.
 
 ## 4. Benachrichtigungen, Jobs, Echtzeit
 
-**E-12 Mail, Push, SMS.** Mail per SMTP (nodemailer; dev: Mailpit). Web-Push per VAPID (`web-push`). SMS nur als `SmsProvider`-Schnittstelle mit Log-Implementierung; OTP für Externe zunächst per E-Mail (Screen 2 nennt „OTP per SMS“ – folgt, sobald ein Anbieter feststeht).
+**E-12 Benachrichtigungen vorbereitet, Versand später (R3).**
+- Alle Nachrichten (Einladung, Erinnerung, Eskalation, OTP, Bestätigung) laufen über eine **Outbox-Tabelle** `notification` (Empfänger, Kanal, Vorlage, Daten, Status, Versuche) und einen BullMQ-Job.
+- Kanäle als Adapter: `MailProvider` (`log` = Standard, schreibt nur ins Log/Outbox · `smtp` per nodemailer · dev: Mailpit), `SmsProvider` (`log`), `PushProvider` (Web-Push/VAPID). Welcher Adapter aktiv ist, steuert `.env`; ein Anbieterwechsel ist Konfiguration.
+- Mail-Vorlagen (Einladung nach Screen 4, Erinnerung, OTP, …) werden vollständig gebaut und in einer Vorschau-Route angezeigt.
+- Damit es ohne Mailversand nutzbar ist: Einladungslinks lassen sich in der Verwaltung **kopieren und als QR/Liste drucken**; Teilnehmer mit Konto sehen neue Einladungen in „Meine Nachweise“.
+- Einschränkung: Teilnehmer **ohne** Konto brauchen für den Step-up vor der Unterschrift den OTP per E-Mail. Solange kein Mailversand eingerichtet ist, funktioniert die Unterschrift nur mit Konto (Passwort) oder in der Entwicklung über Mailpit.
 
 **E-13 Jobs mit BullMQ.** Queues: `pdf-analysis`, `evidence-pdf`, `mail`, `push`, `ocr`, `deadlines` (nächtlich 02:00 Europe/Berlin), `retention` (täglich), `audit-anchor` (täglich). Jobs sind idempotent (Job-ID aus fachlichem Schlüssel).
 
@@ -115,3 +123,12 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 **E-23 Hosting.** Docker Compose mit Caddy (TLS, Rate-Limit), Betrieb in Deutschland; Backups sind Betriebsaufgabe und werden in `docs/BETRIEB.md` beschrieben, nicht im Code umgesetzt.
 
 **E-24 Fachliche Standardwerte** (bis zur Abstimmung mit der Fachkraft für Arbeitssicherheit): Bestehensgrenze 80 %, max. 3 Versuche, Vollständigkeit 90 %, Erinnerungen T−7/T−2/T+1, Eskalation T+1 an Vorgesetzten, Teilnahmebestätigung Live binnen 48 h, Aufbewahrung Beschäftigungsdauer + 3 Jahre (`person.austritt_am` ergänzt; `retain_until` bleibt leer, bis ein Austrittsdatum gepflegt ist, dann Austritt + 3 Jahre; Object Lock im Compliance-Modus zunächst 3 Jahre ab Ablage, Verlängerung per Job – verkürzen ist bei WORM nicht möglich), Heartbeat-Rohdaten 90 Tage.
+
+## 8. Teilnehmerkonten
+
+**E-25 „Meine Nachweise“ – mandantenübergreifend, nur eigene Daten (R2).**
+- Ein Teilnehmer kann jederzeit (typisch nach dem Abschluss: „Nachweis in einem Konto sammeln?“) ein Konto anlegen oder sich anmelden. Nach E-Mail-Bestätigung per OTP werden alle `person`-Datensätze mit dieser verifizierten E-Mail in allen Mandanten mit dem Konto verknüpft (`person.account_id`); der Teilnehmer bestätigt jede Verknüpfung.
+- Das Konto sieht **nur eigene** Einladungen, Nachweise (PDF-Download, Gültigkeit) und Live-Teilnahmen – über eine eigene RLS-Policy `person.account_id = app.account_id` bzw. SECURITY-DEFINER-Funktionen, die ausschließlich eigene Zeilen liefern. Keine Einsicht in andere Personen oder Mandanteneinstellungen.
+- Ein Konto kann gleichzeitig Dozent (Mitglied eines Mandanten) und Teilnehmer anderer Schulungen sein.
+- Eigene externe Nachweise mobil einreichen (Screen 10) geht an den jeweiligen Mandanten, in dem die Person geführt wird.
+- Löschen des Kontos trennt nur die Verknüpfung; Nachweise bleiben beim Mandanten (Aufbewahrungspflicht).
