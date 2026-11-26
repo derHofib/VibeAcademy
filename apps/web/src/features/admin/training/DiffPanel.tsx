@@ -119,7 +119,7 @@ export function DiffPanel({
         </div>
       )}
       {list.length > 0 && (
-        <ul aria-label={t.listLabel} className="flex max-h-[320px] flex-col gap-1.5 overflow-y-auto">
+        <ul aria-label={t.listLabel} tabIndex={0} className="flex max-h-[320px] flex-col gap-1.5 overflow-y-auto rounded-box focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
           {list.map((p) => (
             <li key={`${p.oldPageNo}-${p.pageNo}`} className="flex flex-col gap-1 rounded-input bg-bg px-3 py-2 text-[13px]">
               <div className="flex flex-wrap items-center gap-2">
