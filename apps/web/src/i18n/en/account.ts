@@ -1,5 +1,16 @@
 import type { AccountStrings } from '../account';
 import type { ExternalAccountStrings } from '../external';
+import { PASSWORD_MIN_LENGTH } from '@sn/shared';
+
+/** „4 minutes“, „1 hour“ – rounded up, like formatWaitDe. */
+function formatWaitEn(seconds: number): string {
+  const s = Math.max(1, Math.ceil(seconds));
+  if (s < 60) return s === 1 ? '1 second' : `${s} seconds`;
+  const m = Math.ceil(s / 60);
+  if (m < 60) return m === 1 ? '1 minute' : `${m} minutes`;
+  const h = Math.ceil(m / 60);
+  return h === 1 ? '1 hour' : `${h} hours`;
+}
 
 /** English texts for “My records” (E-39). Register/login stay German (shared with the admin sign-up, E-39). */
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
@@ -98,6 +109,25 @@ export const taEn: Omit<AccountStrings, 'register' | 'login' | 'nav'> = {
     emailVerified: 'confirmed',
     emailUnverified: 'not confirmed',
     delete: 'Delete account',
+  },
+
+  password: {
+    title: 'Change password',
+    intro: 'After the change you will be signed out on all other devices.',
+    current: 'Current password',
+    next: 'New password',
+    repeat: 'Repeat new password',
+    hint: `At least ${PASSWORD_MIN_LENGTH} characters.`,
+    submit: 'Change password',
+    saving: 'Saving …',
+    success: 'Password changed. Other devices have been signed out.',
+    required: 'Please fill in',
+    tooShort: `The password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
+    mismatch: 'The passwords do not match',
+    wrongCurrent: 'The current password is incorrect',
+    sameAsOld: 'The new password must be different from the old one',
+    locked: (seconds: number) => `Too many failed attempts. Please try again in ${formatWaitEn(seconds)}.`,
+    failed: 'The password could not be changed. Please try again later.',
   },
 
   deleteSheet: {

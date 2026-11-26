@@ -30,7 +30,7 @@ test('Dozent: registrieren, Schulung anlegen, einladen, Lesenachweis ansehen', a
   // ── Registrieren mit Feldfehlern ────────────────────────────
   await expect(page.getByRole('heading', { name: 'Konto für Dozenten erstellen' })).toBeVisible();
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
-  await expect(page.getByText('Das Passwort muss mindestens 12 Zeichen haben')).toBeVisible();
+  await expect(page.getByText('Das Passwort muss mindestens 10 Zeichen haben')).toBeVisible();
   await page.getByLabel('Name').fill('Dana Dozentin');
   await page.getByLabel('Organisation').fill('E2E Elektro GmbH');
   await page.getByLabel('E-Mail').fill(email);

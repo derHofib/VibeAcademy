@@ -52,6 +52,12 @@ const schema = z.object({
   EXTERNAL_UPLOAD_MAX_MB: z.coerce.number().int().positive().default(20),
   EXTERNAL_UNDO_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
   /** Öffentliche API (E-37): Anfragen je API-Schlüssel und Minute */
+  /** Login-Sperre (Login, Step-up, Passwort ändern): freie Fehlversuche je E-Mail; ohne Angabe 5 (Entwicklung: 100) */
+  LOGIN_LOCK_FREE_ATTEMPTS: z.coerce.number().int().min(0).optional(),
+  /** Erste Sperrdauer in Sekunden, danach je Fehlversuch verdoppelt */
+  LOGIN_LOCK_BASE_SECONDS: z.coerce.number().int().positive().default(60),
+  /** Höchste Sperrdauer; der Zähler verfällt nach so vielen Sekunden ohne Fehlversuch */
+  LOGIN_LOCK_MAX_SECONDS: z.coerce.number().int().positive().default(86_400),
   API_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(600),
   /** Webhooks (E-37): Versuche je Zustellung, Backoff-Basis (n-ter Versuch wartet Basis · 2^(n−1)), Abschalten nach n Fehlversuchen in Folge */
   WEBHOOK_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(6),

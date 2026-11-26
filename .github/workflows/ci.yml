@@ -97,6 +97,8 @@ jobs:
           SESSION_SECRET=$(openssl rand -hex 32)
           HMAC_MASTER_SECRET=$(openssl rand -hex 32)
           NODE_ENV=development
+          # Login-Sperre mit echten Werten (E2E account-password.spec.ts), sonst in der Entwicklung 100 freie Versuche
+          LOGIN_LOCK_FREE_ATTEMPTS=5
           ENV
           scripts/setup-seal.sh | grep = >> .env
       - name: Bauen, migrieren, API starten

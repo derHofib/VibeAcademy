@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, PipeTransform } from '@nestjs/common';
 import { z, type ZodType } from 'zod';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordTooShortText } from '@sn/shared';
 
 /** Validiert Request-Bodies mit Zod; Fehlermeldungen auf Deutsch. */
 export class ZodBody<T> implements PipeTransform<unknown, T> {
@@ -28,6 +29,6 @@ export function mapDbError(e: unknown): never {
 export const email = z.email('Bitte eine gültige E-Mail-Adresse angeben').trim().toLowerCase().max(254);
 export const password = z
   .string()
-  .min(12, 'Das Passwort muss mindestens 12 Zeichen haben')
-  .max(200, 'Das Passwort ist zu lang');
+  .min(PASSWORD_MIN_LENGTH, passwordTooShortText())
+  .max(PASSWORD_MAX_LENGTH, 'Das Passwort ist zu lang');
 export const displayName = z.string().trim().min(1, 'Bitte einen Namen angeben').max(200);

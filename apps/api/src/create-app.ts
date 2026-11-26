@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule, type AppModuleOptions } from './app.module';
 import { PgExceptionFilter } from './common/pg-exception.filter';
+import { RetryAfterFilter } from './common/retry-after.filter';
 import { HttpAdapterHost } from '@nestjs/core';
 
 export async function createApp(opts: AppModuleOptions): Promise<NestExpressApplication> {
@@ -15,7 +16,7 @@ export async function createApp(opts: AppModuleOptions): Promise<NestExpressAppl
   app.use(helmet());
   app.use(cookieParser());
   app.setGlobalPrefix('api');
-  app.useGlobalFilters(new PgExceptionFilter(app.get(HttpAdapterHost).httpAdapter));
+  app.useGlobalFilters(new PgExceptionFilter(app.get(HttpAdapterHost).httpAdapter), new RetryAfterFilter());
   app.enableShutdownHooks();
   return app;
 }

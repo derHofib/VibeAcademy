@@ -7,6 +7,7 @@ import { de } from '@/i18n/de';
 import { Button, Field, Input, Panel } from '@/components/ui';
 import { fieldErrors, meKey } from '@/features/auth/session';
 import { AuthShell } from './AuthShell';
+import { PASSWORD_MIN_LENGTH } from '@sn/shared';
 
 const t = adm.auth.setPassword;
 
@@ -37,7 +38,7 @@ export default function SetPasswordPage() {
     const password = String(data.get('password') ?? '');
     const repeat = String(data.get('repeat') ?? '');
     const errs: typeof local = {};
-    if (password.length < 12) errs.password = adm.auth.passwordTooShort;
+    if (password.length < PASSWORD_MIN_LENGTH) errs.password = adm.auth.passwordTooShort;
     if (password !== repeat) errs.repeat = t.mismatch;
     setLocal(errs);
     if (!Object.keys(errs).length) m.mutate(password);

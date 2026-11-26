@@ -4,6 +4,7 @@
  */
 import { localized } from './lang';
 import { deEnShared } from './en/common';
+import { PASSWORD_MIN_LENGTH } from '@sn/shared';
 
 const deDe = {
   app: {
@@ -67,6 +68,7 @@ const deDe = {
       emailPlaceholder: 'name@firma.de',
       password: 'Passwort',
       submit: 'Anmelden',
+      lockedSubmit: (clock: string) => `Gesperrt – noch ${clock}`,
       noAccount: 'Noch kein Konto?',
       register: 'Konto für Dozenten erstellen',
     },
@@ -80,7 +82,7 @@ const deDe = {
       email: 'E-Mail',
       emailPlaceholder: 'name@firma.de',
       password: 'Passwort',
-      passwordHint: 'Mindestens 12 Zeichen.',
+      passwordHint: `Mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`,
       submit: 'Konto erstellen',
       haveAccount: 'Schon ein Konto?',
       login: 'Anmelden',

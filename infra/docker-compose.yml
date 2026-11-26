@@ -5,6 +5,9 @@ name: schulungsnachweis
 x-app-env: &app-env
   NODE_ENV: production
   API_HOST: 0.0.0.0
+  LOGIN_LOCK_FREE_ATTEMPTS: ${LOGIN_LOCK_FREE_ATTEMPTS:-}
+  LOGIN_LOCK_BASE_SECONDS: ${LOGIN_LOCK_BASE_SECONDS:-60}
+  LOGIN_LOCK_MAX_SECONDS: ${LOGIN_LOCK_MAX_SECONDS:-86400}
   DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-schulungsnachweis}
   REDIS_URL: redis://redis:6379
   PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}

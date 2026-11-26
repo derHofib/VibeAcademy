@@ -1,4 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { TimerOff } from 'lucide-react';
+import { loginLockedText } from '@sn/shared';
+import { formatClock, useCountdown } from '@/hooks/useCountdown';
+import { lockSecondsFrom } from '@/features/auth/lock';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { de } from '@/i18n/de';
 import { adm } from '@/i18n/admin';
@@ -27,12 +31,15 @@ export interface LoginPageProps {
   error?: string;
   /** Fehler am E-Mail-Feld */
   emailError?: string;
+  /** Restsekunden einer Login-Sperre (> 0: Meldung mit Restzeit, Anmelden deaktiviert) */
+  lockedSeconds?: number;
 }
 
 const t = de.auth.login;
 
 /** Anmeldeseite – Oberfläche; `LoginRoute` bindet sie an die API. */
-export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, emailError }: LoginPageProps) {
+export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, emailError, lockedSeconds = 0 }: LoginPageProps) {
+  const locked = lockedSeconds > 0;
   const participant = mode === 'teilnehmer';
   const [email, setEmail] = useState('');
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -58,6 +65,15 @@ export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, e
       }
     >
       <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        {locked && (
+          <div
+            role="alert"
+            className="flex items-start gap-2.5 rounded-box bg-warn-soft px-4 py-3 text-[14px] font-medium text-warn-text"
+          >
+            <TimerOff aria-hidden="true" className="mt-0.5 size-[18px] shrink-0" />
+            <span data-testid="login-sperre">{loginLockedText(lockedSeconds)}</span>
+          </div>
+        )}
         <Field label={t.email} required error={emailError}>
           <Input
             name="email"
@@ -68,11 +84,11 @@ export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, e
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
-        <Field label={t.password} required error={error}>
+        <Field label={t.password} required error={locked ? undefined : error}>
           <Input name="password" type="password" autoComplete="current-password" />
         </Field>
-        <Button type="submit" size="lg" fullWidth disabled={pending} className="mt-2">
-          {pending ? de.common.loading : t.submit}
+        <Button type="submit" size="lg" fullWidth disabled={pending || locked} className="mt-2">
+          {pending ? de.common.loading : locked ? t.lockedSubmit(formatClock(lockedSeconds)) : t.submit}
         </Button>
       </form>
       {/* Phase 3 (E-36): Anmeldung mit Firmenkonto */}
@@ -94,11 +110,18 @@ export function LoginRoute() {
   const weiter = params.get('weiter');
   const mode = params.get('teilnehmer') === '1' || weiter?.startsWith('/konto') ? 'teilnehmer' : 'dozent';
   const target = (m: Me | null | undefined) => (weiter ? safeNext(weiter) : homePathFor(m));
+  // Login-Sperre: Restzeit aus der 429-Antwort, Countdown bis zum Ablauf
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+  useEffect(() => {
+    const s = lockSecondsFrom(login.error);
+    if (s) setLockUntil(Date.now() + s * 1000);
+  }, [login.error]);
+  const lockedSeconds = useCountdown(lockUntil);
   if (me.data && !login.isPending) return <Navigate to={target(me.data)} replace />;
 
   const fe = fieldErrors(login.error);
   const generic =
-    login.error && !fe.email && !fe.password
+    login.error && !fe.email && !fe.password && !lockSecondsFrom(login.error)
       ? login.error instanceof ApiError && login.error.status === 401
         ? login.error.message || adm.auth.loginFailed
         : (login.error as Error).message || adm.auth.loginFailed
@@ -110,6 +133,7 @@ export function LoginRoute() {
       pending={login.isPending}
       emailError={fe.email}
       error={fe.password ?? generic}
+      lockedSeconds={lockedSeconds}
       onSubmit={(v) => {
         login.mutate(v, { onSuccess: () => navigate(target(qc.getQueryData<Me | null>(meKey)), { replace: true }) });
       }}

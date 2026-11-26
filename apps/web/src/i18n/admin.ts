@@ -1,6 +1,7 @@
 /**
  * Texte der Verwaltung (Dozent/Schulungsverantwortlicher) und der Anmeldung – ergänzt `de.ts` (E-20).
  */
+import { passwordTooShortText } from '@sn/shared';
 export const adm = {
   nav: {
     dashboard: 'Dashboard',
@@ -13,7 +14,7 @@ export const adm = {
     logout: 'Abmelden',
     loginFailed: 'Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.',
     required: 'Bitte ausfüllen',
-    passwordTooShort: 'Das Passwort muss mindestens 12 Zeichen haben',
+    passwordTooShort: passwordTooShortText(),
     invalidEmail: 'Bitte eine gültige E-Mail-Adresse angeben',
     checking: 'Sitzung wird geprüft …',
     noAccessTitle: 'Kein Zugang zur Verwaltung',

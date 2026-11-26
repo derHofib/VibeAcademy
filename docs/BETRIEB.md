@@ -82,10 +82,12 @@ crontab -e
 
 ### 5. Weitere Einstellungen
 
+- **MinIO wird nicht mehr verwendet**: Die Images `minio/minio` und `minio/mc` sind nicht mehr öffentlich ziehbar (Docker Hub liefert keine aktuellen Community-Builds mehr). Der Stack braucht MinIO nicht; Standard ist die Ablage im Volume. Wer einen S3-Speicher mit Object Lock möchte: einen gehosteten Dienst (z. B. IONOS S3 Object Storage, Hetzner Object Storage, AWS S3) oder selbst betrieben **Garage** (`dxflrs/garage`) bzw. **SeaweedFS** (`chrislusf/seaweedfs`) – bei selbst betriebenen Alternativen vorher prüfen, ob Object Lock (Compliance-Modus) unterstützt wird; sonst bleibt `STORAGE_DRIVER=fs` die bessere Wahl.
 - **Dateiablage**: Standard `STORAGE_DRIVER=fs` – Docker-Volume `storage` auf dem Server. Nachweis-PDFs werden nur einmal geschrieben und danach schreibgeschützt (die Anwendung verweigert jedes Überschreiben). Echte Unveränderbarkeit auf Speicherebene (Object Lock) gibt es nur mit `STORAGE_DRIVER=s3` und einem S3-Speicher mit Object Lock (z. B. IONOS) – dann `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` setzen.
 - **Siegel und Zeitstempel sind optional und standardmäßig aus** (`SEAL_MODE=none`, E-45). Echtheit über QR-Code/Prüfcode und SHA-256 (`/verify/:code`).
   Zum Einschalten: `SEAL_MODE=pyhanko`, Zertifikat (PKCS#12) per Volume einbinden und `SEAL_P12_PATH`/`SEAL_P12_PASSWORD` setzen, optional `TSA_URL` (RFC 3161).
 - **Mail**: `MAIL_PROVIDER=smtp` und `SMTP_URL` setzen, sobald ein Anbieter feststeht (E-12). Zum Ausprobieren: `docker compose … --profile dev up -d mailpit`, Postfach unter Port 8025.
 - **Web-Push**: VAPID-Schlüssel erzeugen und in `.env` eintragen (siehe `.env.example`).
+- **Login-Sperre**: je E-Mail-Adresse 5 Fehlversuche frei, danach 1, 2, 4 … Minuten, höchstens 24 Stunden (`LOGIN_LOCK_*`, gilt auch für die Bestätigung per Passwort und „Passwort ändern“). Zusätzlich ein Limit je IP-Adresse. Gesperrte Adressen entsperren sich selbst; manuell: `docker compose … exec redis redis-cli --scan --pattern 'loginlock:*'` und den Schlüssel löschen.
 - **Rate-Limits**: in der API (Login, Registrierung, OTP, Links, Prüfseite). Caddy terminiert TLS.
 - **Logs/Status**: `docker compose -f infra/docker-compose.yml --env-file .env ps` bzw. `… logs -f api`. Gesundheit: `https://<SITE_ADDRESS>/api/health`.

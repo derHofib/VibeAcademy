@@ -75,7 +75,7 @@ describe('Weitere Hilfsfunktionen', () => {
       name: 'Bitte ausfüllen',
       organisation: 'Bitte ausfüllen',
       email: 'Bitte eine gültige E-Mail-Adresse angeben',
-      password: 'Das Passwort muss mindestens 12 Zeichen haben',
+      password: 'Das Passwort muss mindestens 10 Zeichen haben',
     });
     expect(
       validateRegister({

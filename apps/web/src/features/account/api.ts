@@ -87,3 +87,11 @@ export function useRegisterAccount() {
     },
   });
 }
+
+/** Passwort im eigenen Konto ändern; andere Sitzungen werden serverseitig beendet. */
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (v: { currentPassword: string; newPassword: string }) =>
+      post<{ ok: true; endedSessions: number }>('/auth/password/change', v),
+  });
+}

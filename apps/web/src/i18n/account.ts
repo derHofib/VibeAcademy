@@ -3,6 +3,7 @@
  * Registrieren/Anmelden. Getrennt von de.ts/participant.ts (E-20). Ansprache wie in der Teilnehmersicht: „du“.
  */
 import { localized } from './lang';
+import { PASSWORD_MIN_LENGTH, formatWaitDe } from '@sn/shared';
 import { taEn } from './en/account';
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
@@ -124,6 +125,25 @@ export const taDe = {
     emailVerified: 'bestätigt',
     emailUnverified: 'nicht bestätigt',
     delete: 'Konto löschen',
+  },
+
+  password: {
+    title: 'Passwort ändern',
+    intro: 'Nach dem Ändern wirst du auf allen anderen Geräten abgemeldet.',
+    current: 'Aktuelles Passwort',
+    next: 'Neues Passwort',
+    repeat: 'Neues Passwort wiederholen',
+    hint: `Mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`,
+    submit: 'Passwort ändern',
+    saving: 'Wird gespeichert …',
+    success: 'Passwort geändert. Andere Geräte wurden abgemeldet.',
+    required: 'Bitte ausfüllen',
+    tooShort: `Das Passwort muss mindestens ${PASSWORD_MIN_LENGTH} Zeichen haben`,
+    mismatch: 'Die Passwörter stimmen nicht überein',
+    wrongCurrent: 'Das aktuelle Passwort ist falsch',
+    sameAsOld: 'Das neue Passwort muss sich vom bisherigen unterscheiden',
+    locked: (seconds: number) => `Zu viele Fehlversuche. Bitte in ${formatWaitDe(seconds)} erneut versuchen.`,
+    failed: 'Das Passwort konnte nicht geändert werden. Bitte später erneut versuchen.',
   },
 
   deleteSheet: {

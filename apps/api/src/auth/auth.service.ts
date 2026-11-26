@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ROLE_LABELS, type Role } from '@sn/shared';
 import { AuditService } from '../audit/audit.service';
 import { APP_CONFIG, type AppConfig } from '../config';
@@ -8,6 +8,7 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { currentRequest } from '../common/request-context';
 import { DbService } from '../db/db.service';
 import { RedisService } from '../redis/redis.service';
+import { LoginLockService } from './login-lock.service';
 import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
 import { StepUpService } from './step-up.service';
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly rate: RateLimitService,
     private readonly audit: AuditService,
     private readonly redis: RedisService,
+    private readonly lock: LoginLockService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -75,13 +77,18 @@ export class AuthService {
   }
 
   async login(i: { email: string; password: string }) {
+    // IP-Limit gegen das Durchprobieren vieler Konten; je Adresse die Sperre mit steigender Dauer
     await this.rate.hit(`login:ip:${this.ip()}`, 30, 900);
-    await this.rate.hit(`login:mail:${sha256(i.email)}`, 10, 900);
+    await this.lock.assertOpen(i.email);
     const acc = await this.db
       .txAs({}, (c) => c.query('SELECT * FROM app.auth_find_account($1)', [i.email]))
       .then((r) => r.rows[0] as { id: string; password_hash: string | null; disabled: boolean } | undefined);
     const ok = await this.passwords.verify(acc?.password_hash, i.password);
-    if (!acc || !ok || acc.disabled) throw new UnauthorizedException(LOGIN_FAILED);
+    if (!acc || !ok || acc.disabled) {
+      await this.lock.fail(i.email, acc?.id);
+      throw new UnauthorizedException(LOGIN_FAILED);
+    }
+    await this.lock.reset(i.email);
     const tenantId = await this.db
       .txAs({ accountId: acc.id }, (c) =>
         c.query('SELECT tenant_id FROM membership WHERE account_id = $1 ORDER BY created_at LIMIT 1', [acc.id]),
@@ -101,7 +108,10 @@ export class AuthService {
     if (s.kind !== 'account') throw new UnauthorizedException('Bitte anmelden');
     return this.db.txAs({ accountId: s.accountId, tenantId: s.tenantId }, async (c) => {
       const account = (
-        await c.query('SELECT id, email, display_name, email_verified_at FROM account WHERE id = $1', [s.accountId])
+        await c.query(
+          'SELECT id, email, display_name, email_verified_at, app.auth_get_password_hash(id) IS NOT NULL AS has_password FROM account WHERE id = $1',
+          [s.accountId],
+        )
       ).rows[0];
       const memberships = (
         await c.query(
@@ -116,6 +126,8 @@ export class AuthService {
           email: account.email,
           name: account.display_name,
           emailVerified: !!account.email_verified_at,
+          // Konten nur mit Firmenanmeldung (SSO, ohne Passwort) können kein Passwort ändern
+          hasPassword: !!account.has_password,
         },
         activeTenantId: s.tenantId,
         roles: r.roles,
@@ -140,12 +152,73 @@ export class AuthService {
   async stepUpWithPassword(password: string, purpose: string) {
     const s = currentRequest()!.session!;
     if (s.kind !== 'account') throw new UnauthorizedException('Bitte mit Code bestätigen');
-    await this.rate.hit(`stepup:${s.accountId}`, 10, 900);
-    const hash = await this.db
-      .txAs({}, (c) => c.query('SELECT app.auth_get_password_hash($1) AS h', [s.accountId]))
-      .then((r) => r.rows[0]?.h as string | null);
-    if (!(await this.passwords.verify(hash, password))) throw new UnauthorizedException('Passwort ist falsch');
+    const mail = await this.accountEmail(s.accountId);
+    await this.lock.assertOpen(mail);
+    const hash = await this.passwordHash(s.accountId);
+    if (!(await this.passwords.verify(hash, password))) {
+      await this.lock.fail(mail, s.accountId);
+      throw new UnauthorizedException('Passwort ist falsch');
+    }
+    await this.lock.reset(mail);
     return this.stepUp.issue({ subject: s.accountId, purpose, method: 'password' });
+  }
+
+  private accountEmail(accountId: string) {
+    return this.db
+      .txAs({ accountId }, (c) => c.query('SELECT email FROM account WHERE id = $1', [accountId]))
+      .then((r) => String(r.rows[0]?.email ?? ''));
+  }
+
+  private passwordHash(accountId: string) {
+    return this.db
+      .txAs({}, (c) => c.query('SELECT app.auth_get_password_hash($1) AS h', [accountId]))
+      .then((r) => (r.rows[0]?.h as string | null) ?? null);
+  }
+
+  private firstTenant(accountId: string) {
+    return this.db
+      .txAs({ accountId }, (c) =>
+        c.query('SELECT tenant_id FROM membership WHERE account_id = $1 ORDER BY created_at LIMIT 1', [accountId]),
+      )
+      .then((r) => (r.rows[0]?.tenant_id as string | undefined) ?? null);
+  }
+
+  /**
+   * Passwort im eigenen Konto ändern: aktuelles Passwort prüfen (zählt für die Login-Sperre),
+   * neues speichern, alle anderen Sitzungen beenden; die aktuelle bleibt bestehen.
+   */
+  async changePassword(currentPassword: string, newPassword: string) {
+    const r = currentRequest()!;
+    const s = r.session;
+    if (s?.kind !== 'account') throw new UnauthorizedException('Bitte anmelden');
+    const mail = await this.accountEmail(s.accountId);
+    await this.lock.assertOpen(mail);
+    const hash = await this.passwordHash(s.accountId);
+    if (!hash) throw new BadRequestException('Für dieses Konto ist kein Passwort hinterlegt (Anmeldung über das Firmenkonto).');
+    if (!(await this.passwords.verify(hash, currentPassword))) {
+      await this.lock.fail(mail, s.accountId);
+      throw new BadRequestException({
+        message: 'Das aktuelle Passwort ist falsch',
+        fields: [{ path: 'currentPassword', message: 'Das aktuelle Passwort ist falsch' }],
+      });
+    }
+    await this.lock.reset(mail);
+    if (currentPassword === newPassword) {
+      throw new BadRequestException({
+        message: 'Das neue Passwort muss sich vom bisherigen unterscheiden',
+        fields: [{ path: 'newPassword', message: 'Das neue Passwort muss sich vom bisherigen unterscheiden' }],
+      });
+    }
+    const next = await this.passwords.hash(newPassword);
+    const tenantId = await this.firstTenant(s.accountId);
+    await this.db.txAs({ tenantId, accountId: s.accountId }, async (c) => {
+      await c.query('SELECT app.auth_set_password($1, $2)', [s.accountId, next]);
+      if (tenantId) {
+        await this.audit.record(c, { entity: 'account', entityId: s.accountId, action: 'password_changed' });
+      }
+    });
+    const ended = await this.sessions.destroyOthers(s.accountId, r.sessionId);
+    return { ok: true, endedSessions: ended };
   }
 
   /** Einmal-Link zum Passwort-Setzen (eingeladene Kollegen). */

@@ -19,6 +19,7 @@ import { PushToggle } from '@/features/account/PushToggle';
 import { DoneEvidenceCard, OpenEvidenceCard } from '@/features/account/EvidenceCards';
 import { LinkCard } from '@/features/account/LinkCard';
 import { AccountCard } from '@/features/account/AccountCard';
+import { PasswordCard } from '@/features/account/PasswordCard';
 
 /** `/konto` – „Meine Nachweise“ (E-25): eigene Einladungen und Nachweise aus allen verknüpften Organisationen. */
 export default function AccountPage() {
@@ -108,6 +109,8 @@ function MyEvidencePage({ me }: { me: Me }) {
       <div className="mt-2 flex flex-col gap-3.5">
         <PushToggle />
         <LinkCard me={me} />
+        {/* Nicht bei Konten, die sich nur über das Firmenkonto (SSO) anmelden */}
+        {me.account.hasPassword && <PasswordCard />}
         <AccountCard me={me} />
       </div>
     </ParticipantLayout>

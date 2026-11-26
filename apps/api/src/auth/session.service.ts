@@ -23,7 +23,28 @@ export class SessionService {
     const id = randomToken();
     const full = { ...data, createdAt: Date.now() } as SessionData;
     await this.redis.client.set(this.key(id), JSON.stringify(full), 'EX', IDLE_TTL_S);
+    if (full.kind === 'account') {
+      // Index je Konto, damit „Passwort ändern“ alle anderen Sitzungen beenden kann
+      const idx = this.accountIndex(full.accountId);
+      await this.redis.client.sadd(idx, this.key(id));
+      await this.redis.client.expire(idx, ABSOLUTE_MAX_MS / 1000);
+    }
     return id;
+  }
+
+  private accountIndex(accountId: string) {
+    return `acctsess:${accountId}`;
+  }
+
+  /** Beendet alle Sitzungen des Kontos außer `keepId`; liefert die Anzahl beendeter Sitzungen. */
+  async destroyOthers(accountId: string, keepId: string | null): Promise<number> {
+    const idx = this.accountIndex(accountId);
+    const keep = keepId ? this.key(keepId) : null;
+    const others = (await this.redis.client.smembers(idx)).filter((k) => k !== keep);
+    if (!others.length) return 0;
+    const n = await this.redis.client.del(...others);
+    await this.redis.client.srem(idx, ...others);
+    return n;
   }
 
   async get(id: string | undefined): Promise<SessionData | null> {

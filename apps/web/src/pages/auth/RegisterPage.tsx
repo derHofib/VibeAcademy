@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { AuthShell } from './AuthShell';
+import { PASSWORD_MIN_LENGTH } from '@sn/shared';
 
 export interface RegisterValues {
   name: string;
@@ -108,7 +109,7 @@ export function RegisterPage({ mode = 'dozent', onSubmit, pending = false, error
           />
         </Field>
         <Field label={t.password} required hint={t.passwordHint} error={errors.password}>
-          <Input name="password" type="password" autoComplete="new-password" minLength={12} />
+          <Input name="password" type="password" autoComplete="new-password" minLength={PASSWORD_MIN_LENGTH} />
         </Field>
         <Button type="submit" size="lg" fullWidth disabled={pending} className="mt-2">
           {pending ? de.common.loading : participant ? ta.register.submit : t.submit}
@@ -124,7 +125,7 @@ export function validateRegister(v: RegisterValues, mode: RegisterMode = 'dozent
   if (!v.name.trim()) e.name = adm.auth.required;
   if (mode === 'dozent' && v.organisation.trim().length < 2) e.organisation = adm.auth.required;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = adm.auth.invalidEmail;
-  if (v.password.length < 12) e.password = adm.auth.passwordTooShort;
+  if (v.password.length < PASSWORD_MIN_LENGTH) e.password = adm.auth.passwordTooShort;
   return e;
 }
 

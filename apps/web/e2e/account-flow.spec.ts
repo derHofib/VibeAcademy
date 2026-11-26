@@ -150,7 +150,7 @@ test('Teilnehmer ohne Einladung: E-Mail per Code bestätigen, Konto löschen', a
   await page.getByLabel(/^E-Mail/).fill(email);
   await page.getByLabel(/^Passwort/).fill('kurz');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
-  await expect(page.getByText('Das Passwort muss mindestens 12 Zeichen haben')).toBeVisible();
+  await expect(page.getByText('Das Passwort muss mindestens 10 Zeichen haben')).toBeVisible();
   await page.getByLabel(/^Passwort/).fill(PASSWORD);
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
 

@@ -126,7 +126,7 @@ describe('Anmeldung per SSO', () => {
     expect(cb.headers.location).toBe('http://localhost:5173/anmelden/sso?weiter=%2Fkonto');
     const me = await c.get('/api/auth/me');
     expect(me.status).toBe(200);
-    expect(me.body.account).toMatchObject({ email: 'jana.jit@firma.example', name: 'Jana Jit', emailVerified: true });
+    expect(me.body.account).toMatchObject({ email: 'jana.jit@firma.example', name: 'Jana Jit', emailVerified: true, hasPassword: false });
     expect(me.body.roles).toEqual(['teilnehmer']);
     expect(me.body.memberships).toHaveLength(1);
     const ident = (await h.db.admin.query("SELECT * FROM account_identity WHERE subject = 'jit-1'")).rows;

@@ -6,6 +6,7 @@ import { AuditService } from './audit/audit.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthGuard } from './auth/auth.guard';
 import { AuthService } from './auth/auth.service';
+import { LoginLockService } from './auth/login-lock.service';
 import { OtpService } from './auth/otp.service';
 import { PasswordService } from './auth/password.service';
 import { SessionMiddleware } from './auth/session.middleware';
@@ -130,6 +131,7 @@ export class AppModule implements NestModule {
         OtpService,
         StepUpService,
         AuthService,
+        LoginLockService,
         NotificationService,
         AnalysisService,
         InvitationService,

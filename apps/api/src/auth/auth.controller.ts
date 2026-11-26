@@ -22,6 +22,10 @@ const StepUp = z.object({
   purpose: z.string().regex(/^[a-z_]+:[0-9a-f-]{36}$/, 'Ungültiger Zweck'),
 });
 const SetPassword = z.object({ token: z.string().min(20).max(100), password });
+const ChangePassword = z.object({
+  currentPassword: z.string().min(1, 'Bitte das aktuelle Passwort eingeben').max(200),
+  newPassword: password,
+});
 
 @Controller('auth')
 export class AuthController {
@@ -93,6 +97,14 @@ export class AuthController {
   @HttpCode(200)
   async stepUp(@Body(new ZodBody(StepUp)) body: z.infer<typeof StepUp>) {
     return { stepUpToken: await this.auth.stepUpWithPassword(body.password, body.purpose), expiresInSeconds: 300 };
+  }
+
+  /** Passwort im eigenen Konto ändern; beendet alle anderen Sitzungen. */
+  @AnyAccount()
+  @Post('password/change')
+  @HttpCode(200)
+  changePassword(@Body(new ZodBody(ChangePassword)) body: z.infer<typeof ChangePassword>) {
+    return this.auth.changePassword(body.currentPassword, body.newPassword);
   }
 
   @Public()

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, get, post } from '@/lib/api';
 
 export interface Me {
-  account: { id: string; email: string; name: string; emailVerified: boolean };
+  account: { id: string; email: string; name: string; emailVerified: boolean; hasPassword?: boolean };
   activeTenantId: string | null;
   roles: string[];
   memberships: Array<{ tenantId: string; tenantName: string; roles: string[] }>;
