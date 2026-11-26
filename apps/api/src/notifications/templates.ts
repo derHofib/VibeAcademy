@@ -15,8 +15,8 @@ const esc = (v: unknown) =>
   String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
 
 /** Gemeinsamer Rahmen im weichen Stil (Design-Tokens, Inline-CSS für Mail-Clients). */
-function frame(title: string, body: string, footer = 'Diese Nachricht wurde automatisch versendet.'): string {
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+function frame(title: string, body: string, footer = 'Diese Nachricht wurde automatisch versendet.', lang = 'de'): string {
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>${esc(title)}</title></head>
 <body style="margin:0;background:#F4F6FB;font-family:Inter,Arial,sans-serif;color:#1D2433">
 <div style="max-width:560px;margin:0 auto;padding:32px 16px">
@@ -80,7 +80,7 @@ export const TEMPLATES = {
   /** Einladung zur Online-Unterweisung (Screen 4) */
   invitation: (d: Data, s: Secret): Rendered => {
     const link = s?.link ?? '#';
-    const facts = `${d.pages} Seiten · ca. ${d.minutes} Minuten${d.questions ? ` · ${d.questions} Fragen` : ''}`;
+    const facts = `${d.pages} Seiten · ca. ${d.minutes} Minuten${d.questions ? ` · ${d.questions} Fragen` : ''}${d.onlyPages ? ` · nur geänderte Seiten: ${d.onlyPages}` : ''}`;
     return {
       subject: `${d.reminder ? 'Erinnerung: ' : ''}${d.trainingTitle} – bitte bis ${d.dueDate} bearbeiten`,
       text:
@@ -204,7 +204,134 @@ export const TEMPLATES = {
 
 export type TemplateName = keyof typeof TEMPLATES;
 
+// ── Englische Fassungen der Teilnehmer-Nachrichten (E-39) ─────────────────────────
+// Gewählt über `data.lang = 'en'` (setzt NotificationService.enqueue aus person.sprache). Verwaltungs-Nachrichten bleiben Deutsch.
+const AUTO_EN = 'This message was sent automatically.';
+const personal = (tenant: unknown) => `${tenant} · This link is personal – please do not forward it.`;
+
+export const TEMPLATES_EN: Partial<Record<TemplateName, (d: Data, s: Secret) => Rendered>> = {
+  otp: (d, s) => {
+    const code = s?.code ?? '••••••';
+    return {
+      subject: `Your confirmation code: ${code}`,
+      text: `Your confirmation code is ${code}.\nIt is valid for 10 minutes. Purpose: ${d.purposeLabel ?? 'confirmation'}.\nIf you did not request it, please ignore this message.`,
+      html: frame(
+        'Your confirmation code',
+        p(`Purpose: ${esc(d.purposeLabel ?? 'confirmation')}`) +
+          `<p style="font-size:32px;font-weight:700;letter-spacing:.2em;font-variant-numeric:tabular-nums;margin:8px 0 16px">${esc(code)}</p>` +
+          p('The code is valid for 10 minutes. If you did not request it, please ignore this message.'),
+        AUTO_EN, 'en',
+      ),
+    };
+  },
+  invitation: (d, s) => {
+    const link = s?.link ?? '#';
+    const facts = `${d.pages} pages · approx. ${d.minutes} minutes${d.questions ? ` · ${d.questions} questions` : ''}${d.onlyPages ? ` · changed pages only: ${d.onlyPages}` : ''}`;
+    return {
+      subject: `${d.reminder ? 'Reminder: ' : ''}${d.trainingTitle} – please complete by ${d.dueDate}`,
+      text:
+        `Hello ${d.personName},\n\n${d.reminder ? 'this is a reminder: ' : ''}please complete the training “${d.trainingTitle}” by ${d.dueDate}.\n` +
+        `Scope: ${facts}.\n\nStart the training: ${link}\n\n` +
+        `We only record which pages you had open and for how long, your answers in the knowledge check and your confirmation. ` +
+        `No camera, no location.\n${d.contact ? `Questions? ${d.contact}\n` : ''}`,
+      html: frame(
+        String(d.trainingTitle),
+        p(`Hello ${esc(d.personName)},`) +
+          p(`${d.reminder ? 'this is a reminder: ' : ''}please complete this training by <strong>${esc(d.dueDate)}</strong>.`) +
+          `<p style="background:#EAF0FE;color:#223C8F;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 8px">${esc(facts)}</p>` +
+          button(link, 'Start training') +
+          p('We only record which pages you had open and for how long, your answers in the knowledge check and your confirmation. No camera, no location.') +
+          (d.contact ? p(`Questions? ${esc(d.contact)}`) : ''),
+        personal(d.tenantName), 'en',
+      ),
+    };
+  },
+  'termin-invitation': (d, s) => {
+    const link = s?.link ?? '#';
+    const when = `${d.date} · ${d.time}${d.place ? ` · ${d.place}` : ''}`;
+    return {
+      subject: `${d.reminder ? 'Reminder: ' : ''}${d.trainingTitle} on ${d.date}`,
+      text:
+        `Hello ${d.personName},\n\nyou are invited to “${d.trainingTitle}”${d.provider ? ` (${d.provider})` : ''}.\n${when}\n\n` +
+        `Your personal access (to check in and out on site via QR code): ${link}\n\n` +
+        `We only record check-in and check-out times, your answers to control questions and your confirmation. No location.\n`,
+      html: frame(
+        String(d.trainingTitle),
+        p(`Hello ${esc(d.personName)},`) +
+          p(`you are invited to this training${d.provider ? ` (${esc(d.provider)})` : ''}.`) +
+          `<p style="background:#EAF0FE;color:#223C8F;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 8px">${esc(when)}</p>` +
+          button(link, 'Open access') +
+          p('On site, scan the start QR code to check in and the end QR code at the end. We only record check-in and check-out times, your answers to control questions and your confirmation. No location.'),
+        personal(d.tenantName), 'en',
+      ),
+    };
+  },
+  'attendance-confirm': (d) => ({
+    subject: 'Please confirm your attendance',
+    text: `“${d.trainingTitle}” has ended. Please check and confirm your attendance (${d.duration}).`,
+    html: frame('Please confirm your attendance', p(`“${esc(d.trainingTitle)}” has ended. Please check and confirm your attendance (${esc(d.duration)}).`) + button(String(d.url ?? '#'), 'Confirm now'), AUTO_EN, 'en'),
+  }),
+  'attendance-confirm-reminder': (d) => ({
+    subject: `Reminder: confirm your attendance at “${d.trainingTitle}”`,
+    text: `Hello ${d.personName},\n\nplease confirm your attendance at “${d.trainingTitle}” on ${d.date}. Your record will only be created afterwards.\n${d.url}\n`,
+    html: frame(
+      'Confirm attendance',
+      p(`Hello ${esc(d.personName)},`) +
+        p(`please confirm your attendance at “${esc(d.trainingTitle)}” on ${esc(d.date)}. Your record will only be created afterwards.`) +
+        button(String(d.url ?? '#'), 'Confirm attendance'),
+      AUTO_EN, 'en',
+    ),
+  }),
+  'attendance-note-question': (d) => ({
+    subject: `Question about your note – ${d.trainingTitle}`,
+    text: `Hello ${d.personName},\n\nthere is a question about your note (“${d.note}”)${d.message ? `:\n${d.message}` : '.'}\nPlease contact ${d.organizer ?? 'the person in charge'}.\n`,
+    html: frame(
+      'Question about your note',
+      p(`Hello ${esc(d.personName)},`) +
+        p(`there is a question about the note you left when checking out of “${esc(d.trainingTitle)}” (“${esc(d.note)}”).`) +
+        (d.message ? `<p style="background:#FFF4DF;color:#5A3A00;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 16px">${esc(d.message)}</p>` : '') +
+        p(`Please contact ${esc(d.organizer ?? 'the person in charge')}.`),
+      AUTO_EN, 'en',
+    ),
+  }),
+  'book-course': (d) => ({
+    subject: d.expired ? `Expired: ${d.trainingTitle} – please book a new date` : `${d.trainingTitle} expires on ${d.validUntil} – please book a new date`,
+    text:
+      `Hello ${d.personName},\n\n${d.expired ? `your record “${d.trainingTitle}” has expired` : `your record “${d.trainingTitle}” is valid until ${d.validUntil}`}` +
+      `${d.qualification ? ` (qualification ${d.qualification})` : ''}.\nPlease book a new date in good time and submit the certificate afterwards.\n` +
+      `${d.contact ? `Contact: ${d.contact}\n` : ''}`,
+    html: frame(
+      'Book a new date',
+      p(`Hello ${esc(d.personName)},`) +
+        p(d.expired
+          ? `your record “${esc(d.trainingTitle)}” has <strong>expired</strong>${d.qualification ? ` (qualification ${esc(d.qualification)})` : ''}.`
+          : `your record “${esc(d.trainingTitle)}” is valid until <strong>${esc(d.validUntil)}</strong>${d.qualification ? ` (qualification ${esc(d.qualification)})` : ''}.`) +
+        p('Please book a new date in good time and submit the certificate afterwards – on your phone as a photo under “My records”.') +
+        (d.contact ? p(`Contact: ${esc(d.contact)}`) : ''),
+      String(d.tenantName ?? ''), 'en',
+    ),
+  }),
+  'external-approved': (d) => ({
+    subject: `Approved: ${d.title}`,
+    text: `Hello ${d.personName},\n\nyour record “${d.title}” has been approved${d.validUntil ? ` and is valid until ${d.validUntil}` : ''}.\n`,
+    html: frame('Record approved', p(`Hello ${esc(d.personName)},`) +
+      p(`your record “${esc(d.title)}” has been approved${d.validUntil ? ` and is valid until <strong>${esc(d.validUntil)}</strong>` : ''}.`), String(d.tenantName ?? ''), 'en'),
+  }),
+  'external-returned': (d) => ({
+    subject: `Please check: ${d.title} was returned`,
+    text: `Hello ${d.personName},\n\nyour record “${d.title}” was returned.\nReason: ${d.reason}\n\nPlease correct it and submit it again.`,
+    html: frame('Record returned', p(`Hello ${esc(d.personName)},`) + p(`your record “${esc(d.title)}” was returned.`) +
+      `<p style="background:#FFF4DF;color:#5A3A00;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 16px">${esc(d.reason)}</p>` +
+      p('Please correct the details and submit the record again.'), String(d.tenantName ?? ''), 'en'),
+  }),
+};
+
+/** Vorlagen, die eine englische Fassung haben (für die automatische Sprachwahl beim Einreihen). */
+export const TRANSLATED_TEMPLATES = new Set<string>(Object.keys(TEMPLATES_EN));
+
 export function render(template: string, data: Data, secret: Secret): Rendered {
+  const en = data?.lang === 'en' ? (TEMPLATES_EN as Record<string, (d: Data, s: Secret) => Rendered>)[template] : undefined;
+  if (en) return en(data, secret);
   const fn = (TEMPLATES as Record<string, (d: Data, s: Secret) => Rendered>)[template];
   if (!fn) throw new Error(`Unbekannte Vorlage: ${template}`);
   return fn(data, secret);

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { minReadingSeconds } from '@sn/shared';
+import { minReadingSeconds, normalizePageText, pageFingerprint } from '@sn/shared';
 import type pg from 'pg';
 import { AuditService } from '../audit/audit.service';
 import { APP_CONFIG, type AppConfig } from '../config';
@@ -72,6 +72,7 @@ export class AnalysisService implements OnModuleInit, OnModuleDestroy {
       await this.db.txAs(this.sys(tenantId), async (c) => {
         await c.query('DELETE FROM chapter WHERE version_id = $1', [versionId]);
         await c.query('DELETE FROM page_meta WHERE version_id = $1', [versionId]);
+        await AnalysisService.storePageText(c, versionId, analysis.pages);
         for (const p of analysis.pages) {
           const hasText = p.wordCount >= 5;
           await c.query(
@@ -114,6 +115,17 @@ export class AnalysisService implements OnModuleInit, OnModuleDestroy {
           'Die PDF-Datei konnte nicht gelesen werden. Ist sie beschädigt oder passwortgeschützt?',
         ]),
       );
+    }
+  }
+
+  /** Normalisierter Seitentext + Fingerabdruck für den Seiten-Diff (E-38); ersetzt vorhandene Einträge. */
+  static async storePageText(c: pg.PoolClient, versionId: string, pages: Array<{ pageNo: number; text: string }>) {
+    await c.query('DELETE FROM page_text WHERE version_id = $1', [versionId]);
+    for (const p of pages) {
+      const norm = normalizePageText(p.text).slice(0, 20000);
+      await c.query('INSERT INTO page_text (version_id, page_no, fingerprint, text_norm) VALUES ($1, $2, $3, $4)', [
+        versionId, p.pageNo, pageFingerprint(norm), norm,
+      ]);
     }
   }
 

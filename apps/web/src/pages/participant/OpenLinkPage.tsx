@@ -7,6 +7,7 @@ import { ParticipantLayout } from '@/components/layout/ParticipantLayout';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { tp } from '@/i18n/participant';
+import { useParticipantLang } from '@/i18n/lang';
 import { participantPath } from '@/features/participant/api';
 import { LoadingScreen } from '@/features/participant/ScreenStates';
 import { invitationKind, isLiveTyp, livePath } from '@/features/live/api';
@@ -14,6 +15,7 @@ import { invitationKind, isLiveTyp, livePath } from '@/features/live/api';
 /** Persönlicher Einladungslink `/s/:token` → Sitzung für diese Einladung → Startbildschirm. */
 export default function OpenLinkPage() {
   const { token = '' } = useParams();
+  useParticipantLang();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [error, setError] = useState<{ title: string; message: string } | null>(null);

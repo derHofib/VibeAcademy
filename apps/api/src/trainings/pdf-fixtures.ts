@@ -8,6 +8,8 @@ export async function makeTestPdf(opts: {
   wordsPerPage: number[];
   chapters?: Array<{ title: string; page: number }>;
   heading?: (pageNo: number) => string;
+  /** Fester Text je Seite (statt „WortN“-Füllwörtern), z. B. für den Seiten-Diff; ersetzt wordsPerPage[i] */
+  pageTexts?: Array<string | null>;
 }): Promise<Buffer> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -17,6 +19,16 @@ export async function makeTestPdf(opts: {
     const page = doc.addPage([595, 842]);
     pageRefs.push(page.ref);
     let y = 780;
+    const fixed = opts.pageTexts?.[i];
+    if (fixed) {
+      const tokens = fixed.split(/\s+/).filter(Boolean);
+      for (let k = 0; k < tokens.length; k += 10) {
+        page.drawText(tokens.slice(k, k + 10).join(' '), { x: 56, y, size: 11, font });
+        y -= 16;
+        if (y < 60) y = 780;
+      }
+      return;
+    }
     let remaining = words;
     if (words > 0 && opts.heading) {
       const h = opts.heading(i + 1);

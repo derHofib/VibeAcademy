@@ -38,7 +38,7 @@ export class RunsController {
       const t = (
         await c.query(
           `SELECT t.id, t.settings, v.id AS version_id FROM training t
-             JOIN LATERAL (SELECT id FROM training_version WHERE training_id = t.id AND published_at IS NOT NULL ORDER BY version_no DESC LIMIT 1) v ON true
+             JOIN LATERAL (SELECT id FROM training_version WHERE training_id = t.id AND sprache = 'de' AND published_at IS NOT NULL ORDER BY version_no DESC LIMIT 1) v ON true
             WHERE t.id = $1`,
           [b.trainingId],
         )

@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status';
 import { cn } from '@/lib/cn';
 import { tp, formatDateTime } from '@/i18n/participant';
+import { useParticipantLang } from '@/i18n/lang';
+import { LanguageSwitch } from '@/features/participant/LanguageSwitch';
 import { useVerify } from '@/features/participant/api';
 import { LoadingScreen } from '@/features/participant/ScreenStates';
 
@@ -18,6 +20,7 @@ async function fileSha256(file: File): Promise<string> {
 /** Öffentliche Echtheitsprüfung `/verify/:code` (E-10): Status, Nr., Datum, Schulung, Initialen, SHA-256 + lokaler Dateiabgleich. */
 export default function VerifyPage() {
   const { code = '' } = useParams();
+  useParticipantLang();
   const q = useVerify(code);
   const inputId = useId();
   const [check, setCheck] = useState<{ state: 'idle' } | { state: 'busy' } | { state: 'done'; hash: string; match: boolean }>({ state: 'idle' });
@@ -25,7 +28,7 @@ export default function VerifyPage() {
   if (q.isPending) return <LoadingScreen label={tp.verify.loading} />;
   if (q.isError || !q.data) {
     return (
-      <ParticipantLayout title={tp.verify.title} eyebrow={tp.verify.eyebrow} className="justify-start">
+      <ParticipantLayout title={tp.verify.title} eyebrow={tp.verify.eyebrow} headerAside={<LanguageSwitch />} className="justify-start">
         <Card>
           <EmptyState icon={<SearchX />} title={<span role="alert">{tp.verify.notFoundTitle}</span>} description={tp.verify.notFoundText} />
         </Card>
@@ -43,7 +46,7 @@ export default function VerifyPage() {
   };
 
   return (
-    <ParticipantLayout title={tp.verify.title} eyebrow={tp.verify.eyebrow}>
+    <ParticipantLayout title={tp.verify.title} eyebrow={tp.verify.eyebrow} headerAside={<LanguageSwitch />}>
       <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div

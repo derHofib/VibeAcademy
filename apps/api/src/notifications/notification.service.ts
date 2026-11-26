@@ -5,7 +5,8 @@ import { APP_CONFIG, type AppConfig } from '../config';
 import { DbService } from '../db/db.service';
 import { RedisService } from '../redis/redis.service';
 import { MAIL_PROVIDER, PUSH_PROVIDER, SMS_PROVIDER, type MailProvider, type PushProvider, type SmsProvider } from './providers';
-import { render, type TemplateName } from './templates';
+import { render, TRANSLATED_TEMPLATES, type TemplateName } from './templates';
+import { recipientLanguage } from '../i18n/recipient-language';
 
 export interface EnqueueInput {
   tenantId: string | null;
@@ -66,6 +67,10 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
 
   /** In der laufenden Transaktion einreihen. Liefert die ID für dispatch(). */
   async enqueue(client: pg.PoolClient, n: EnqueueInput): Promise<{ id: string; tenantId: string | null }> {
+    // E-39: Teilnehmer-Nachrichten in der Sprache der Person (sofern die Vorlage übersetzt ist)
+    if (n.data.lang === undefined && TRANSLATED_TEMPLATES.has(n.template) && (await recipientLanguage(client, n.tenantId, n.recipient)) === 'en') {
+      n = { ...n, data: { ...n.data, lang: 'en' } };
+    }
     const r = await client.query(
       `INSERT INTO notification (tenant_id, account_id, channel, recipient, template, data, has_secret)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,

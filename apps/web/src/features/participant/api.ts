@@ -31,14 +31,26 @@ export interface InvitationStart {
   rules: { strictMode: boolean; passPct: number; maxAttempts: number };
   totals: { pages: number; minReadingSeconds: number; questions: number };
   chapters: Chapter[];
-  pages: Array<{ pageNo: number; title: string | null; tMinSeconds: number }>;
+  pages: Array<{ pageNo: number; title: string | null; tMinSeconds: number; required?: boolean }>;
   hasAccount: boolean;
+  /** Phase 3 (E-39): Sprache der Person ('de'|'en') und Sprache der Dokumentfassung */
+  sprache?: 'de' | 'en';
+  documentLanguage?: 'de' | 'en';
+  /** E-38: Neueinladung „nur geänderte Seiten“ – Pflichtseiten, sonst null */
+  onlyPages?: number[] | null;
+  quizRequired?: boolean;
+  /** E-40: Signaturniveau der Schulung */
+  signatureLevel?: SignatureLevel;
   /** E-Mail-Adresse der eingeladenen Person, falls die API sie liefert (Vorbelegung „Konto anlegen“, E-25) */
   personEmail?: string | null;
 }
 
+export type SignatureLevel = 'ees' | 'fes' | 'qes';
+
 export interface PageProgress {
   pageNo: number;
+  /** false = freiwillige Seite (Neueinladung „nur geänderte Seiten“, E-38) */
+  required?: boolean;
   tMinMs: number;
   dwellMs: number;
   fulfilled: boolean;
@@ -48,6 +60,7 @@ export interface PageProgress {
 export interface ProgressSummary {
   complete: boolean;
   strictMode: boolean;
+  onlyPages?: number[] | null;
   pages: PageProgress[];
   current?: { pageNo: number; remainingMs: number };
 }
@@ -116,6 +129,9 @@ export interface SignatureInfo {
   signedAt: string | null;
   verifyCode: string | null;
   authMethods: Array<'password' | 'otp_mail'>;
+  /** E-40: Niveau; bei FES/QES unterschreibt der Teilnehmer beim Anbieter */
+  level?: SignatureLevel;
+  provider?: { name: string; label: string; test: boolean } | null;
 }
 
 export interface EvidenceInfo {
@@ -227,3 +243,19 @@ export const participantPath = {
   sign: (id: string) => `/teilnahme/${id}/abschluss`,
   verify: (code: string) => `/verify/${code}`,
 };
+
+/** Seitenliste „3, 7, 8“ bzw. Bereiche „3–5, 9“ (Hinweis „Nur geänderte Seiten“, E-38). */
+export function pageList(pages: readonly number[]): string {
+  const sorted = [...new Set(pages)].sort((a, b) => a - b);
+  const out: string[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j]! + 1) j++;
+    out.push(j - i >= 2 ? `${sorted[i]}–${sorted[j]}` : sorted.slice(i, j + 1).join(', '));
+    i = j;
+  }
+  return out.join(', ');
+}
+
+/** Nur Pflichtseiten (ohne Angabe: alle). */
+export const requiredOf = <T extends { required?: boolean }>(pages: readonly T[]): T[] => pages.filter((p) => p.required !== false);

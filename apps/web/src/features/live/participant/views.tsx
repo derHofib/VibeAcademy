@@ -6,6 +6,7 @@ import { Button, Card, CheckboxField, Panel, StatusChip } from '@/components/ui'
 import { ApiError, get } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { tl } from '@/i18n/live';
+import { LanguageSwitch } from '@/features/participant/LanguageSwitch';
 import { livePath, liveKeys, type AttendanceEvidence, type AttendanceRow, type ParticipantPolls, type RunView } from '../api';
 import { durLong, formatClock, hm, pctOf } from '../time';
 import { PollCard, type AnswerFeedback } from './PollCard';
@@ -16,9 +17,12 @@ const t = tl.tn;
 export function LiveHeader({ run, kicker }: { run: RunView; kicker?: string }) {
   const kind = run.typ === 'live_extern' ? t.externalTraining : t.presenceTraining;
   return (
-    <header className="px-0.5 pt-0.5 pb-1.5">
-      <p className="text-[12px] text-muted">{kicker ?? t.eyebrow(kind, `${hm(run.startAt)}–${hm(run.endAt)}`, run.ort)}</p>
-      <h1 className="mt-0.5 font-heading text-[20px] leading-tight font-bold text-ink">{run.titel}</h1>
+    <header className="flex items-start gap-3 px-0.5 pt-0.5 pb-1.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[12px] text-muted">{kicker ?? t.eyebrow(kind, `${hm(run.startAt)}–${hm(run.endAt)}`, run.ort)}</p>
+        <h1 className="mt-0.5 font-heading text-[20px] leading-tight font-bold text-ink">{run.titel}</h1>
+      </div>
+      <LanguageSwitch />
     </header>
   );
 }

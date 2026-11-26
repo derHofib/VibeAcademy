@@ -49,6 +49,21 @@ const schema = z.object({
   /** Externe Nachweise: Upload-Grenze je Beleg in MB, Rückgängig-Frist nach Freigabe in Minuten */
   EXTERNAL_UPLOAD_MAX_MB: z.coerce.number().int().positive().default(20),
   EXTERNAL_UNDO_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
+  /** Öffentliche API (E-37): Anfragen je API-Schlüssel und Minute */
+  API_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(600),
+  /** Webhooks (E-37): Versuche je Zustellung, Backoff-Basis (n-ter Versuch wartet Basis · 2^(n−1)), Abschalten nach n Fehlversuchen in Folge */
+  WEBHOOK_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(6),
+  WEBHOOK_BACKOFF_BASE_MS: z.coerce.number().int().min(10).default(60_000),
+  WEBHOOK_DISABLE_AFTER_FAILURES: z.coerce.number().int().min(1).default(20),
+  WEBHOOK_TIMEOUT_MS: z.coerce.number().int().min(100).max(60_000).default(10_000),
+  WEBHOOK_POLL_MS: z.coerce.number().int().min(20).default(5_000),
+  /** http:// zu localhost und private Ziele: leer = außer in Produktion erlaubt; „true“ z. B. für Ziele im Intranet */
+  WEBHOOK_ALLOW_PRIVATE: z.enum(['true', 'false', '']).default(''),
+  /** SSO (E-36): IdP-Issuer über http statt https erlauben – nur Entwicklung (lokaler Test-IdP); in Produktion wirkungslos, in Tests immer an */
+  SSO_ALLOW_HTTP_ISSUER: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   RUN_WORKERS: z
     .enum(['true', 'false'])
     .default('true')

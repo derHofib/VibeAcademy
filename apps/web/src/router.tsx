@@ -6,6 +6,8 @@ export const router = createBrowserRouter([
   { path: '/', lazy: async () => ({ Component: (await import('@/features/auth/HomeRedirect')).default }) },
   { path: '/anmelden', element: <LoginRoute /> },
   { path: '/registrieren', element: <RegisterRoute /> },
+  // Phase 3 (E-36): Rückkehr von der Anmeldung mit Firmenkonto
+  { path: '/anmelden/sso', lazy: async () => ({ Component: (await import('@/pages/sso/SsoLandingPage')).default }) },
   { path: '/passwort-festlegen', lazy: async () => ({ Component: (await import('@/pages/auth/SetPasswordPage')).default }) },
   // Verwaltung (Phase 1, Schritte 1.11/1.12) – Anmeldung erforderlich, lazy geladen
   {
@@ -21,6 +23,8 @@ export const router = createBrowserRouter([
       { path: 'termine', lazy: async () => ({ Component: (await import('@/pages/presence/TerminePage')).default }) },
       { path: 'personen', lazy: async () => ({ Component: (await import('@/pages/admin/PersonsPage')).default }) },
       { path: 'einstellungen', lazy: async () => ({ Component: (await import('@/pages/admin/SettingsPage')).default }) },
+      // Phase 3 (E-37): REST-API-Schlüssel und Webhooks
+      { path: 'schnittstellen', lazy: async () => ({ Component: (await import('@/pages/integrations/IntegrationsPage')).default }) },
       // Phase 2: externe Nachweise (2.10) und Pflichtmatrix (2.9)
       { path: 'extern', lazy: async () => ({ Component: (await import('@/pages/external/ExternalQueuePage')).default }) },
       { path: 'extern/neu', lazy: async () => ({ Component: (await import('@/pages/external/ExternalCapturePage')).default }) },

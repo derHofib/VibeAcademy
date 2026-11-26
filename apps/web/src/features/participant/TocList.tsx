@@ -45,7 +45,8 @@ export function TocList({ start, pages, current, onGo, desktop }: TocListProps) 
               const done = !!p?.fulfilled;
               const isCurrent = n === current;
               const locked = !!p && !p.allowed;
-              const label = done ? tp.reader.toc.captured : isCurrent ? tp.reader.toc.current : locked ? tp.reader.toc.locked : desktop ? '' : tp.reader.toc.open;
+              const optional = p?.required === false;
+              const label = done ? tp.reader.toc.captured : isCurrent ? tp.reader.toc.current : locked ? tp.reader.toc.locked : optional ? tp.reader.toc.optional : desktop ? '' : tp.reader.toc.open;
               return (
                 <li key={n}>
                   <button

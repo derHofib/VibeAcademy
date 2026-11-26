@@ -13,6 +13,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { RedisService } from '../redis/redis.service';
 import { formatDateDe, InvitationService } from '../runs/invitation.service';
 import { parseSettings } from '../trainings/settings';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 type Queued = { id: string; tenantId: string | null };
 type Counts = { reminders: number; escalations: number; overdue: number; reinvitations: number; bookCourse: number; newVersion: number; expiredExternal: number };
@@ -109,6 +110,7 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
         [berlinDate(now)],
       );
       counts.expiredExternal = ex.rowCount ?? 0;
+      await WebhookEmitter.complianceChanged(c, tenantId, now); // E-37: compliance.state_changed ggü. letztem Lauf
       if (Object.values(counts).some((n) => n > 0)) {
         await this.audit.record(c, { entity: 'deadlines', action: 'scan', payload: { at: now.toISOString(), ...counts } });
       }
@@ -271,7 +273,7 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
       const t = (
         await c.query(
           `SELECT t.id, t.titel, t.format, t.settings, t.ansprechpartner,
-                  (SELECT v.id FROM training_version v WHERE v.training_id = t.id AND v.published_at IS NOT NULL ORDER BY v.version_no DESC LIMIT 1) AS version_id
+                  (SELECT v.id FROM training_version v WHERE v.training_id = t.id AND v.sprache = 'de' AND v.published_at IS NOT NULL ORDER BY v.version_no DESC LIMIT 1) AS version_id
              FROM training t WHERE t.id = $1`,
           [row.trainingId],
         )
@@ -360,10 +362,10 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
   private async newVersions(c: pg.PoolClient, tenantId: string, now: Date, counts: Counts, queued: Queued[]) {
     const versions = (
       await c.query(
-        `SELECT v.id, v.training_id, v.version_no, v.changed_pages, t.titel, t.settings, t.format
+        `SELECT v.id, v.training_id, v.version_no, v.changed_pages, v.published_at, t.titel, t.settings, t.format
            FROM training_version v JOIN training t ON t.id = v.training_id
-          WHERE v.change_kind = 'inhaltlich' AND v.published_at IS NOT NULL AND t.archived_at IS NULL
-            AND v.version_no = (SELECT max(x.version_no) FROM training_version x WHERE x.training_id = v.training_id AND x.published_at IS NOT NULL)`,
+          WHERE v.change_kind = 'inhaltlich' AND v.published_at IS NOT NULL AND t.archived_at IS NULL AND v.sprache = 'de'
+            AND v.version_no = (SELECT max(x.version_no) FROM training_version x WHERE x.training_id = v.training_id AND x.published_at IS NOT NULL AND x.sprache = 'de')`,
       )
     ).rows;
     for (const v of versions) {
@@ -377,8 +379,14 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
               AND (p.austritt_am IS NULL OR p.austritt_am > $5::date)
               AND NOT EXISTS (SELECT 1 FROM invitation j JOIN run rj ON rj.id = j.run_id WHERE j.person_id = i.person_id AND rj.training_version_id = $6)
               AND NOT EXISTS (SELECT 1 FROM invitation j JOIN run rj ON rj.id = j.run_id
-                               WHERE j.person_id = i.person_id AND rj.training_id = $1 AND j.status NOT IN ('bestaetigt','befreit'))`,
-          [v.training_id, v.version_no, settings.intervalMonths, now, berlinDate(now), v.id],
+                               WHERE j.person_id = i.person_id AND rj.training_id = $1 AND j.status NOT IN ('bestaetigt','befreit'))
+              -- E-39: Gibt es englische Fassungen, aber für diese Version noch nicht, warten englischsprachige Personen
+              -- bis zu 14 Tage auf die Übersetzung (danach erhalten sie die deutsche Fassung).
+              AND NOT (lower(left(p.sprache, 2)) = 'en' AND $7::timestamptz > $4::timestamptz - interval '14 days'
+                       AND EXISTS (SELECT 1 FROM training_version e WHERE e.training_id = $1 AND e.sprache = 'en' AND e.published_at IS NOT NULL)
+                       AND NOT EXISTS (SELECT 1 FROM training_version e WHERE e.training_id = $1 AND e.sprache = 'en'
+                                          AND e.version_no = $2 AND e.published_at IS NOT NULL))`,
+          [v.training_id, v.version_no, settings.intervalMonths, now, berlinDate(now), v.id, v.published_at],
         )
       ).rows;
       for (const { person_id } of persons) {

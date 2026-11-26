@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, Panel } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
 import { tp, formatDayMonth } from '@/i18n/participant';
-import { nextStep, participantPath, useInvitation, useProgress } from '@/features/participant/api';
+import { nextStep, pageList, participantPath, requiredOf, useInvitation, useProgress } from '@/features/participant/api';
+import { LanguageSwitch } from '@/features/participant/LanguageSwitch';
+import { useParticipantLang } from '@/i18n/lang';
 import { neededCorrect } from '@/features/participant/quizLogic';
 import { ErrorScreen, LoadingScreen } from '@/features/participant/ScreenStates';
 import { contactLine, firstName, parseContact } from '@/features/participant/viewerModel';
@@ -16,6 +18,8 @@ export default function StartPage() {
   const navigate = useNavigate();
   const inv = useInvitation(id);
   const progress = useProgress(id);
+  // E-39: Sprache der Person übernehmen (sofern nicht selbst gewählt)
+  useParticipantLang(inv.data?.sprache);
   // Präsenz-/Live-Termine → Live-Ansicht statt Lese-Start
   const live = useLiveInvitationRedirect(id, inv.error);
 
@@ -28,7 +32,9 @@ export default function StartPage() {
   const minutes = Math.max(1, Math.ceil(s.totals.minReadingSeconds / 60));
   const hasQuiz = s.totals.questions > 0;
   const step = nextStep(s.status, hasQuiz);
-  const done = progress.data?.pages.filter((p) => p.fulfilled).length ?? 0;
+  const reqPages = progress.data ? requiredOf(progress.data.pages) : [];
+  const done = reqPages.filter((p) => p.fulfilled).length;
+  const onlyPages = s.onlyPages?.length ? s.onlyPages : null;
   const started = (progress.data?.pages.some((p) => p.dwellMs > 0 || p.fulfilled) ?? false) || s.status === 'gelesen';
   const contact = contactLine(parseContact(s.training.ansprechpartner));
 
@@ -65,22 +71,37 @@ export default function StartPage() {
             <span className="rounded-pill bg-surface px-3 py-1.5 text-[12px] font-semibold text-accent-text">
               {s.training.kategorie || tp.start.defaultCategory}
             </span>
-            {s.dueAt && (
-              <span className="rounded-pill bg-warn-soft px-3 py-1.5 text-[12px] font-semibold text-warn-text">{tp.start.due(formatDayMonth(s.dueAt))}</span>
-            )}
+            <div className="flex items-center gap-2">
+              {s.dueAt && (
+                <span className="rounded-pill bg-warn-soft px-3 py-1.5 text-[12px] font-semibold text-warn-text">{tp.start.due(formatDayMonth(s.dueAt))}</span>
+              )}
+              <LanguageSwitch invitationId={id} />
+            </div>
           </div>
           <h1 className="font-heading text-[28px] leading-[1.2] font-bold tracking-[-0.01em] break-words text-ink [hyphens:manual]">
             {softHyphenate(s.training.titel)}
           </h1>
           <p className="text-[15px] leading-[1.55] text-ink-2">{tp.start.greeting(firstName(s.personName), minutes)}</p>
           <dl className={cn('grid gap-2', hasQuiz ? 'grid-cols-3' : 'grid-cols-2')}>
-            <Kpi value={String(s.totals.pages)} label={tp.start.pages(s.totals.pages)} />
+            {onlyPages ? (
+              <Kpi value={String(onlyPages.length)} label={tp.start.pagesRequired(onlyPages.length)} />
+            ) : (
+              <Kpi value={String(s.totals.pages)} label={tp.start.pages(s.totals.pages)} />
+            )}
             <Kpi value={tp.start.minutesShort(minutes)} label={tp.start.readingTime} />
             {hasQuiz && <Kpi value={String(s.totals.questions)} label={tp.start.questions(s.totals.questions)} />}
           </dl>
         </section>
 
         <main className="flex flex-1 flex-col gap-3 pt-3.5 md:flex-none">
+          {onlyPages && (
+            <Panel tone="accent" data-testid="only-pages">
+              <strong className="font-semibold">{tp.start.onlyPages(pageList(onlyPages))}</strong>
+              <br />
+              {tp.start.onlyPagesText}
+            </Panel>
+          )}
+          {s.sprache === 'en' && s.documentLanguage === 'de' && <Panel tone="warn">{tp.start.documentGerman}</Panel>}
           <Card padding="none" className="rounded-[22px] px-[18px] pt-[18px] pb-2" aria-labelledby="ablauf-titel">
             <h2 id="ablauf-titel" className="mb-2 font-heading text-[16px] font-bold text-ink">
               {tp.start.stepsTitle}
@@ -119,7 +140,7 @@ export default function StartPage() {
           </section>
 
           {step === 'lesen' && done > 0 && progress.data && (
-            <p className="px-1 text-center text-[13px] text-muted">{tp.start.progressNote(done, progress.data.pages.length)}</p>
+            <p className="px-1 text-center text-[13px] text-muted">{tp.start.progressNote(done, reqPages.length)}</p>
           )}
           {step === 'befreit' && <Panel tone="success">{tp.start.exempt}</Panel>}
         </main>

@@ -11,6 +11,7 @@ import { parseCsv } from '../persons/persons.controller';
 import { ExternalService, type RecordFields } from './external.service';
 import { normalize, parseGermanDate } from './ocr';
 import type { ReceiptFile } from './receipts';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 const HEADERS: Record<string, string[]> = {
   personalnr: ['personalnr', 'personalnummer', 'pers_nr', 'persnr'],
@@ -153,6 +154,7 @@ export class ExternalImportController {
           files: p.beleg ? [stored.get(p.beleg.toLowerCase())!] : [], validUntil, reviewed: status === 'freigegeben',
         });
         report.find((r) => r.line === p.line)!.recordId = id;
+        if (status === 'freigegeben') await WebhookEmitter.emit(c, tenantId, 'external_record.approved', { externalRecordId: id }); // E-37
         created.push(id);
       }
       await this.audit.record(c, { entity: 'external_record', action: 'imported', payload: { rows: rows.length, created: created.length, mode, receipts: stored.size } });

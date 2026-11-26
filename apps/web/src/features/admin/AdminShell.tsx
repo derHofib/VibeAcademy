@@ -8,10 +8,12 @@ import { adm } from '@/i18n/admin';
 import { de } from '@/i18n/de';
 import { ta } from '@/i18n/account';
 import { FileInput, Grid3x3 } from 'lucide-react';
+import { Plug } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/lib/api';
 import { qk } from '@/features/admin/api';
 import type { DashboardCompliance } from '@/features/matrix/api';
+import { useAdminLang } from '@/i18n/lang';
 import { tx } from '@/i18n/external';
 
 export const ADMIN_NAV: AdminNavItem[] = [
@@ -22,6 +24,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/verwaltung/pflichtmatrix', label: tx.nav.matrix, icon: Grid3x3 },
   { to: '/verwaltung/extern', label: tx.nav.external, icon: FileInput },
   { to: '/verwaltung/einstellungen', label: adm.nav.settings, icon: Settings },
+  { to: '/verwaltung/schnittstellen', label: 'Schnittstellen', icon: Plug },
   // Eigene Nachweise als Teilnehmer anderer Schulungen (E-25)
   { to: '/konto', label: ta.nav.myEvidence, icon: FileCheck2 },
 ];
@@ -87,5 +90,7 @@ function Shell({ me }: { me: Me }) {
 
 /** Layout-Route für `/verwaltung/*`: Anmeldung prüfen, Rahmen mit Nutzer/Mandant/Abmelden. */
 export default function AdminShell() {
+  // E-39: Verwaltung bleibt Deutsch, auch nach einem Besuch der englischen Teilnehmersicht
+  useAdminLang();
   return <RequireAuth>{(me) => <Shell me={me} />}</RequireAuth>;
 }

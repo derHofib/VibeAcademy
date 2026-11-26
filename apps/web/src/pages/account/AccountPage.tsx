@@ -10,6 +10,8 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 import type { Me } from '@/features/auth/session';
 import { de } from '@/i18n/de';
 import { ta } from '@/i18n/account';
+import { useParticipantLang } from '@/i18n/lang';
+import { LanguageSwitch } from '@/features/participant/LanguageSwitch';
 import { useMyEvidence } from '@/features/account/api';
 import { evidenceKey, firstNameOf, groupEvidence } from '@/features/account/model';
 import { ExternalSection } from '@/features/account/ExternalCards';
@@ -25,11 +27,12 @@ export default function AccountPage() {
 
 function MyEvidencePage({ me }: { me: Me }) {
   const evidence = useMyEvidence();
+  useParticipantLang();
   const groups = evidence.data ? groupEvidence(evidence.data) : null;
   const isMember = me.memberships.length > 0;
 
   return (
-    <ParticipantLayout title={ta.page.title} eyebrow={de.app.name} width="wide">
+    <ParticipantLayout title={ta.page.title} eyebrow={de.app.name} width="wide" headerAside={<LanguageSwitch />}>
       <section
         aria-label={ta.page.greeting(firstNameOf(me.account.name))}
         className="flex flex-col gap-3.5 rounded-[28px] bg-[#E4EBFD] px-[22px] pt-[22px] pb-6"

@@ -12,6 +12,8 @@ export interface AnalyzedPage {
   pageNo: number;
   wordCount: number;
   title: string | null;
+  /** Text-Layer der Seite (Rohtext, Elemente mit Leerzeichen verbunden) – Grundlage des Seiten-Diffs (E-38) */
+  text: string;
 }
 export interface AnalyzedChapter {
   idx: number;
@@ -62,7 +64,8 @@ export async function analyzePdf(data: Buffer): Promise<PdfAnalysis> {
         parts.push(it.str);
         if (!firstLine && it.str.trim().length > 2) firstLine = it.str.trim();
       }
-      pages.push({ pageNo: n, wordCount: countWords(parts.join(' ')), title: firstLine ? firstLine.slice(0, 120) : null });
+      const text = parts.join(' ');
+      pages.push({ pageNo: n, wordCount: countWords(text), title: firstLine ? firstLine.slice(0, 120) : null, text });
       page.cleanup();
     }
 

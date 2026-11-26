@@ -15,6 +15,8 @@ const PersonInput = z.object({
   birthdateUnder18: z.boolean().default(false),
   austrittAm: z.iso.date().nullish(),
   readingTimeFactor: z.number().min(1).max(5).default(1),
+  /** Sprache für Teilnehmeroberfläche, Mails und Nachweis (E-39) */
+  sprache: z.enum(['de', 'en']).optional(),
 });
 const PersonPatch = PersonInput.partial();
 const OrgUnitInput = z.object({
@@ -26,7 +28,7 @@ const ImportInput = z.object({ csv: z.string().min(1).max(2_000_000) });
 
 const COLS: Record<string, string> = {
   name: 'name', personalnr: 'personalnr', email: 'email', mobil: 'mobil', orgUnitId: 'org_unit_id', extern: 'extern',
-  birthdateUnder18: 'birthdate_under18', austrittAm: 'austritt_am', readingTimeFactor: 'reading_time_factor',
+  birthdateUnder18: 'birthdate_under18', austrittAm: 'austritt_am', readingTimeFactor: 'reading_time_factor', sprache: 'sprache',
 };
 
 function mapUnique(e: unknown): never {
@@ -73,7 +75,7 @@ export class PersonsController {
       (
         await c.query(
           `SELECT p.id, p.name, p.personalnr, p.email, p.mobil, p.org_unit_id, o.name AS org_unit_name, p.extern,
-                  p.birthdate_under18, p.austritt_am, p.reading_time_factor, p.account_id IS NOT NULL AS has_account
+                  p.birthdate_under18, p.austritt_am, p.reading_time_factor, p.account_id IS NOT NULL AS has_account, p.sprache
              FROM person p LEFT JOIN org_unit o ON o.id = p.org_unit_id
             WHERE ($1::text IS NULL OR p.name ILIKE '%' || $1 || '%' OR p.email ILIKE '%' || $1 || '%' OR p.personalnr = $1)
               AND ($2::uuid IS NULL OR p.org_unit_id = $2)
@@ -90,9 +92,9 @@ export class PersonsController {
     return this.db
       .tx(async (c) => {
         const r = await c.query(
-          `INSERT INTO person (name, personalnr, email, mobil, org_unit_id, extern, birthdate_under18, austritt_am, reading_time_factor)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-          [b.name, b.personalnr ?? null, b.email ?? null, b.mobil ?? null, b.orgUnitId ?? null, b.extern, b.birthdateUnder18, b.austrittAm ?? null, b.readingTimeFactor],
+          `INSERT INTO person (name, personalnr, email, mobil, org_unit_id, extern, birthdate_under18, austritt_am, reading_time_factor, sprache)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+          [b.name, b.personalnr ?? null, b.email ?? null, b.mobil ?? null, b.orgUnitId ?? null, b.extern, b.birthdateUnder18, b.austrittAm ?? null, b.readingTimeFactor, b.sprache ?? 'de'],
         );
         await this.audit.record(c, { entity: 'person', entityId: r.rows[0].id, action: 'created' });
         return { id: r.rows[0].id as string };

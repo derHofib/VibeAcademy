@@ -9,6 +9,7 @@ import { Panel } from '@/components/ui/card';
 import { QuizOption } from '@/components/ui/quiz-option';
 import { cn } from '@/lib/cn';
 import { tp } from '@/i18n/participant';
+import { useParticipantLang } from '@/i18n/lang';
 import {
   participantKeys,
   participantPath,
@@ -36,6 +37,7 @@ export default function QuizPage() {
   const qc = useQueryClient();
   const desktop = useMediaQuery(VIEWER_DESKTOP_QUERY);
   const inv = useInvitation(id);
+  useParticipantLang(inv.data?.sprache);
   const progress = useProgress(id);
   const quiz = useQuiz(id);
   const [zoom, setZoom] = useViewerZoom();

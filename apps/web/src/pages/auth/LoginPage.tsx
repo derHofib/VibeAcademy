@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { de } from '@/i18n/de';
 import { adm } from '@/i18n/admin';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { AuthShell } from './AuthShell';
+import { SsoLoginButton } from '@/features/sso/SsoLoginButton';
 
 export interface LoginValues {
   email: string;
@@ -33,6 +34,7 @@ const t = de.auth.login;
 /** Anmeldeseite – Oberfläche; `LoginRoute` bindet sie an die API. */
 export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, emailError }: LoginPageProps) {
   const participant = mode === 'teilnehmer';
+  const [email, setEmail] = useState('');
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -63,6 +65,7 @@ export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, e
             autoComplete="email"
             inputMode="email"
             placeholder={t.emailPlaceholder}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
         <Field label={t.password} required error={error}>
@@ -72,6 +75,8 @@ export function LoginPage({ mode = 'dozent', onSubmit, pending = false, error, e
           {pending ? de.common.loading : t.submit}
         </Button>
       </form>
+      {/* Phase 3 (E-36): Anmeldung mit Firmenkonto */}
+      <SsoLoginButton email={email} />
     </AuthShell>
   );
 }

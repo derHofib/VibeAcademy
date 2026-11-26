@@ -2,8 +2,33 @@
  * Texte für Phase 2: externe Nachweise (Screens 9–11), Pflichtmatrix (2.9), Nachweismappe-Export,
  * Web-Push-Opt-in. Verwaltung siezt nicht, Teilnehmersicht duzt (wie participant.ts/account.ts).
  */
+import { localized } from './lang';
+import { txAccountEn } from './en/account';
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 const persons = (n: number) => `${n} ${plural(n, 'Person', 'Personen')}`;
+
+/** „Meine Nachweise“: externe Nachweise und Push (Teilnehmersicht) – Deutsch; Englisch in en/account.ts */
+export const txAccountDe = {
+  entryTitle: 'Externen Nachweis einreichen',
+  entryText: 'Erste-Hilfe-Kurs, Staplerschein oder Herstellerschulung? Foto machen, prüfen, einreichen.',
+  entryAction: 'Nachweis einreichen',
+  submissions: 'Eigene Einreichungen',
+  submissionsHint: 'Freigegebene Nachweise findest du unter „Erledigt“.',
+  open: (title: string) => `Öffnen: ${title}`,
+  untitled: 'Externer Nachweis',
+  kind: { online: 'Online', praesenz: 'Präsenz', live: 'Live', extern: 'Extern' } as Record<string, string>,
+  push: {
+    title: 'Benachrichtigungen auf diesem Gerät',
+    text: 'Wir melden uns, wenn ein Nachweis freigegeben oder zurückgegeben wird oder eine Frist naht.',
+    on: 'Benachrichtigungen sind auf diesem Gerät aktiv.',
+    denied: 'Benachrichtigungen sind im Browser blockiert. Bitte in den Website-Einstellungen erlauben.',
+    unsupported: 'Dieser Browser unterstützt keine Push-Benachrichtigungen.',
+    failed: 'Das hat nicht geklappt. Bitte erneut versuchen.',
+    busy: 'Wird eingerichtet …',
+  },
+};
+
+export type ExternalAccountStrings = typeof txAccountDe;
 
 export const tx = {
   nav: {
@@ -295,25 +320,8 @@ export const tx = {
     errCourse: 'Bitte den Kurs angeben.',
   },
 
-  account: {
-    entryTitle: 'Externen Nachweis einreichen',
-    entryText: 'Erste-Hilfe-Kurs, Staplerschein oder Herstellerschulung? Foto machen, prüfen, einreichen.',
-    entryAction: 'Nachweis einreichen',
-    submissions: 'Eigene Einreichungen',
-    submissionsHint: 'Freigegebene Nachweise findest du unter „Erledigt“.',
-    open: (title: string) => `Öffnen: ${title}`,
-    untitled: 'Externer Nachweis',
-    kind: { online: 'Online', praesenz: 'Präsenz', live: 'Live', extern: 'Extern' } as Record<string, string>,
-    push: {
-      title: 'Benachrichtigungen auf diesem Gerät',
-      text: 'Wir melden uns, wenn ein Nachweis freigegeben oder zurückgegeben wird oder eine Frist naht.',
-      on: 'Benachrichtigungen sind auf diesem Gerät aktiv.',
-      denied: 'Benachrichtigungen sind im Browser blockiert. Bitte in den Website-Einstellungen erlauben.',
-      unsupported: 'Dieser Browser unterstützt keine Push-Benachrichtigungen.',
-      failed: 'Das hat nicht geklappt. Bitte erneut versuchen.',
-      busy: 'Wird eingerichtet …',
-    },
-  },
+  // Teilnehmersicht „Meine Nachweise“: Deutsch/Englisch (E-39)
+  account: localized<ExternalAccountStrings>({ de: txAccountDe, en: txAccountEn }),
 
   matrix: {
     title: 'Pflichtmatrix',

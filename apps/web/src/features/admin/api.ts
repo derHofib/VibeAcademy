@@ -65,11 +65,17 @@ export interface TrainingSettings {
   deadlineDays: number;
   intervalMonths: number;
   completenessPct: number;
+  /** E-38: Wissenscheck auch bei Neueinladung „nur geänderte Seiten“ */
+  quizOnReinvite?: boolean;
+  /** E-40: Signaturniveau */
+  signatureLevel?: 'ees' | 'fes' | 'qes';
 }
 
 export interface TrainingVersionSummary {
   id: string;
   version_no: number;
+  /** E-39: Sprachfassung (fehlt bei älteren Antworten → Deutsch) */
+  sprache?: 'de' | 'en';
   status: VersionStatus;
   file_name: string | null;
   file_size: string | number | null;
@@ -159,6 +165,8 @@ export interface Person {
   austritt_am: string | null;
   reading_time_factor: string | number;
   has_account: boolean;
+  /** E-39 */
+  sprache?: string;
 }
 
 export interface OrgUnit {

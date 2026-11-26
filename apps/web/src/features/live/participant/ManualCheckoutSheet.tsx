@@ -1,5 +1,5 @@
 import { useId, useState, type KeyboardEvent } from 'react';
-import { MANUAL_CHECKOUT_REASONS, MANUAL_REASON_LABEL, MANUAL_NOTE_MAX, type ManualCheckoutReason } from '@sn/shared';
+import { MANUAL_CHECKOUT_REASONS, MANUAL_NOTE_MAX, type ManualCheckoutReason } from '@sn/shared';
 import { Button, Sheet, Textarea } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { tl } from '@/i18n/live';
@@ -54,7 +54,7 @@ export function ManualCheckoutSheet({
       <div className="flex flex-col gap-3.5">
         <p className="text-[13.5px] leading-[1.5] text-ink-2">
           {t.textBefore}
-          <strong className="text-ink">{tl.common.oclock(nowLabel)}</strong>
+          <strong className="text-ink">{tl.tn.oclock(nowLabel)}</strong>
           {t.textAfter}
         </p>
         <div role="radiogroup" aria-label={t.reasonLabel} className="flex flex-wrap gap-2">
@@ -74,7 +74,7 @@ export function ManualCheckoutSheet({
                   sel ? 'bg-accent text-white' : 'bg-bg text-ink-2 hover:bg-neutral-soft',
                 )}
               >
-                {MANUAL_REASON_LABEL[r]}
+                {t.reasons[r]}
               </button>
             );
           })}

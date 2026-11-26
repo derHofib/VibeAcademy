@@ -22,12 +22,18 @@ import {
 import { ErrorScreen, LoadingScreen } from '@/features/participant/ScreenStates';
 import { participantRegisterPath } from '@/features/account/model';
 import { MIN_SIGNATURE_POINTS, SignatureField, type SignatureFieldHandle } from '@/features/participant/SignatureField';
+import { useParticipantLang } from '@/i18n/lang';
+import { LanguageSwitch } from '@/features/participant/LanguageSwitch';
+import { ProviderSignForm } from '@/features/participant/ProviderSignForm';
+import { SsoStepUpBlock, useSsoStepUp } from '@/features/sso/SsoStepUp';
+import { tsso } from '@/features/sso/texts';
 
 /** Bestätigung und Unterschrift (Screen 6), danach Abschluss mit Nachweis. */
 export default function SignaturePage() {
   const { id = '' } = useParams();
   const inv = useInvitation(id);
   const info = useSignatureInfo(id);
+  useParticipantLang(inv.data?.sprache);
   const [done, setDone] = useState<{ verifyCode: string; nachweisNr: string; signedAt?: string } | null>(null);
 
   if (inv.isError) return <ErrorScreen message={inv.error.message} />;
@@ -102,15 +108,17 @@ function SignForm({
   const confirmId = useId();
   const authId = useId();
 
-  const usePassword = info.authMethods.includes('password');
-  const useOtp = !usePassword && info.authMethods.includes('otp_mail');
+  // E-36: Step-up per Firmenkonto (bei „nur SSO“ ohne Passwort)
+  const sso = useSsoStepUp(id);
+  const usePassword = info.authMethods.includes('password') && !sso.required && !sso.ticket;
+  const useOtp = !info.authMethods.includes('password') && info.authMethods.includes('otp_mail') && !sso.ticket;
   const signed = points >= MIN_SIGNATURE_POINTS;
-  const authOk = usePassword ? password.length > 0 : useOtp ? /^\d{6}$/.test(code) : false;
+  const authOk = sso.ticket ? true : usePassword ? password.length > 0 : useOtp ? /^\d{6}$/.test(code) : false;
   const ready = info.ready && agree && signed && authOk;
   const missing = [
     ...(agree ? [] : [tp.sign.missingConfirm]),
     ...(signed ? [] : [tp.sign.missingSignature]),
-    ...(authOk ? [] : usePassword ? [tp.sign.missingPassword] : useOtp ? [tp.sign.missingCode] : []),
+    ...(authOk ? [] : sso.available && !usePassword ? [tsso.stepUp.missing] : usePassword ? [tp.sign.missingPassword] : useOtp ? [tp.sign.missingCode] : []),
   ];
 
   const header = { title: tp.sign.title, onBack: () => navigate(participantPath.start(id)) };
@@ -129,6 +137,11 @@ function SignForm({
         </Card>
       </ParticipantLayout>
     );
+  }
+
+  // E-40: FES/QES – Bestätigung, dann Weiterleitung zum Signaturanbieter statt Unterschriftsfeld
+  if (info.level && info.level !== 'ees') {
+    return <ProviderSignForm id={id} info={info} header={header} steps={<Steps start={start} info={info} current />} />;
   }
 
   const requestCode = async () => {
@@ -150,7 +163,10 @@ function SignForm({
     try {
       // Hash des angezeigten Textes – der Server prüft, ob er zur Version passt
       const confirmTextSha256 = await sha256Hex(info.confirmText);
-      const { stepUpToken } = await post<{ stepUpToken: string }>(`/me/invitations/${id}/step-up`, usePassword ? { password } : { code });
+      const { stepUpToken } = await post<{ stepUpToken: string }>(
+        `/me/invitations/${id}/step-up`,
+        sso.ticket ? { ssoTicket: sso.ticket } : usePassword ? { password } : { code },
+      );
       const r = await post<{ verifyCode: string; nachweisNr: string; signedAt: string }>(`/me/invitations/${id}/signature`, {
         stepUpToken,
         confirmed: true,
@@ -162,6 +178,7 @@ function SignForm({
       void qc.invalidateQueries({ queryKey: participantKeys.signature(id) });
       onSigned(r);
     } catch (e) {
+      sso.clearTicket(); // Ticket ist verbraucht oder abgelaufen
       setError(e instanceof Error ? e.message : tp.common.errorTitle);
     } finally {
       setBusy(false);
@@ -199,6 +216,7 @@ function SignForm({
           {info.confirmText}
         </label>
       </Card>
+      <SsoStepUpBlock sso={sso} passwordAlternative={usePassword} />
       <SignatureField ref={pad} caption={start.personName} onChange={setPoints} />
       {usePassword && (
         <div className="flex flex-col gap-1.5 px-1">
@@ -256,7 +274,7 @@ function SignForm({
           )}
         </div>
       )}
-      {!usePassword && !useOtp && <Panel tone="warn">{tp.sign.noAuth}</Panel>}
+      {!usePassword && !useOtp && !sso.available && <Panel tone="warn">{tp.sign.noAuth}</Panel>}
     </ParticipantLayout>
   );
 }
@@ -280,6 +298,9 @@ function DoneView({
   const nr = ev.data?.nachweisNr ?? nachweisNr;
   return (
     <ParticipantLayout title={start.training.titel} eyebrow={start.tenantName}>
+      <div className="-mt-1 flex justify-end">
+        <LanguageSwitch invitationId={id} />
+      </div>
       <Card className="flex flex-col items-center gap-3 text-center" padding="lg">
         <div aria-hidden="true" className="flex size-[84px] items-center justify-center rounded-full bg-success-soft text-success">
           <Check className="size-10" strokeWidth={3} />
@@ -290,6 +311,9 @@ function DoneView({
           {nr && <Fact label={tp.done.nr} value={nr} />}
           {code && <Fact label={tp.done.code} value={code} mono />}
           {signedAt && <Fact label={tp.done.signedAt} value={formatDateTime(signedAt)} className="sm:col-span-2" />}
+          {start.signatureLevel && start.signatureLevel !== 'ees' && (
+            <Fact label={tp.done.level} value={tp.done.levels[start.signatureLevel]} className="sm:col-span-2" />
+          )}
         </dl>
         <div className="mt-2 flex w-full flex-col gap-2.5" aria-live="polite">
           {ready ? (

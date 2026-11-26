@@ -4,3 +4,4 @@ export * from './rules/deadlines';
 export * from './roles';
 export * from './rules/qr';
 export * from './rules/attendance';
+export * from './rules/page-diff';

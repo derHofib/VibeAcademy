@@ -55,7 +55,8 @@ export function parseStep(raw: string | null): WizardStep {
 
 /** Neueste Version, an der gearbeitet wird. */
 export function latestVersion(versions: TrainingVersionSummary[]): TrainingVersionSummary | null {
-  return [...versions].sort((a, b) => b.version_no - a.version_no)[0] ?? null;
+  // Sprachfassungen (E-39) teilen die Versionsnummer – maßgeblich ist die deutsche Linie
+  return [...versions].filter((v) => (v.sprache ?? 'de') === 'de').sort((a, b) => b.version_no - a.version_no)[0] ?? null;
 }
 
 /** Muss beim Einladen noch veröffentlicht werden? */

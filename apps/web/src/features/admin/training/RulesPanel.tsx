@@ -6,6 +6,7 @@ import { Button, Card, CardTitle, CheckboxField, Field, Input, Select } from '@/
 import { qk, type Training, type TrainingSettings } from '../api';
 import { formatDecimal, parseDecimal } from '../format';
 import { errorMessage } from '../components/common';
+import { ac } from '@/i18n/admin-diff-i18n';
 
 const r = adm.wizard.rules;
 
@@ -26,6 +27,9 @@ interface Draft {
   allowDownload: boolean;
   deadlineDays: number;
   intervalMonths: number;
+  /** Phase 3 (E-38/E-40) */
+  quizOnReinvite?: boolean;
+  signatureLevel?: 'ees' | 'fes' | 'qes';
 }
 
 const numericFields: Array<{ key: keyof Draft; min: number; max: number; decimal?: boolean }> = [
@@ -54,6 +58,8 @@ function toDraft(t: Training): Draft {
     allowDownload: s.allowDownload,
     deadlineDays: s.deadlineDays,
     intervalMonths: s.intervalMonths,
+    quizOnReinvite: s.quizOnReinvite ?? true,
+    signatureLevel: s.signatureLevel ?? 'ees',
   };
 }
 
@@ -89,6 +95,8 @@ export function validateRules(d: Draft): {
       allowDownload: d.allowDownload,
       deadlineDays: d.deadlineDays,
       intervalMonths: d.intervalMonths,
+      ...(d.quizOnReinvite !== undefined ? { quizOnReinvite: d.quizOnReinvite } : {}),
+      ...(d.signatureLevel ? { signatureLevel: d.signatureLevel } : {}),
     },
   };
 }
@@ -232,6 +240,17 @@ export function RulesPanel({
               </Field>
             </div>
           )}
+          {draft.quizRequired && (
+            <div className="pl-[38px]">
+              <CheckboxField
+                label={<span className="font-semibold">{ac.rules.quizOnReinvite}</span>}
+                description={ac.rules.quizOnReinviteText}
+                checked={draft.quizOnReinvite ?? true}
+                onCheckedChange={(c) => set('quizOnReinvite', c === true)}
+                disabled={disabled}
+              />
+            </div>
+          )}
         </div>
         <CheckboxField
           label={<span className="font-semibold">{r.stepUp}</span>}
@@ -247,6 +266,20 @@ export function RulesPanel({
           onCheckedChange={(c) => set('allowDownload', c === true)}
           disabled={disabled}
         />
+        <Field label={ac.rules.signatureLevel} hint={ac.rules.signatureLevelHint}>
+          <Select
+            name="signatureLevel"
+            value={draft.signatureLevel ?? 'ees'}
+            onChange={(e) => set('signatureLevel', e.target.value as 'ees' | 'fes' | 'qes')}
+            disabled={disabled}
+          >
+            {(['ees', 'fes', 'qes'] as const).map((l) => (
+              <option key={l} value={l}>
+                {ac.rules.levels[l]}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </div>
 
       <div className="grid grid-cols-2 gap-3 border-t border-line pt-4">

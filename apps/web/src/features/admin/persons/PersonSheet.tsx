@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patch, post } from '@/lib/api';
 import { adm } from '@/i18n/admin';
 import { Button, CheckboxField, Field, Input, Panel, Select, Sheet } from '@/components/ui';
+import { ac } from '@/i18n/admin-diff-i18n';
 import { fieldErrors } from '@/features/auth/session';
 import { type OrgUnit, type Person } from '../api';
 import { formatDecimal, parseDecimal } from '../format';
@@ -20,6 +21,8 @@ interface Draft {
   birthdateUnder18: boolean;
   readingTimeFactor: string;
   austrittAm: string;
+  /** E-39: Sprache für Teilnehmersicht, Mails und Nachweis */
+  sprache: 'de' | 'en';
 }
 
 export function PersonSheet({
@@ -46,6 +49,7 @@ export function PersonSheet({
     birthdateUnder18: person?.birthdate_under18 ?? false,
     readingTimeFactor: formatDecimal(Number(person?.reading_time_factor ?? 1)),
     austrittAm: person?.austritt_am?.slice(0, 10) ?? '',
+    sprache: person?.sprache === 'en' ? 'en' : 'de',
   }));
   const [local, setLocal] = useState<Partial<Record<keyof Draft, string>>>({});
   const save = useMutation({
@@ -60,6 +64,7 @@ export function PersonSheet({
         birthdateUnder18: x.birthdateUnder18,
         readingTimeFactor: parseDecimal(x.readingTimeFactor),
         austrittAm: x.austrittAm || null,
+        sprache: x.sprache,
       };
       return person ? patch(`/persons/${person.id}`, body) : post('/persons', body);
     },
@@ -149,6 +154,12 @@ export function PersonSheet({
             <Input type="date" value={d.austrittAm} onChange={set('austrittAm')} />
           </Field>
         </div>
+        <Field label={ac.person.language} hint={ac.person.languageHint}>
+          <Select value={d.sprache} onChange={(e) => setD((x) => ({ ...x, sprache: e.target.value === 'en' ? 'en' : 'de' }))}>
+            <option value="de">{ac.person.de}</option>
+            <option value="en">{ac.person.en}</option>
+          </Select>
+        </Field>
         <CheckboxField
           label={p.externLabel}
           checked={d.extern}

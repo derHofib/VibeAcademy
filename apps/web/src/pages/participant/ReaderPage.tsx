@@ -6,9 +6,12 @@ import { post } from '@/lib/api';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Button } from '@/components/ui/button';
 import { tp } from '@/i18n/participant';
+import { useParticipantLang } from '@/i18n/lang';
 import {
   participantKeys,
+  pageList,
   participantPath,
+  requiredOf,
   useInvitation,
   type HeartbeatBody,
   type HeartbeatResponse,
@@ -35,6 +38,7 @@ export default function ReaderPage() {
   const [params, setParams] = useSearchParams();
   const desktop = useMediaQuery(VIEWER_DESKTOP_QUERY);
   const inv = useInvitation(id);
+  useParticipantLang(inv.data?.sprache);
 
   const [session, setSession] = useState<SessionStart | null>(null);
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
@@ -112,7 +116,11 @@ export default function ReaderPage() {
   const total = summary.pages.length;
   const cur = summary.pages.find((p) => p.pageNo === page) ?? summary.pages[0]!;
   const hasQuiz = start.totals.questions > 0;
-  const isLast = page === summary.pages[total - 1]?.pageNo;
+  // E-38: Neueinladung „nur geänderte Seiten“ – Fortschritt und Reihenfolge nur über die Pflichtseiten
+  const onlyPages = summary.onlyPages?.length ? summary.onlyPages : null;
+  const reqPages = requiredOf(summary.pages);
+  const optionalPage = cur.required === false;
+  const isLast = page === (onlyPages ? reqPages[reqPages.length - 1]?.pageNo : summary.pages[total - 1]?.pageNo);
   const tracking = tracker.phase === 'tracking';
 
   // Countdown: Serverwert ist maßgeblich, zwischen zwei Heartbeats lokal fortgeschrieben
@@ -124,8 +132,8 @@ export default function ReaderPage() {
   const remaining = cur.fulfilled ? 0 : Math.max(0, cur.tMinMs - dwell);
   const seconds = cur.fulfilled ? 0 : Math.max(1, Math.ceil(remaining / 1000));
   const fraction = cur.fulfilled ? 1 : Math.min(0.97, cur.tMinMs ? dwell / cur.tMinMs : 0);
-  const segments = summary.pages.map((p) => (p.pageNo === page ? fraction : pageFraction(p)));
-  const doneCount = summary.pages.filter((p) => p.fulfilled).length;
+  const segments = reqPages.map((p) => (p.pageNo === page ? fraction : pageFraction(p)));
+  const doneCount = reqPages.filter((p) => p.fulfilled).length;
 
   const chapter = chapterOf(start.chapters, page);
   const chLabel = chapter ? chapterLabel(chapter) : null;
@@ -137,17 +145,18 @@ export default function ReaderPage() {
   };
 
   const advance = () => {
-    if (!cur.fulfilled) return;
+    if (!cur.fulfilled && !optionalPage) return;
     if (complete && isLast) {
       navigate(hasQuiz ? participantPath.quiz(id) : participantPath.sign(id));
       return;
     }
-    const next = summary.pages.find((p) => p.pageNo > page && p.allowed) ?? summary.pages.find((p) => !p.fulfilled && p.allowed);
+    const nextRequired = onlyPages ? reqPages.find((p) => !p.fulfilled && p.allowed) : undefined;
+    const next = nextRequired ?? summary.pages.find((p) => p.pageNo > page && p.allowed) ?? summary.pages.find((p) => !p.fulfilled && p.allowed);
     if (next) goTo(next.pageNo);
     else if (complete) navigate(hasQuiz ? participantPath.quiz(id) : participantPath.sign(id));
   };
 
-  const ringLabel = !cur.fulfilled
+  const ringLabel = !cur.fulfilled && !optionalPage
     ? tp.reader.ring.waiting(seconds)
     : complete && isLast
       ? hasQuiz
@@ -167,7 +176,9 @@ export default function ReaderPage() {
       status = { text: tp.reader.status.offline, tone: 'warn' };
       break;
     default:
-      if (cur.fulfilled) {
+      if (optionalPage && !cur.fulfilled) {
+        status = { text: tp.reader.optionalPage, tone: 'muted' };
+      } else if (cur.fulfilled) {
         status = complete
           ? { text: hasQuiz ? tp.reader.status.allCaptured : tp.reader.status.allCapturedNoQuiz, tone: 'success' }
           : { text: desktop ? tp.reader.status.capturedDesktop(page) : tp.reader.status.captured, tone: 'success' };
@@ -220,14 +231,14 @@ export default function ReaderPage() {
       kicker={chLabel ? tp.reader.chapterOf(chLabel.no, start.chapters.length) : start.training.titel}
       title={chLabel ? chLabel.title : tp.reader.pageOf(page, total)}
       desktopSub={chLabel ? `${tp.reader.chapter(chLabel.no)} · ${chLabel.title}` : tp.reader.pageOf(page, total)}
-      overall={total ? doneCount / total : 0}
+      overall={reqPages.length ? doneCount / reqPages.length : 0}
       segments={segments}
-      currentSegment={summary.pages.findIndex((p) => p.pageNo === page)}
+      currentSegment={reqPages.findIndex((p) => p.pageNo === page)}
       doneCount={doneCount}
       status={status}
       ring={{
-        state: cur.fulfilled ? 'ready' : 'counting',
-        progress: fraction,
+        state: cur.fulfilled || optionalPage ? 'ready' : 'counting',
+        progress: optionalPage ? 1 : fraction,
         seconds,
         label: ringLabel,
         onClick: advance,
@@ -283,6 +294,11 @@ export default function ReaderPage() {
         </span>
         {!desktop && <span className="text-[12px] text-muted">{tp.reader.pageOf(page, total)}</span>}
       </div>
+      {onlyPages && (
+        <p className="text-[12.5px] font-medium text-accent-text" data-testid="reader-only-pages">
+          {tp.reader.onlyPages(pageList(onlyPages))}
+        </p>
+      )}
       <PdfPage invitationId={id} pageNo={page} zoom={zoom} />
     </ViewerShell>
   );

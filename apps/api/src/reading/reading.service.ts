@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  applyHeartbeat, isComplete, isPageAllowed, remainingMs, type Heartbeat, type PageRule, type ProgressSnapshot,
-  type SessionTrackState,
+  applyHeartbeat, isComplete, isPageAllowed, isRequiredPage, remainingMs, requiredPageNos, withRequiredPages, type Heartbeat,
+  type PageRule, type ProgressSnapshot, type SessionTrackState,
 } from '@sn/shared';
 import type pg from 'pg';
 import { AuditService } from '../audit/audit.service';
@@ -20,6 +20,8 @@ export interface ReadingModel {
   strictMode: boolean;
   versionId: string;
   status: string;
+  /** Neueinladung „nur geänderte Seiten“ (E-38): Pflichtseiten, sonst null (alle Seiten Pflicht) */
+  onlyPages: number[] | null;
 }
 
 /**
@@ -44,32 +46,41 @@ export class ReadingService {
   async model(c: pg.PoolClient, invitationId: string): Promise<ReadingModel> {
     const inv = (
       await c.query(
-        `SELECT i.status, i.reading_time_factor, r.training_version_id, t.settings
+        `SELECT i.status, i.reading_time_factor, coalesce(i.training_version_id, r.training_version_id) AS training_version_id,
+                i.changed_pages, t.settings
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id WHERE i.id = $1`,
         [invitationId],
       )
     ).rows[0];
     if (!inv) throw new NotFoundException('Einladung nicht gefunden');
     const factor = Math.max(1, Number(inv.reading_time_factor));
-    const pages = (
+    const allPages = (
       await c.query('SELECT page_no, coalesce(t_min_manual, t_min_seconds) AS t FROM page_meta WHERE version_id = $1 ORDER BY page_no', [
         inv.training_version_id,
       ])
     ).rows.map((p) => ({ pageNo: p.page_no as number, tMinMs: Math.round(p.t * factor) * 1000 }));
+    // E-38: Neueinladung nach inhaltlicher Änderung → nur die geänderten Seiten sind Pflicht
+    const pages = withRequiredPages(allPages, inv.changed_pages as number[] | null);
+    const partial = pages.some((p) => !isRequiredPage(p));
     const rows = (await c.query('SELECT page_no, dwell_ms, fulfilled_at FROM page_progress WHERE invitation_id = $1', [invitationId])).rows;
     const progress: ProgressSnapshot = {
       dwellMs: Object.fromEntries(rows.map((r) => [r.page_no, Number(r.dwell_ms)])),
       fulfilled: rows.filter((r) => r.fulfilled_at).map((r) => r.page_no as number).sort((a, b) => a - b),
     };
-    return { pages, progress, strictMode: parseSettings(inv.settings).strictMode, versionId: inv.training_version_id, status: inv.status };
+    return {
+      pages, progress, strictMode: parseSettings(inv.settings).strictMode, versionId: inv.training_version_id, status: inv.status,
+      onlyPages: partial ? requiredPageNos(pages) : null,
+    };
   }
 
   summary(m: ReadingModel, currentPage?: number) {
     return {
       complete: isComplete(m.pages, m.progress),
       strictMode: m.strictMode,
+      onlyPages: m.onlyPages,
       pages: m.pages.map((p) => ({
         pageNo: p.pageNo,
+        required: isRequiredPage(p),
         tMinMs: p.tMinMs,
         dwellMs: Math.min(m.progress.dwellMs[p.pageNo] ?? 0, p.tMinMs),
         fulfilled: m.progress.fulfilled.includes(p.pageNo),
@@ -158,7 +169,9 @@ export class ReadingService {
       const next = { ...m, progress: d.progress };
       if (d.newlyFulfilled.length && isComplete(next.pages, next.progress)) {
         const upd = await c.query(
-          `UPDATE invitation i SET status = CASE WHEN t.quiz_required THEN 'gelesen' ELSE 'bestanden' END, read_completed_at = $2
+          `UPDATE invitation i SET status = CASE WHEN t.quiz_required AND (coalesce(cardinality(i.changed_pages), 0) = 0
+                                     OR coalesce((t.settings->>'quizOnReinvite')::boolean, true)) THEN 'gelesen' ELSE 'bestanden' END,
+                  read_completed_at = $2
              FROM run r JOIN training t ON t.id = r.training_id
             WHERE i.id = $1 AND r.id = i.run_id AND i.status IN ('offen','geoeffnet','ueberfaellig') RETURNING i.id`,
           [p.invitationId, now],

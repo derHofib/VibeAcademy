@@ -15,6 +15,10 @@ export const TrainingSettings = z.object({
   deadlineDays: z.number().int().min(1).max(365).default(14),
   intervalMonths: z.number().int().min(1).max(120).default(12),
   completenessPct: z.number().int().min(1).max(100).default(90),
+  /** Neueinladung „nur geänderte Seiten“ (E-38): Wissenscheck trotzdem verlangen */
+  quizOnReinvite: z.boolean().default(true),
+  /** Signaturniveau (E-40): einfache (EES, Standard), fortgeschrittene (FES) oder qualifizierte (QES) Signatur */
+  signatureLevel: z.enum(['ees', 'fes', 'qes']).default('ees'),
 }).refine((s) => s.floorSeconds <= s.capSeconds, { message: 'Minimum je Seite darf das Maximum nicht übersteigen', path: ['floorSeconds'] });
 
 export type TrainingSettings = z.infer<typeof TrainingSettings>;
@@ -25,4 +29,13 @@ export function parseSettings(raw: unknown): TrainingSettings {
 
 export function readingRule(s: TrainingSettings) {
   return { wordsPerMinute: s.wordsPerMinute, factor: s.factor, floorSeconds: s.floorSeconds, capSeconds: s.capSeconds };
+}
+
+/**
+ * Wissenscheck für diese Einladung verlangt? Neueinladungen „nur geänderte Seiten“ (changed_pages gesetzt)
+ * verlangen ihn nur, wenn `quizOnReinvite` an ist (Standard).
+ */
+export function quizRequiredFor(trainingQuizRequired: boolean, s: TrainingSettings, changedPages: readonly number[] | null | undefined): boolean {
+  if (!trainingQuizRequired) return false;
+  return !(changedPages?.length && !s.quizOnReinvite);
 }

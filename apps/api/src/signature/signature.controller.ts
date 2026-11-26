@@ -11,6 +11,9 @@ import { EvidenceService } from '../evidence/evidence.service';
 import { personSubject, signaturePurpose } from '../participant/participant.controller';
 import { ParticipantService } from '../participant/participant.service';
 import { OBJECT_STORAGE, type ObjectStorage } from '../storage/storage';
+import { parseSettings } from '../trainings/settings';
+import { SignatureProviders } from '../qes/signature-providers';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 const MAX_PNG_BYTES = 300 * 1024;
 const Point = z.object({ x: z.number().finite(), y: z.number().finite(), t: z.number().finite().optional() });
@@ -32,6 +35,7 @@ export class SignatureController {
     private readonly evidence: EvidenceService,
     private readonly clock: Clock,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly providers: SignatureProviders,
   ) {}
 
   @ParticipantRoute()
@@ -41,11 +45,13 @@ export class SignatureController {
     return this.participants.read(p, async (c) => {
       const r = (
         await c.query(
-          `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, t.quiz_required, p.email IS NOT NULL AS has_email,
+          `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, t.quiz_required AND (coalesce(cardinality(i.changed_pages), 0) = 0
+                    OR coalesce((t.settings->>'quizOnReinvite')::boolean, true)) AS quiz_required, p.email IS NOT NULL AS has_email,
                   (SELECT signed_at FROM signature s WHERE s.invitation_id = i.id) AS signed_at,
-                  (SELECT verify_code FROM evidence e WHERE e.invitation_id = i.id) AS verify_code
+                  (SELECT verify_code FROM evidence e WHERE e.invitation_id = i.id) AS verify_code,
+                  (SELECT typ FROM signature s WHERE s.invitation_id = i.id) AS signed_typ, t.settings
              FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id
-             JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = r.training_version_id WHERE i.id = $1`,
+             JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id) WHERE i.id = $1`,
           [id],
         )
       ).rows[0];
@@ -60,6 +66,8 @@ export class SignatureController {
         signedAt: r.signed_at,
         verifyCode: r.verify_code,
         authMethods: [...(p.accountId ? ['password'] : []), ...(r.has_email ? ['otp_mail'] : [])],
+        // E-40: Signaturniveau der Schulung; bei FES/QES Weiterleitung zum Anbieter statt Unterschriftsfeld
+        ...this.providers.levelInfo(r.signed_typ ?? parseSettings(r.settings).signatureLevel),
       };
     });
   }
@@ -73,9 +81,9 @@ export class SignatureController {
     // Vorbedingungen zuerst prüfen, damit ein Step-up-Token nicht unnötig verbraucht wird.
     const pre = await this.participants.read(p, async (c) =>
       (await c.query(
-        `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, v.sha256 AS document_sha256
+        `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, v.sha256 AS document_sha256, t.settings
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id
-           JOIN training_version v ON v.id = r.training_version_id WHERE i.id = $1`,
+           JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id) WHERE i.id = $1`,
         [id],
       )).rows[0],
     );
@@ -83,6 +91,9 @@ export class SignatureController {
     if (pre.status === 'bestaetigt') throw new ConflictException('Bereits unterschrieben');
     if (pre.status !== 'bestanden') throw new ConflictException('Unterschrift erst nach allen Seiten und bestandenem Wissenscheck');
     if (sha256(pre.confirm_text) !== b.confirmTextSha256) throw new ConflictException('Der Bestätigungstext wurde geändert. Bitte Seite neu laden.');
+    if (parseSettings(pre.settings).signatureLevel !== 'ees') {
+      throw new ConflictException({ code: 'anbieter', message: 'Für diese Schulung wird beim Signaturanbieter unterschrieben.' });
+    }
     const method = await this.stepUp.consume(b.stepUpToken, { subject: personSubject(p.personId), purpose: signaturePurpose(id) });
     const now = this.clock.now();
     const req = currentRequest();
@@ -100,6 +111,7 @@ export class SignatureController {
          attempt?.id ?? null, req?.userAgent ?? null, req?.ipHash ?? null, now],
       );
       await c.query(`UPDATE invitation SET status = 'bestaetigt', completed_at = $2 WHERE id = $1`, [id, now]);
+      await WebhookEmitter.emit(c, p.tenantId, 'invitation.completed', { invitationId: id }); // E-37
       await this.audit.record(c, {
         entity: 'signature', entityId: r.rows[0].id, action: 'signed',
         payload: { invitationId: id, authMethod: method, documentSha256: pre.document_sha256, confirmTextSha256: b.confirmTextSha256, imageSha256: sha256(png) },

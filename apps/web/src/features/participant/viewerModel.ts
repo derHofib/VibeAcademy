@@ -1,6 +1,7 @@
 /** Ab dieser Breite: Desktop-Viewer mit Kapitel-Leiste (5c) */
 export const VIEWER_DESKTOP_QUERY = '(min-width: 1024px)';
 
+import { tp } from '@/i18n/participant';
 import type { Chapter, InvitationStart, PageProgress } from './api';
 
 /** Kapitelnummer (1-basiert) und Titel ohne vorangestellte Nummer („2 Elektrische …“ → „Elektrische …“). */
@@ -15,12 +16,13 @@ export function chapterOf(chapters: Chapter[], pageNo: number): Chapter | undefi
 
 /** Seitentitel für Inhaltsverzeichnis und Kopf; Fallback „Seite n“. */
 export function pageTitle(start: Pick<InvitationStart, 'pages'>, pageNo: number): string {
-  return start.pages.find((p) => p.pageNo === pageNo)?.title?.trim() || `Seite ${pageNo}`;
+  return start.pages.find((p) => p.pageNo === pageNo)?.title?.trim() || tp.reader.pageLabel(pageNo);
 }
 
 /** Erste noch nicht erfüllte, aufrufbare Seite (Startpunkt beim Weiterlesen). */
 export function resumePage(pages: PageProgress[]): number {
-  const open = pages.find((p) => !p.fulfilled && p.allowed) ?? pages.find((p) => !p.fulfilled);
+  const open =
+    pages.find((p) => !p.fulfilled && p.allowed && p.required !== false) ?? pages.find((p) => !p.fulfilled && p.allowed) ?? pages.find((p) => !p.fulfilled);
   return open?.pageNo ?? pages[pages.length - 1]?.pageNo ?? 1;
 }
 

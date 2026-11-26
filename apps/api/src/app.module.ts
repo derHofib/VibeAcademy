@@ -60,6 +60,9 @@ import { RunAccess } from './presence/run-access.service';
 import { LiveBus } from './live/live-bus.service';
 import { LiveController } from './live/live.controller';
 import { LiveService } from './live/live.service';
+import { DIFF_QES_CONTROLLERS, DIFF_QES_PROVIDERS } from './qes';
+import { configureSso, SCIM_ROUTES, SSO_CONTROLLERS, SSO_PROVIDERS } from './sso';
+import { ApiContextMiddleware, PUBLIC_API_CONTROLLERS, PUBLIC_API_PROVIDERS, PUBLIC_API_ROUTES } from './public-api';
 
 export interface AppModuleOptions {
   config: AppConfig;
@@ -77,6 +80,9 @@ export class AppModule implements NestModule {
         PresenceController, CheckinController, LiveController,
         PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController, MyAccountController,
         MatrixController, DeadlinesController, PushController, ExternalController, MyExternalController, ExternalImportController, NachweismappeController,
+        ...DIFF_QES_CONTROLLERS,
+        ...SSO_CONTROLLERS,
+        ...PUBLIC_API_CONTROLLERS,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -134,12 +140,17 @@ export class AppModule implements NestModule {
         EvidenceService,
         RunAccess, QrService, LiveBus, AttendanceService, LiveService,
         ComplianceService, DeadlineService, ExternalService,
+        ...DIFF_QES_PROVIDERS,
+        ...SSO_PROVIDERS,
+        ...PUBLIC_API_PROVIDERS,
         ...overrides,
       ],
     };
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SessionMiddleware).forRoutes('*path');
+    consumer.apply(SessionMiddleware).exclude(SCIM_ROUTES, PUBLIC_API_ROUTES).forRoutes('*path');
+    consumer.apply(ApiContextMiddleware).forRoutes(PUBLIC_API_ROUTES);
+    configureSso(consumer);
   }
 }

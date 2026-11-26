@@ -2,9 +2,13 @@
  * Texte für „Meine Nachweise“ (optionales Teilnehmerkonto, E-25) und den Teilnehmer-Modus von
  * Registrieren/Anmelden. Getrennt von de.ts/participant.ts (E-20). Ansprache wie in der Teilnehmersicht: „du“.
  */
+import { localized } from './lang';
+import { taEn } from './en/account';
+
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-export const ta = {
+/** Deutsch; Englisch für „Meine Nachweise“ in en/account.ts (E-39). Registrieren/Anmelden bleiben Deutsch. */
+export const taDe = {
   register: {
     title: 'Konto für deine Nachweise',
     subtitle: 'Sammle deine Schulungsnachweise an einem Ort – auch von verschiedenen Firmen.',
@@ -144,3 +148,7 @@ export const ta = {
     myEvidence: 'Meine Nachweise',
   },
 };
+
+export type AccountStrings = typeof taDe;
+
+export const ta: AccountStrings = localized({ de: taDe, en: { ...taEn, register: taDe.register, login: taDe.login, nav: taDe.nav } });

@@ -14,13 +14,17 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { currentRequest } from '../common/request-context';
 import { DbService } from '../db/db.service';
 import { NotificationService } from '../notifications/notification.service';
-import { parseSettings } from '../trainings/settings';
+import { parseSettings, quizRequiredFor } from '../trainings/settings';
+import { participantLanguage } from '../i18n/language';
 import { ParticipantService } from './participant.service';
+import { SsoService } from '../sso/sso.service';
 
 const OpenLink = z.object({ token: z.string().min(20).max(100) });
+const Language = z.object({ sprache: z.enum(['de', 'en']) });
 const StepUp = z.union([
   z.object({ code: z.string().regex(/^\d{6}$/, 'Bitte den 6-stelligen Code eingeben') }),
   z.object({ password: z.string().min(1).max(200) }),
+  z.object({ ssoTicket: z.string().min(20).max(100) }),
 ]);
 
 export const signaturePurpose = (invitationId: string) => `signature:${invitationId}`;
@@ -39,6 +43,7 @@ export class ParticipantController {
     private readonly passwords: PasswordService,
     private readonly rate: RateLimitService,
     private readonly notifications: NotificationService,
+    private readonly sso: SsoService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -100,9 +105,10 @@ export class ParticipantController {
         await c.query(
           `SELECT i.id, i.status, i.due_at, i.opened_at, i.read_completed_at, i.completed_at, i.reading_time_factor,
                   p.name AS person_name, p.email AS person_email, t.titel, t.kategorie, t.rechtsgrundlage, t.ansprechpartner, t.quiz_required, t.settings,
-                  v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name
+                  v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name,
+                  v.sprache AS version_sprache, p.sprache AS person_sprache, i.changed_pages
              FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id
-             JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = r.training_version_id
+             JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id)
              JOIN tenant te ON te.id = i.tenant_id WHERE i.id = $1`,
           [id],
         )
@@ -117,7 +123,11 @@ export class ParticipantController {
       const chapters = (await c.query('SELECT idx, title, short_name, from_page, to_page FROM chapter WHERE version_id = $1 ORDER BY idx', [r.version_id])).rows;
       const settings = parseSettings(r.settings);
       const factor = Number(r.reading_time_factor);
-      const questionPool = r.quiz_required
+      // E-38: nur geänderte Seiten (unbekannte Seitennummern zählen nicht; bleibt nichts übrig → alle Seiten)
+      const onlyPages = ((r.changed_pages ?? []) as number[]).filter((n) => pages.some((x) => x.page_no === n)).sort((a, b) => a - b);
+      const required = (n: number) => !onlyPages.length || onlyPages.includes(n);
+      const quizRequired = quizRequiredFor(r.quiz_required, settings, onlyPages);
+      const questionPool = quizRequired
         ? Number((await this.db.txAs({ tenantId: p.tenantId, roles: ['system'] }, (s) =>
             s.query('SELECT count(*) AS n FROM quiz_question q JOIN run r ON r.training_id = q.training_id JOIN invitation i ON i.run_id = r.id WHERE i.id = $1 AND q.active', [id]),
           )).rows[0].n)
@@ -134,14 +144,33 @@ export class ParticipantController {
         rules: { strictMode: settings.strictMode, passPct: settings.passPct, maxAttempts: settings.maxAttempts },
         totals: {
           pages: r.page_count,
-          minReadingSeconds: pages.reduce((s, x) => s + Math.round(x.t_min * Math.max(1, factor)), 0),
-          questions: r.quiz_required ? Math.min(settings.quizQuestionCount, questionPool) : 0,
+          minReadingSeconds: pages.filter((x) => required(x.page_no)).reduce((s, x) => s + Math.round(x.t_min * Math.max(1, factor)), 0),
+          questions: quizRequired ? Math.min(settings.quizQuestionCount, questionPool) : 0,
         },
         chapters,
-        pages: pages.map((x) => ({ pageNo: x.page_no, title: x.title, tMinSeconds: Math.round(x.t_min * Math.max(1, factor)) })),
+        pages: pages.map((x) => ({ pageNo: x.page_no, title: x.title, tMinSeconds: Math.round(x.t_min * Math.max(1, factor)), required: required(x.page_no) })),
         hasAccount: !!p.accountId,
+        // Phase 3, Paket C: Sprache (E-39), nur geänderte Seiten (E-38), Signaturniveau (E-40)
+        sprache: participantLanguage(r.person_sprache),
+        documentLanguage: r.version_sprache,
+        onlyPages: onlyPages.length ? onlyPages : null,
+        quizRequired,
+        signatureLevel: settings.signatureLevel,
       };
     });
+  }
+
+  /** Sprache der Teilnehmeroberfläche merken (E-39): gilt für künftige Mails und das Nachweis-PDF dieser Person. */
+  @ParticipantRoute()
+  @Post('me/invitations/:id/language')
+  @HttpCode(200)
+  async setLanguage(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(Language)) b: z.infer<typeof Language>) {
+    const p = await this.participants.resolve(id);
+    await this.participants.write(p, async (c) => {
+      const changed = (await c.query('SELECT app.set_person_language($1, $2) AS ok', [p.personId, b.sprache])).rows[0].ok;
+      if (changed) await this.audit.record(c, { entity: 'person', entityId: p.personId, action: 'language_set', payload: { sprache: b.sprache, invitationId: id } });
+    });
+    return { sprache: b.sprache };
   }
 
   /** Bestätigungscode an die E-Mail-Adresse der Einladung (Step-up für Teilnehmer ohne Konto, E-08). */
@@ -153,14 +182,17 @@ export class ParticipantController {
     await this.rate.hit(`otp-send:${id}`, 5, 900);
     const n = await this.participants.write(p, async (c) => {
       const r = (await c.query(
-        'SELECT p.email, t.titel FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id WHERE i.id = $1',
+        'SELECT p.email, p.sprache, t.titel FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id WHERE i.id = $1',
         [id],
       )).rows[0];
       if (!r?.email) throw new NotFoundException('Für Sie ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an die verantwortliche Person.');
       const code = await this.otp.issue(`sig:${id}`);
       return this.notifications.enqueue(c, {
         tenantId: p.tenantId, channel: 'mail', recipient: r.email, template: 'otp',
-        data: { purposeLabel: `Unterschrift „${r.titel}“` }, secret: { code },
+        data: participantLanguage(r.sprache) === 'en'
+          ? { purposeLabel: `Signature “${r.titel}”`, lang: 'en' }
+          : { purposeLabel: `Unterschrift „${r.titel}“` },
+        secret: { code },
       });
     });
     await this.notifications.dispatch([n]);
@@ -174,12 +206,17 @@ export class ParticipantController {
   async doStepUp(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(StepUp)) b: z.infer<typeof StepUp>) {
     const p = await this.participants.resolve(id);
     await this.rate.hit(`stepup:${id}`, 10, 900);
-    let method: 'password' | 'otp_mail';
+    let method: 'password' | 'otp_mail' | 'sso';
     if ('code' in b) {
       if (!(await this.otp.verify(`sig:${id}`, b.code))) throw new UnauthorizedException('Der Code ist falsch oder abgelaufen');
       method = 'otp_mail';
+    } else if ('ssoTicket' in b) {
+      // E-36: Ticket aus der erneuten IdP-Anmeldung (GET /auth/sso/step-up/start → Rückleitung #sso=…)
+      await this.sso.redeemStepUpTicket(b.ssoTicket, { accountId: p.accountId, purpose: signaturePurpose(id) });
+      method = 'sso';
     } else {
       if (!p.accountId) throw new UnauthorizedException('Bitte mit Code bestätigen');
+      await this.sso.assertPasswordStepUpAllowed(p.accountId, p.tenantId);
       const hash = (await this.db.txAs({}, (c) => c.query('SELECT app.auth_get_password_hash($1) AS h', [p.accountId]))).rows[0]?.h;
       if (!(await this.passwords.verify(hash, b.password))) throw new UnauthorizedException('Passwort ist falsch');
       method = 'password';

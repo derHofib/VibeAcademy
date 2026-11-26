@@ -16,6 +16,7 @@ import { DbService } from '../db/db.service';
 import { NotificationService } from '../notifications/notification.service';
 import { ExternalService, type ExtStatus, type RecordFields } from './external.service';
 import type { ReceiptFile } from './receipts';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 const date = z.iso.date('Datum im Format JJJJ-MM-TT');
 export const FieldsSchema = z.object({
@@ -164,6 +165,7 @@ export class ExternalController {
         });
         ids.push({ id, personId });
         await this.audit.record(c, { entity: 'external_record', entityId: id, action: status === 'freigegeben' ? 'recorded_and_approved' : 'recorded', payload: { personId, status, groupId } });
+        if (status === 'freigegeben') await WebhookEmitter.emit(c, tenantId, 'external_record.approved', { externalRecordId: id }); // E-37
       }
       return { ids, groupId, validUntil, names: new Map(persons.map((x) => [x.id as string, x.name as string])) };
     });

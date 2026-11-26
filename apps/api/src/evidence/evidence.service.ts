@@ -9,11 +9,14 @@ import { DbService } from '../db/db.service';
 import { JobRunner } from '../jobs/job-runner';
 import { RedisService } from '../redis/redis.service';
 import { OBJECT_STORAGE, type ObjectStorage } from '../storage/storage';
-import { parseSettings } from '../trainings/settings';
+import { parseSettings, quizRequiredFor } from '../trainings/settings';
+import { EVIDENCE_LABELS } from '../i18n/evidence-labels';
+import { formatDate, formatDateTimeLong, formatDayMonth, participantLanguage } from '../i18n/language';
 import { renderEvidenceHtml, type EvidenceData } from './evidence-template';
 import { PDFDocument } from 'pdf-lib';
 import { PDF_RENDERER, type PdfRenderer } from './pdf-renderer';
 import { SEALER, type Sealer } from './sealer';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 export type EvidenceKind = 'online' | 'praesenz' | 'live' | 'extern';
 export interface EvidenceRef {
@@ -33,6 +36,8 @@ export interface CollectedEvidence {
   tenantName: string;
   /** PDFs, die als Anlage angehängt werden (z. B. Beleg eines externen Nachweises) */
   attachments?: Buffer[];
+  /** Dateien, die unverändert als PDF-Dateianhang eingebettet werden (z. B. vom FES/QES-Anbieter signiertes Dokument, E-40) */
+  embeddedFiles?: Array<{ name: string; data: Buffer; mimeType: string; description: string }>;
   /** Austrittsdatum der Person → retain_until = Austritt + 3 Jahre (E-24) */
   austritt: string | null;
 }
@@ -118,9 +123,12 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     this.registerCollector('online', async (id, tenantId, h) => {
-      const { data, austritt } = await this.collect(id, tenantId);
-      data.seal.label = h.sealLabel(data.tenantName);
-      return { html: renderEvidenceHtml(data, h.fontDir), nachweisNr: data.nachweisNr, tenantName: data.tenantName, austritt };
+      const { data, austritt, embeddedFiles } = await this.collect(id, tenantId);
+      const L = EVIDENCE_LABELS[data.lang ?? 'de'];
+      data.seal.label = data.lang === 'en'
+        ? this.config.SEAL_MODE === 'none' ? L.unsealed : L.sealed(data.tenantName, !!this.config.TSA_URL)
+        : h.sealLabel(data.tenantName);
+      return { html: renderEvidenceHtml(data, h.fontDir), nachweisNr: data.nachweisNr, tenantName: data.tenantName, austritt, embeddedFiles };
     });
     this.runner = new JobRunner('evidence-pdf', this.redis, this.config, (d) => this.generate(d.evidenceId, d.tenantId), 1);
   }
@@ -171,7 +179,9 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
     return this.create(tenantId, 'online', { invitationId }, subject);
   }
 
-  private async collect(evidenceId: string, tenantId: string): Promise<{ data: EvidenceData; austritt: string | null }> {
+  private async collect(
+    evidenceId: string, tenantId: string,
+  ): Promise<{ data: EvidenceData; austritt: string | null; embeddedFiles?: CollectedEvidence['embeddedFiles'] }> {
     return this.db.txAs({ tenantId, roles: ['system'] }, async (c) => {
       const r = (
         await c.query(
@@ -179,10 +189,12 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
                   i.completed_at, i.reading_time_factor, p.name AS person_name, p.personalnr, p.austritt_am, o.name AS org_unit,
                   t.titel, t.rechtsgrundlage, t.format, t.ansprechpartner, t.quiz_required, t.settings,
                   v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name,
-                  s.image_key, s.signed_at, s.auth_method, s.user_agent, s.ip_hash, s.confirm_text, s.confirm_text_sha256
+                  s.image_key, s.signed_at, s.auth_method, s.user_agent, s.ip_hash, s.confirm_text, s.confirm_text_sha256,
+                  p.sprache, i.changed_pages, s.typ AS signature_typ, s.provider, s.provider_transaction_id, s.signed_document_key,
+                  s.signed_document_sha256, s.signed_document_format, s.signer_info
              FROM evidence e JOIN invitation i ON i.id = e.invitation_id JOIN person p ON p.id = i.person_id
              LEFT JOIN org_unit o ON o.id = p.org_unit_id JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id
-             JOIN training_version v ON v.id = r.training_version_id JOIN tenant te ON te.id = e.tenant_id
+             JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id) JOIN tenant te ON te.id = e.tenant_id
              JOIN signature s ON s.invitation_id = i.id
             WHERE e.id = $1`,
           [evidenceId],
@@ -208,11 +220,28 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
         )
       ).rows;
       const settings = parseSettings(r.settings);
-      const soll = pages.reduce((s, p) => s + Math.round(p.t * factor) * 1000, 0);
+      // E-39: Beschriftungen in der Sprache der Person; E-38: Nachschulung nur geänderter Seiten
+      const lang = participantLanguage(r.sprache);
+      const L = EVIDENCE_LABELS[lang];
+      const dt = (d: Date | string | null, withTime = true) => formatDate(lang, d, withTime);
+      const dayMonth = (d: Date | string | null) => formatDayMonth(lang, d);
+      const onlyPages = ((r.changed_pages ?? []) as number[]).filter((n) => pages.some((p) => p.page_no === n)).sort((a, b) => a - b);
+      const required = (n: number) => !onlyPages.length || onlyPages.includes(n);
+      const quizRequired = quizRequiredFor(r.quiz_required, settings, onlyPages);
+      const soll = pages.filter((p) => required(p.page_no)).reduce((s, p) => s + Math.round(p.t * factor) * 1000, 0);
       const ist = pages.reduce((s, p) => s + Number(p.dwell_ms ?? 0), 0);
       const validUntil = r.completed_at ? new Date(new Date(r.completed_at).getTime()) : null;
       if (validUntil) validUntil.setMonth(validUntil.getMonth() + settings.intervalMonths);
-      const png = await this.storage.get('evidence', r.image_key);
+      const png = r.image_key ? await this.storage.get('evidence', r.image_key) : null;
+      const signer = r.signer_info as { subject?: string; test?: boolean } | null;
+      const embeddedFiles: CollectedEvidence['embeddedFiles'] = r.signed_document_key
+        ? [{
+            name: `${r.signature_typ}-${r.provider}-${r.provider_transaction_id}.${r.signed_document_format === 'CAdES' ? 'p7m' : 'pdf'}`.replace(/[^\w.-]/g, '_'),
+            data: await this.storage.get('evidence', r.signed_document_key),
+            mimeType: r.signed_document_format === 'CAdES' ? 'application/pkcs7-mime' : 'application/pdf',
+            description: L.levels[r.signature_typ as 'fes' | 'qes'],
+          }]
+        : undefined;
       const verifyUrl = this.verifyUrl(r.verify_code);
       const qrSvg = await QRCode.toString(verifyUrl, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#1D2433', light: '#FFFFFF' } });
       const data: EvidenceData = {
@@ -222,7 +251,7 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
         verifyUrl,
         qrSvg,
         training: {
-          titel: r.titel, versionNo: r.version_no, rechtsgrundlage: r.rechtsgrundlage, format: FORMAT_LABEL[r.format] ?? r.format,
+          titel: r.titel, versionNo: r.version_no, rechtsgrundlage: r.rechtsgrundlage, format: L.formats[r.format] ?? r.format,
           pageCount: r.page_count, unterweisender: r.ansprechpartner, sha256: r.sha256,
         },
         person: { name: r.person_name, personalnr: r.personalnr, orgUnit: r.org_unit },
@@ -240,27 +269,35 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
           soll: mmss(Math.round(p.t * factor) * 1000),
           erstmals: dayMonth(p.first_seen_at),
           erfuellt: !!p.fulfilled_at,
+          required: required(p.page_no),
         })),
         quiz: {
-          required: r.quiz_required,
+          required: quizRequired,
+          skippedOnReinvite: r.quiz_required && !quizRequired,
           attempts: attempts.map((a) => ({ no: a.attempt_no, right: a.right_count, total: a.total, pct: a.score_pct, passed: a.passed })),
           passPct: settings.passPct,
           maxAttempts: settings.maxAttempts,
         },
         gueltigBis: validUntil ? dt(validUntil, false) : null,
-        wiederholung: settings.intervalMonths === 12 ? 'jährlich, automatische Einladung' : `alle ${settings.intervalMonths} Monate, automatische Einladung`,
+        wiederholung: L.repetitionText(settings.intervalMonths),
         confirmText: r.confirm_text,
         signature: {
-          pngBase64: png.toString('base64'),
-          signedAt: new Intl.DateTimeFormat('de-DE', { timeZone: TZ, dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(r.signed_at)),
-          authMethod: AUTH_LABEL[r.auth_method] ?? r.auth_method,
-          device: device(r.user_agent),
+          pngBase64: png ? png.toString('base64') : null,
+          signedAt: formatDateTimeLong(lang, r.signed_at),
+          authMethod: L.authMethods[r.auth_method] ?? r.auth_method,
+          device: lang === 'de' ? device(r.user_agent) : device(r.user_agent).replace('Mobil', L.deviceMobile).replace('unbekannt', L.deviceUnknown),
           ipHash: r.ip_hash ? `${String(r.ip_hash).slice(0, 4)}…` : '–',
           confirmSha: r.confirm_text_sha256,
         },
         seal: { label: '' },
+        lang,
+        reinvite: onlyPages.length ? { pages: onlyPages } : null,
+        level: {
+          typ: r.signature_typ, provider: r.provider, transactionId: r.provider_transaction_id, signer: signer?.subject ?? null,
+          format: r.signed_document_format, sha256: r.signed_document_sha256, test: !!signer?.test,
+        },
       };
-      return { data, austritt: r.austritt_am };
+      return { data, austritt: r.austritt_am, embeddedFiles };
     });
   }
 
@@ -272,9 +309,10 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
       const kind = (await this.db.txAs({ tenantId, roles: ['system'] }, (c) => c.query('SELECT kind FROM evidence WHERE id = $1', [evidenceId]))).rows[0].kind as EvidenceKind;
       const collector = this.collectors.get(kind);
       if (!collector) throw new Error(`Keine Nachweisvorlage für Art „${kind}“`);
-      const { html, nachweisNr, attachments, austritt } = await collector(evidenceId, tenantId, this.helpers());
+      const { html, nachweisNr, attachments, austritt, embeddedFiles } = await collector(evidenceId, tenantId, this.helpers());
       let raw = await this.renderer.render(html);
       if (attachments?.length) raw = await appendPdfs(raw, attachments);
+      if (embeddedFiles?.length) raw = await embedFiles(raw, embeddedFiles, this.clock.now());
       const data = { nachweisNr };
       const sealed = await this.sealer.seal(raw);
       const hash = sha256(sealed.pdf);
@@ -290,6 +328,7 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
           [evidenceId, key, hash, this.clock.now(), sealed.info, austritt],
         );
         await this.audit.record(c, { entity: 'evidence', entityId: evidenceId, action: 'created', payload: { sha256: hash, nachweisNr: data.nachweisNr, seal: sealed.info.level } });
+        await WebhookEmitter.emit(c, tenantId, 'evidence.created', { evidenceId }); // E-37
       });
     } catch (e) {
       this.log.error(`Nachweis ${evidenceId}: ${(e as Error).message}`);
@@ -307,6 +346,15 @@ export async function appendPdfs(main: Buffer, extras: Buffer[]): Promise<Buffer
   for (const x of extras) {
     const src = await PDFDocument.load(x, { ignoreEncryption: true });
     for (const p of await doc.copyPages(src, src.getPageIndices())) doc.addPage(p);
+  }
+  return Buffer.from(await doc.save());
+}
+
+/** Bettet Dateien unverändert als PDF-Dateianhänge ein (vor dem Versiegeln → vom Siegel abgedeckt, E-40). */
+export async function embedFiles(main: Buffer, files: NonNullable<CollectedEvidence['embeddedFiles']>, at: Date): Promise<Buffer> {
+  const doc = await PDFDocument.load(main);
+  for (const f of files) {
+    await doc.attach(f.data, f.name, { mimeType: f.mimeType, description: f.description, creationDate: at, modificationDate: at });
   }
   return Buffer.from(await doc.save());
 }

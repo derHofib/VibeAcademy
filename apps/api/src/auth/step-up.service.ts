@@ -7,7 +7,7 @@ export interface StepUpBinding {
   subject: string;
   /** Wofür: z. B. „signature:<invitationId>“ */
   purpose: string;
-  method: 'password' | 'otp_mail' | 'otp_sms';
+  method: 'password' | 'otp_mail' | 'otp_sms' | 'sso';
 }
 
 const TTL_S = 5 * 60;

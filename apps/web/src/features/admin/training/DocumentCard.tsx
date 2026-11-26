@@ -20,6 +20,7 @@ import { formatBytes, formatDateTime, formatDuration, formatNumber, shortHash } 
 import { uploadWithProgress } from '../upload';
 import { StatBox, errorMessage } from '../components/common';
 import { ChapterEditor } from './ChapterEditor';
+import { DiffPanel } from './DiffPanel';
 
 const d = adm.wizard.doc;
 
@@ -395,6 +396,12 @@ export function DocumentCard({
               <legend className="float-left mb-1 w-full text-[15px] font-semibold text-ink">
                 {d.changeKindLegend(previousVersionNo)}
               </legend>
+              <DiffPanel
+                trainingId={trainingId}
+                versionId={version.id}
+                current={change}
+                onApply={(kind, pages) => onChange({ ...change, kind, pages })}
+              />
               {(['inhaltlich', 'redaktionell'] as const).map((k) => (
                 <label
                   key={k}

@@ -31,6 +31,7 @@ import {
 } from '@/features/admin/components/common';
 import { activeTenantName, fieldErrors, hasRole, useSwitchTenant } from '@/features/auth/session';
 import { useAdminMe } from '@/features/admin/hooks';
+import { SsoSettingsSection } from '@/features/sso/SsoSettingsSection';
 
 const s = adm.settings;
 const ASSIGNABLE: Role[] = ROLES.filter((r) => r !== 'teilnehmer');
@@ -272,6 +273,9 @@ export default function SettingsPage() {
           )}
         </Card>
       </div>
+
+      {/* Phase 3 (E-36): Anmeldung & Benutzerverwaltung (SSO, SCIM) */}
+      <SsoSettingsSection isAdmin={isAdmin} onNotice={show} />
 
       {open && (
         <MemberSheet

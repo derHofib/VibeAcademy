@@ -2,7 +2,10 @@
  * Alle UI-Texte zentral (E-20). Komponenten lesen ihre eingebauten Beschriftungen von hier.
  * Funktionen sind für Texte mit Platzhaltern gedacht.
  */
-export const de = {
+import { localized } from './lang';
+import { deEnShared } from './en/common';
+
+const deDe = {
   app: {
     name: 'Schulungsnachweis',
     tenantLabel: 'Mandant',
@@ -312,4 +315,10 @@ export const de = {
   },
 };
 
-export type DeStrings = typeof de;
+export type DeStrings = typeof deDe;
+
+/**
+ * Bausteine, die auch die Teilnehmersicht nutzt (Fortschritt, Quiz-Optionen, Ring-Button, Schließen/Zurück), gibt es
+ * auf Englisch (E-39); alles andere bleibt Deutsch. Die Verwaltung setzt die Sprache immer auf Deutsch.
+ */
+export const de: DeStrings = localized({ de: deDe, en: { ...deDe, ...deEnShared } });

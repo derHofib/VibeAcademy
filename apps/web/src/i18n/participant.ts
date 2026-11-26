@@ -1,10 +1,14 @@
 /**
  * Texte der Teilnehmersicht (Startbildschirm, Lesen, Wissenscheck, Unterschrift, Prüfseite).
  * Getrennt von de.ts, damit Verwaltung und Teilnehmersicht parallel gepflegt werden können (E-20).
+ * Englisch: `en/participant.ts` (E-39); `tp` löst in der aktuellen Sprache auf (siehe lang.ts).
  */
+import { getLang, localized, LOCALE } from './lang';
+import { tpEn } from './en/participant';
+
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-export const tp = {
+export const tpDe = {
   common: {
     loading: 'Wird geladen …',
     retry: 'Erneut versuchen',
@@ -13,6 +17,13 @@ export const tp = {
     close: 'Schließen',
     closeTraining: 'Unterbrechen und schließen',
     back: 'Zurück',
+  },
+
+  /** Sprachumschalter (E-39); Sprachnamen immer in der eigenen Sprache */
+  lang: {
+    label: 'Sprache',
+    de: 'Deutsch',
+    en: 'English',
   },
 
   link: {
@@ -51,6 +62,10 @@ export const tp = {
     contact: (c: string) => `Fragen? ${c}`,
     exempt: 'Für diese Schulung ist nichts mehr zu tun – du bist befreit.',
     progressNote: (done: number, total: number) => `${done} von ${total} Seiten bereits erfasst.`,
+    onlyPages: (list: string) => `Nur geänderte Seiten: ${list}`,
+    onlyPagesText: 'Die Unterweisung wurde inhaltlich geändert. Bitte lies die geänderten Seiten – alle anderen kannst du freiwillig ansehen.',
+    documentGerman: 'Diese Unterweisung gibt es nur auf Deutsch.',
+    pagesRequired: (n: number) => `${plural(n, 'Seite', 'Seiten')} zu lesen`,
   },
 
   reader: {
@@ -109,6 +124,7 @@ export const tp = {
       locked: 'gesperrt',
       open: 'offen',
       capturedAria: 'erfasst',
+      optional: 'freiwillig',
     },
     rail: {
       label: 'Kapitel',
@@ -140,6 +156,8 @@ export const tp = {
       action: 'Hier weiterlesen',
     },
     sessionError: 'Die Lesesitzung konnte nicht gestartet werden.',
+    onlyPages: (list: string) => `Nur geänderte Seiten: ${list}`,
+    optionalPage: 'Freiwillige Seite – für den Abschluss nicht nötig',
   },
 
   quiz: {
@@ -212,6 +230,18 @@ export const tp = {
     toReading: 'Weiterlesen',
     toQuiz: 'Zum Wissenscheck',
     stepDone: ' (erledigt)',
+    // FES/QES über einen Signaturanbieter (E-40)
+    providerTitle: 'Signieren beim Signaturanbieter',
+    providerText: (level: string) =>
+      `Für diese Unterweisung unterschreibst du mit einer ${level}. Nach dem Bestätigen wirst du zum Signaturanbieter weitergeleitet und kommst danach automatisch hierher zurück.`,
+    providerLevel: { fes: 'fortgeschrittenen elektronischen Signatur (FES)', qes: 'qualifizierten elektronischen Signatur (QES)' },
+    providerTest: 'Test-Anbieter: Diese Signatur hat keine Rechtswirkung.',
+    providerReady: 'Bestätigt – weiter zum Signaturanbieter.',
+    providerSubmit: 'Weiter zum Signaturanbieter',
+    providerRedirecting: 'Weiterleitung …',
+    providerCancelled: 'Die Signatur wurde beim Anbieter abgebrochen. Du kannst es erneut versuchen.',
+    providerFailed: 'Die Signatur beim Anbieter ist fehlgeschlagen. Bitte erneut versuchen.',
+    providerChecking: 'Signatur wird abgeschlossen …',
   },
 
   done: {
@@ -228,6 +258,8 @@ export const tp = {
     accountTitle: 'Nachweise in einem Konto sammeln',
     accountText: 'Mit einem kostenlosen Konto findest du alle deine Schulungsnachweise an einem Ort – auch von anderen Firmen.',
     accountAction: 'Konto anlegen',
+    level: 'Signaturniveau',
+    levels: { ees: 'Einfache elektronische Signatur', fes: 'Fortgeschrittene elektronische Signatur', qes: 'Qualifizierte elektronische Signatur' },
   },
 
   verify: {
@@ -257,10 +289,16 @@ export const tp = {
   },
 };
 
-/** Datum kurz „17.11.“ */
-export const formatDayMonth = (iso: string) =>
-  new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }).format(new Date(iso));
+export type ParticipantStrings = typeof tpDe;
 
-/** Datum + Uhrzeit „26.11.2026, 14:05 Uhr“ */
-export const formatDateTime = (iso: string) =>
-  `${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(iso))} Uhr`;
+export const tp: ParticipantStrings = localized({ de: tpDe, en: tpEn });
+
+/** Datum kurz „17.11.“ bzw. „17/11“ */
+export const formatDayMonth = (iso: string) =>
+  new Intl.DateTimeFormat(LOCALE[getLang()], { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }).format(new Date(iso));
+
+/** Datum + Uhrzeit „26.11.2026, 14:05 Uhr“ bzw. „26 Nov 2026, 14:05“ */
+export const formatDateTime = (iso: string) => {
+  const s = new Intl.DateTimeFormat(LOCALE[getLang()], { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(iso));
+  return getLang() === 'de' ? `${s} Uhr` : s;
+};

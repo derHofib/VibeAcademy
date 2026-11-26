@@ -7,6 +7,7 @@ import { ApiError, post } from '@/lib/api';
 import { ParticipantLayout } from '@/components/layout/ParticipantLayout';
 import { Button, Card, EmptyState, Field, Input, Panel } from '@/components/ui';
 import { tl } from '@/i18n/live';
+import { useParticipantLang } from '@/i18n/lang';
 import { LoadingScreen } from '@/features/participant/ScreenStates';
 import { livePath, type ScanResponse } from '@/features/live/api';
 import { browserStore, enqueueScan } from '@/features/live/offlineQueue';
@@ -24,6 +25,7 @@ type State =
  */
 export default function QrLinkPage() {
   const { token = '' } = useParams();
+  useParticipantLang();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const payload = peekQrToken(token);

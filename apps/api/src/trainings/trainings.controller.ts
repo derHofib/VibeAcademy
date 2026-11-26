@@ -1,6 +1,6 @@
 import type {} from 'multer';
 import {
-  BadRequestException, Body, Controller, Delete, Get, Inject, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe,
+  BadRequestException, Body, ConflictException, Controller, Delete, Get, Inject, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe,
   Patch, Post, Put, Res, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -31,6 +31,8 @@ const SettingsPatch = z.record(z.string(), z.unknown());
 const VersionMeta = z.object({
   changeKind: z.enum(['redaktionell', 'inhaltlich']).optional(),
   changeNote: z.string().trim().max(2000).optional(),
+  /** Sprachfassung (E-39): „en“ = englische Fassung der aktuellen Versionsnummer */
+  sprache: z.enum(['de', 'en']).default('de'),
 });
 const PagePatch = z.object({ tMinManual: z.number().int().min(1).max(1800).nullable() });
 const Chapters = z
@@ -73,8 +75,8 @@ export class TrainingsController {
                   lv.id AS latest_version_id, lv.version_no AS latest_version_no, lv.status AS latest_version_status,
                   lv.page_count, pv.version_no AS published_version_no, pv.published_at
              FROM training t
-             LEFT JOIN LATERAL (SELECT * FROM training_version v WHERE v.training_id = t.id ORDER BY version_no DESC LIMIT 1) lv ON true
-             LEFT JOIN LATERAL (SELECT * FROM training_version v WHERE v.training_id = t.id AND v.published_at IS NOT NULL ORDER BY version_no DESC LIMIT 1) pv ON true
+             LEFT JOIN LATERAL (SELECT * FROM training_version v WHERE v.training_id = t.id AND v.sprache = 'de' ORDER BY version_no DESC LIMIT 1) lv ON true
+             LEFT JOIN LATERAL (SELECT * FROM training_version v WHERE v.training_id = t.id AND v.sprache = 'de' AND v.published_at IS NOT NULL ORDER BY version_no DESC LIMIT 1) pv ON true
             ORDER BY t.archived_at NULLS FIRST, t.created_at DESC`,
         )
       ).rows,
@@ -102,9 +104,9 @@ export class TrainingsController {
       if (!t) throw new NotFoundException('Schulung nicht gefunden');
       const versions = (
         await c.query(
-          `SELECT id, version_no, status, file_name, file_size, sha256, page_count, word_count, analysis_error,
+          `SELECT id, version_no, sprache, status, file_name, file_size, sha256, page_count, word_count, analysis_error,
                   change_kind, change_note, changed_pages, published_at, created_at
-             FROM training_version WHERE training_id = $1 ORDER BY version_no DESC`,
+             FROM training_version WHERE training_id = $1 ORDER BY version_no DESC, sprache`,
           [id],
         )
       ).rows;
@@ -179,20 +181,33 @@ export class TrainingsController {
     const res = await this.db.tx(async (c) => {
       const t = await c.query('SELECT id, tenant_id FROM training WHERE id = $1 FOR UPDATE', [id]);
       if (!t.rowCount) throw new NotFoundException('Schulung nicht gefunden');
-      const no = (await c.query('SELECT coalesce(max(version_no), 0) + 1 AS n FROM training_version WHERE training_id = $1', [id])).rows[0].n;
+      let no: number;
+      if (meta.sprache === 'de') {
+        no = (await c.query('SELECT coalesce(max(version_no), 0) + 1 AS n FROM training_version WHERE training_id = $1', [id])).rows[0].n;
+      } else {
+        // Sprachfassung zur aktuellen (neuesten) deutschen Versionsnummer (E-39)
+        no = (await c.query(`SELECT max(version_no) AS n FROM training_version WHERE training_id = $1 AND sprache = 'de'`, [id])).rows[0].n;
+        if (!no) throw new BadRequestException('Bitte zuerst die deutsche Fassung hochladen');
+        const prev = (await c.query('SELECT id, published_at FROM training_version WHERE training_id = $1 AND version_no = $2 AND sprache = $3', [id, no, meta.sprache])).rows[0];
+        if (prev?.published_at) {
+          throw new ConflictException(`Die englische Fassung von Version ${no} ist bereits veröffentlicht. Für Änderungen zuerst eine neue deutsche Version hochladen.`);
+        }
+        // Noch nicht veröffentlichte Sprachfassung wird ersetzt
+        if (prev) await c.query('DELETE FROM training_version WHERE id = $1', [prev.id]);
+      }
       const versionId = (await c.query('SELECT gen_random_uuid() AS id')).rows[0].id as string;
       const key = `${versionPrefix(id, versionId)}/original-${hash.slice(0, 16)}.pdf`;
       await this.storage.put('uploads', key, file.buffer, { contentType: 'application/pdf' });
       await c.query(
-        `INSERT INTO training_version (id, training_id, version_no, file_key, file_name, file_size, sha256, change_kind, change_note)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [versionId, id, no, key, fileName, file.size, hash, meta.changeKind ?? null, meta.changeNote ?? null],
+        `INSERT INTO training_version (id, training_id, version_no, file_key, file_name, file_size, sha256, change_kind, change_note, sprache)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [versionId, id, no, key, fileName, file.size, hash, meta.changeKind ?? null, meta.changeNote ?? null, meta.sprache],
       );
-      await this.audit.record(c, { entity: 'training_version', entityId: versionId, action: 'uploaded', payload: { sha256: hash, fileName, versionNo: no } });
+      await this.audit.record(c, { entity: 'training_version', entityId: versionId, action: 'uploaded', payload: { sha256: hash, fileName, versionNo: no, sprache: meta.sprache } });
       return { id: versionId, versionNo: no as number, sha256: hash, tenantId: t.rows[0].tenant_id as string };
     });
     await this.analysis.enqueue(res.id, res.tenantId);
-    return { id: res.id, versionNo: res.versionNo, sha256: res.sha256, status: 'hochgeladen' };
+    return { id: res.id, versionNo: res.versionNo, sha256: res.sha256, status: 'hochgeladen', sprache: meta.sprache };
   }
 
   @Get(':id/versions/:vid')
@@ -211,7 +226,7 @@ export class TrainingsController {
       ).rows;
       const chapters = (await c.query('SELECT idx, title, short_name, from_page, to_page, source FROM chapter WHERE version_id = $1 ORDER BY idx', [vid])).rows;
       return {
-        id: v.id, versionNo: v.version_no, status: v.status, fileName: v.file_name, fileSize: Number(v.file_size), sha256: v.sha256,
+        id: v.id, versionNo: v.version_no, sprache: v.sprache, status: v.status, fileName: v.file_name, fileSize: Number(v.file_size), sha256: v.sha256,
         pageCount: v.page_count, analysisError: v.analysis_error, changeKind: v.change_kind, changeNote: v.change_note,
         changedPages: v.changed_pages, publishedAt: v.published_at, createdAt: v.created_at,
         totals: {
@@ -283,7 +298,10 @@ export class TrainingsController {
       if (!v) throw new NotFoundException('Version nicht gefunden');
       if (v.published_at) throw new BadRequestException('Version ist bereits veröffentlicht');
       if (v.status !== 'bereit') throw new BadRequestException('Die Seitenanalyse ist noch nicht abgeschlossen');
-      const kind = b.changeKind ?? v.change_kind ?? (v.version_no === 1 ? null : undefined);
+      // Sprachfassung übernimmt die Art der Änderung der deutschen Fassung derselben Versionsnummer (E-39)
+      const deKind = v.sprache === 'de' ? null
+        : (await c.query(`SELECT change_kind FROM training_version WHERE training_id = $1 AND version_no = $2 AND sprache = 'de'`, [id, v.version_no])).rows[0]?.change_kind;
+      const kind = b.changeKind ?? v.change_kind ?? deKind ?? (v.version_no === 1 ? null : undefined);
       if (kind === undefined) throw new BadRequestException('Bitte die Art der Änderung angeben (inhaltlich oder redaktionell)');
       if (b.changedPages?.some((p) => p > v.page_count)) throw new BadRequestException('Geänderte Seite existiert nicht');
       await c.query(
@@ -291,7 +309,7 @@ export class TrainingsController {
                 changed_pages = $4, confirm_text = $5 WHERE id = $1`,
         [vid, kind, b.changeNote ?? null, b.changedPages ?? null, v.training_confirm],
       );
-      await this.audit.record(c, { entity: 'training_version', entityId: vid, action: 'published', payload: { versionNo: v.version_no, changeKind: kind, sha256: v.sha256 } });
+      await this.audit.record(c, { entity: 'training_version', entityId: vid, action: 'published', payload: { versionNo: v.version_no, sprache: v.sprache, changeKind: kind, changedPages: b.changedPages ?? null, sha256: v.sha256 } });
       return { ok: true };
     });
   }

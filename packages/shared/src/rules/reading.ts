@@ -46,6 +46,32 @@ export interface SessionTrackState {
 export interface PageRule {
   pageNo: number;
   tMinMs: number;
+  /**
+   * Pflichtseite für den Abschluss (Standard: true). Neueinladungen „nur geänderte Seiten“ (E-38) markieren alle
+   * übrigen Seiten mit `required: false`: aufrufbar und erfassbar, aber nicht nötig für den Abschluss.
+   */
+  required?: boolean;
+}
+
+/** Pflichtseite? Fehlt die Angabe, ist jede Seite Pflicht (Verhalten bis Phase 2). */
+export function isRequiredPage(p: PageRule): boolean {
+  return p.required !== false;
+}
+
+/**
+ * Markiert Pflichtseiten (E-38): `requiredPages` = null/leer → alle Seiten Pflicht; sonst nur die genannten
+ * (unbekannte Nummern werden ignoriert; bleibt nichts übrig, sind wieder alle Seiten Pflicht).
+ */
+export function withRequiredPages(pages: readonly PageRule[], requiredPages: readonly number[] | null | undefined): PageRule[] {
+  const wanted = new Set(requiredPages ?? []);
+  const known = pages.filter((p) => wanted.has(p.pageNo));
+  if (!known.length) return pages.map((p) => ({ ...p, required: true }));
+  return pages.map((p) => ({ ...p, required: wanted.has(p.pageNo) }));
+}
+
+/** Nummern der Pflichtseiten, aufsteigend. */
+export function requiredPageNos(pages: readonly PageRule[]): number[] {
+  return orderedPageNos(pages.filter(isRequiredPage));
 }
 
 /** Fortschritt je Einladung, kumuliert über ALLE Sitzungen. */
@@ -117,13 +143,16 @@ function orderedPageNos(pages: readonly PageRule[]): number[] {
 /**
  * Aufrufbare Seiten. Strenger Modus: erfüllte Seiten plus die erste noch nicht
  * erfüllte Seite in Reihenfolge. Sonst alle Seiten.
+ * Mit Pflichtseiten (E-38) gilt der strenge Modus nur unter den Pflichtseiten;
+ * Seiten, die nicht Pflicht sind, bleiben immer aufrufbar.
  */
 export function allowedPages(pages: readonly PageRule[], fulfilled: readonly number[], strictMode: boolean): number[] {
   const order = orderedPageNos(pages);
   if (!strictMode) return order;
+  const optional = new Set(pages.filter((p) => !isRequiredPage(p)).map((p) => p.pageNo));
   const done = new Set(fulfilled);
-  const next = order.find((n) => !done.has(n));
-  return order.filter((n) => done.has(n) || n === next);
+  const next = order.find((n) => !done.has(n) && !optional.has(n));
+  return order.filter((n) => done.has(n) || n === next || optional.has(n));
 }
 
 export function isPageAllowed(
@@ -222,21 +251,22 @@ export function remainingMs(pageNo: number, pages: readonly PageRule[], progress
   return Math.max(0, rule.tMinMs - (progress.dwellMs[pageNo] ?? 0));
 }
 
-/** Σ t_min aller Seiten in ms. */
+/** Σ t_min aller Pflichtseiten in ms. */
 export function totalRequiredMs(pages: readonly PageRule[]): number {
-  return pages.reduce((s, p) => s + p.tMinMs, 0);
+  return pages.filter(isRequiredPage).reduce((s, p) => s + p.tMinMs, 0);
 }
 
-/** Gesamt-Ist in ms; nur Seiten des Dokuments zählen. */
+/** Gesamt-Ist in ms; nur Pflichtseiten des Dokuments zählen. */
 export function totalDwellMs(pages: readonly PageRule[], progress: ProgressSnapshot): number {
-  return orderedPageNos(pages).reduce((s, n) => s + (progress.dwellMs[n] ?? 0), 0);
+  return requiredPageNos(pages).reduce((s, n) => s + (progress.dwellMs[n] ?? 0), 0);
 }
 
-/** Alle Seiten erfüllt. Ein Dokument ohne Seiten gilt nie als abgeschlossen. */
+/** Alle Pflichtseiten erfüllt. Ein Dokument ohne (Pflicht-)Seiten gilt nie als abgeschlossen. */
 export function isComplete(pages: readonly PageRule[], progress: ProgressSnapshot): boolean {
-  if (pages.length === 0) return false;
+  const required = pages.filter(isRequiredPage);
+  if (required.length === 0) return false;
   const done = new Set(progress.fulfilled);
-  return pages.every((p) => done.has(p.pageNo));
+  return required.every((p) => done.has(p.pageNo));
 }
 
 /**

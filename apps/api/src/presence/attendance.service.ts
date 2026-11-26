@@ -25,6 +25,7 @@ import { parseSettings } from '../trainings/settings';
 import { ATTENDANCE_CONFIRM_TEXT, attendanceCollector } from './attendance-evidence';
 import { QrRejected, QrService } from './qr.service';
 import { RunAccess, type ManageCtx } from './run-access.service';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 type Queued = { id: string; tenantId: string | null };
 
@@ -197,7 +198,7 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
         training = (
           await c.query(
             `SELECT t.id, t.titel, t.settings,
-                    (SELECT v.id FROM training_version v WHERE v.training_id = t.id AND v.published_at IS NOT NULL ORDER BY v.version_no DESC LIMIT 1) AS version_id
+                    (SELECT v.id FROM training_version v WHERE v.training_id = t.id AND v.sprache = 'de' AND v.published_at IS NOT NULL ORDER BY v.version_no DESC LIMIT 1) AS version_id
                FROM training t WHERE t.id = $1 AND t.archived_at IS NULL`,
             [b.trainingId],
           )
@@ -705,8 +706,10 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
         const credited = a.completeness_state === 'vollstaendig' || a.release === 'freigegeben';
         if (a.invitation_id && credited) {
           await c.query(`UPDATE invitation SET status = 'bestaetigt', completed_at = coalesce(completed_at, $2) WHERE id = $1`, [a.invitation_id, a.confirmed_at]);
+          await WebhookEmitter.emit(c, tenantId, 'invitation.completed', { invitationId: a.invitation_id }); // E-37
         }
         await this.audit.record(c, { entity: 'attendance', entityId: id, action: 'finalized', payload: { credited } });
+        await WebhookEmitter.emit(c, tenantId, 'attendance.confirmed', { attendanceId: id }); // E-37
         return { kind: evidenceKind(run.typ), subject: { titel: run.titel, version: run.version_no, initialen: initials(a.person_name) + '.' } };
       });
       if (!ready) continue;

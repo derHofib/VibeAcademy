@@ -26,6 +26,7 @@ import { useSessionState } from '@/features/admin/upload';
 import { Stepper } from '@/features/admin/training/Stepper';
 import { BasicsStep } from '@/features/admin/training/BasicsStep';
 import { DocumentCard, type ChangeInfo } from '@/features/admin/training/DocumentCard';
+import { LanguageVersionsCard } from '@/features/admin/training/LanguageVersionsCard';
 import { RulesPanel, type RulesPanelHandle } from '@/features/admin/training/RulesPanel';
 import { QuestionPool } from '@/features/admin/training/QuestionPool';
 import { AudienceStep, type AudienceSelection } from '@/features/admin/training/AudienceStep';
@@ -194,6 +195,7 @@ export default function TrainingWizardPage() {
                   void version.refetch();
                 }}
               />
+              <LanguageVersionsCard training={training.data} onNotice={(m) => show(m)} />
               {nav(2, w.steps[2])}
             </div>
           </div>

@@ -17,6 +17,8 @@ import {
   type SessionTrackState,
   totalDwellMs,
   totalRequiredMs,
+  requiredPageNos,
+  withRequiredPages,
 } from './reading';
 
 const PAGES: PageRule[] = [
@@ -464,5 +466,42 @@ describe('Eigenschaften (fast-check)', () => {
       }),
       { numRuns: 300 },
     );
+  });
+});
+
+describe('Pflichtseiten – Neueinladung nur geänderte Seiten (E-38)', () => {
+  const FIVE: PageRule[] = [1, 2, 3, 4, 5].map((pageNo) => ({ pageNo, tMinMs: 10_000 }));
+  const only = (nos: number[] | null) => withRequiredPages(FIVE, nos);
+
+  it('ohne Angabe bzw. leer → alle Seiten Pflicht', () => {
+    expect(requiredPageNos(only(null))).toEqual([1, 2, 3, 4, 5]);
+    expect(requiredPageNos(only([]))).toEqual([1, 2, 3, 4, 5]);
+    expect(requiredPageNos(only([99]))).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('Abschluss nur über die Pflichtseiten', () => {
+    const p = only([2, 4]);
+    expect(isComplete(p, { dwellMs: {}, fulfilled: [2] })).toBe(false);
+    expect(isComplete(p, { dwellMs: {}, fulfilled: [4, 2] })).toBe(true);
+    expect(isComplete(only([]), { dwellMs: {}, fulfilled: [4, 2] })).toBe(false);
+    expect(totalRequiredMs(p)).toBe(20_000);
+  });
+
+  it('strenger Modus nur unter den Pflichtseiten; andere Seiten frei aufrufbar', () => {
+    const p = only([2, 4]);
+    expect(allowedPages(p, [], true)).toEqual([1, 2, 3, 5]);
+    expect(isPageAllowed(4, p, [], true)).toBe(false);
+    expect(allowedPages(p, [2], true)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('Gutschrift auf freiwilligen Seiten zählt nicht für den Abschluss', () => {
+    const p = only([2]);
+    const s = new Session({ progress: emptyProgress() }, p, true);
+    s.run(1, 1, 0, 3);
+    expect(s.shared.progress.fulfilled).toEqual([1]);
+    expect(isComplete(p, s.shared.progress)).toBe(false);
+    s.run(2, 4, 20_000, 3);
+    expect(isComplete(p, s.shared.progress)).toBe(true);
+    expect(plausibilityFlag(p, s.shared.progress)).toBe(false);
   });
 });

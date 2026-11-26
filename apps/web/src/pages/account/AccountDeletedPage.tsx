@@ -6,11 +6,13 @@ import { ParticipantLayout } from '@/components/layout/ParticipantLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ta } from '@/i18n/account';
+import { useParticipantLang } from '@/i18n/lang';
 import { clearAccountSession } from '@/features/account/api';
 
 /** `/konto/geloescht`: Bestätigung nach dem Löschen (Nachweise bleiben beim Mandanten, E-25). */
 export default function AccountDeletedPage() {
   const qc = useQueryClient();
+  useParticipantLang();
   // Die Sitzung ist serverseitig beendet – zwischengespeicherte Kontodaten verwerfen
   useEffect(() => clearAccountSession(qc), [qc]);
   return (

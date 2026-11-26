@@ -6,6 +6,7 @@ import type { ManualCheckoutReason } from '@sn/shared';
 import { ApiError, del, post } from '@/lib/api';
 import { Button, Card, EmptyState, Panel, StatusChip } from '@/components/ui';
 import { tl } from '@/i18n/live';
+import { useParticipantLang } from '@/i18n/lang';
 import { ErrorScreen, LoadingScreen } from '@/features/participant/ScreenStates';
 import {
   fetchParticipantSnapshot,
@@ -48,6 +49,7 @@ type AnswerResponse =
 /** Teilnehmersicht Live/Präsenz (13a–13i): einchecken, Uhr, Kontrollfragen, Fragen, auschecken, bestätigen. */
 export default function ParticipantLivePage() {
   const { id = '' } = useParams();
+  useParticipantLang();
   const location = useLocation();
   const qc = useQueryClient();
   const key = liveKeys.participant(id);
@@ -290,7 +292,7 @@ export default function ParticipantLivePage() {
         )}
         {mode === 'polling' && view === 'in' && (
           <p className="flex items-center gap-1.5 px-1 text-[12.5px] text-muted">
-            <CloudOff aria-hidden="true" className="size-3.5" /> {tl.org.liveConnection.polling}
+            <CloudOff aria-hidden="true" className="size-3.5" /> {tl.tn.polling}
           </p>
         )}
 
