@@ -156,3 +156,15 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 **E-34 Externe Nachweise:** mobil einreichen nur über das mit der Person verknüpfte Konto (E-25), kein eigener Einreiche-Link. OCR (Tesseract deu, PDF über pdftoppm) füllt nur leere Felder von Entwürfen, sonst nur Vorschläge. Vier-Augen-Prinzip: niemand gibt eigene Nachweise frei; Vorgesetzte nur selbst eingereichte ihres Teams. Gruppen werden als ein Fall geprüft. Rückgängig nach Freigabe (10 min) = Widerruf: Nachweis wird „widerrufen“ (auch auf `/verify`), eine Kopie geht zurück in die Prüfung. Arbeitsmedizinische Vorsorge: nur Teilnahme + Datum, keine OCR.
 
 **E-35 Web-Push** über VAPID (`web-push`), Abos je Konto oder Person (Link-Sitzung), nur über SECURITY-DEFINER-Funktionen schreibbar; ohne Schlüssel Log-Platzhalter. Nachweismappe-Export synchron (bis 5.000 Nachweise) als ZIP mit versiegeltem Verzeichnis-PDF und CSV.
+
+## 11. Phase 3 (Annahmen bei Start, werden von den Paketen präzisiert)
+
+**E-36 SSO/SCIM.** OIDC (Authorization Code + PKCE) je Mandant; Client-Secret verschlüsselt (AES-256-GCM, Schlüssel aus `HMAC_MASTER_SECRET` abgeleitet). Konten werden über (Issuer, Subject) verknüpft, bei erster Anmeldung über die bestätigte E-Mail. Step-up vor der Unterschrift per erneuter IdP-Anmeldung (`prompt=login`, `max_age=0`, `auth_time` geprüft) → Auth-Methode „sso“ im Nachweis. SCIM 2.0 je Mandant mit eigenem Bearer-Token (nur Hash gespeichert); SCIM-Löschen = deaktivieren (Aufbewahrung).
+
+**E-37 REST-API und Webhooks.** `/api/v1` mit API-Schlüsseln (Präfix + Geheimnis, nur Hash gespeichert, Scopes wie `persons:read`, `evidence:read`, `trainings:write`), eigene Rate-Limits, OpenAPI 3.1 unter `/api/v1/openapi.json`. Webhooks über die Outbox-Mechanik: HMAC-SHA256-Signatur mit Zeitstempel im Header, Wiederholung mit Backoff, Zustellprotokoll, keine Personendaten außer IDs in den Ereignissen (Abruf über die API).
+
+**E-38 Seiten-Diff.** Textvergleich je Seite (normalisierter Text, Ähnlichkeitsmaß) zwischen veröffentlichter und neuer Version; Vorschlag für `changed_pages`, der Verantwortliche bestätigt. Neueinladungen mit `changed_pages` verlangen die Lese-Erfüllung nur für diese Seiten.
+
+**E-39 Mehrsprachigkeit.** Phase 3 übersetzt die Teilnehmer-Oberfläche, Mails und das Nachweis-PDF (de/en); die Verwaltung bleibt Deutsch. Sprache je Person (`person.sprache`), Schulungsversionen können je Sprache hochgeladen werden; Einladungen wählen die Version in der Sprache der Person, sonst Deutsch.
+
+**E-40 FES/QES.** Signaturniveau je Schulung (EES Standard, FES/QES optional) über eine Anbieter-Schnittstelle (`SignatureProvider`: Vorgang starten → Weiterleitung → Rückruf mit signiertem Dokument). Ohne Vertrag mit einem Vertrauensdiensteanbieter nur Test-Anbieter.

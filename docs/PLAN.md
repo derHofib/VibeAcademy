@@ -164,9 +164,22 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 **Parallelisierbar:** Paket E „QR + Anwesenheit + Tests“ (2.3, 2.4) · Paket F „Fristen-Engine“ (2.1, 2.2) · Paket G „Extern + OCR“ (2.6, 2.10) · Paket H „Live-UI“ (2.11, 2.12 gegen SSE-Mock).
 
-## Phase 3 – Ausbau (erst nach Rücksprache)
+## Phase 3 – Ausbau (freigegeben am 26.11.2026)
 
-SSO/SCIM, REST-API + Webhooks, FieldVibe-Anbindung (`PersonDirectory`-Adapter), Seiten-Diff bei neuen Versionen, Mehrsprachigkeit, optional FES/QES-Anbieter. Wird nach Phase 2 separat geplant.
+Drei parallele Pakete, je Backend + Oberfläche + Tests. Migrationen: A = 015, B = 016, C = 017.
+
+- [ ] **3.1 SSO + SCIM (Paket A)** (E-36)
+  OIDC-Anmeldung je Mandant (Issuer, Client-ID, Secret verschlüsselt), Zuordnung Konto ↔ IdP-Subjekt, Step-up vor der Unterschrift per OIDC-Re-Auth (`prompt=login`, `max_age`), optional „nur SSO“. SCIM 2.0 (`/scim/v2/Users`, `/Groups`, Bearer-Token je Mandant) → Personen, Org-Einheiten, Mitgliedschaften; Deaktivieren statt Löschen.
+  **Test:** Login und Step-up gegen einen Test-IdP (oidc-provider), fremder Issuer abgelehnt; SCIM-Konformität (Filter `userName eq`, PATCH, Paging), Mandantentrennung.
+- [ ] **3.2 REST-API + Webhooks (Paket B)** (E-37)
+  Öffentliche, versionierte API `/api/v1` mit API-Schlüsseln je Mandant (Scopes, nur Hash gespeichert), OpenAPI-Beschreibung, Rate-Limit. Webhooks (HMAC-signiert, Wiederholung mit Backoff, Zustellprotokoll) für u. a. `evidence.created`, `invitation.completed`, `external_record.approved`, `compliance.state_changed`.
+  **Test:** Scopes, Mandantentrennung, Signaturprüfung, Wiederholung nach Fehler, Idempotenz.
+- [ ] **3.3 Seiten-Diff, Mehrsprachigkeit, FES/QES (Paket C)** (E-38–E-40)
+  Seiten-Diff zwischen Versionen (Textvergleich je Seite → Vorschlag „geänderte Seiten“), Neueinladung liest nur geänderte Seiten. Mehrsprachigkeit für Teilnehmer-Oberfläche, Mails und Nachweis-PDF (de/en), Sprache je Person, Schulungsversion je Sprache. Schnittstelle für fortgeschrittene/qualifizierte Signatur (FES/QES) mit Test-Anbieter; Signaturniveau je Schulung.
+  **Test:** Diff erkennt geänderte Seiten; Lese-Erfüllung nur für geänderte Seiten; Teilnehmer-Ablauf auf Englisch; FES-Ablauf mit Test-Anbieter.
+- [ ] **3.4 Phasenabschluss** `docs/PHASE-3.md`, E2E in der CI.
+
+FieldVibe-Anbindung bleibt außen vor (R1: eigenständig); die `PersonDirectory`-Schnittstelle bzw. SCIM deckt die Personenübernahme ab.
 
 ---
 
