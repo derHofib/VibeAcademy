@@ -35,6 +35,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Systempakete (poppler-utils für Vorschaubilder)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Chromium für Nachweis-PDF
+        run: pnpm --filter @sn/api exec playwright-core install --with-deps chromium
+      - name: Siegel-Werkzeug (pyHanko, Dev-Zertifikate)
+        run: scripts/setup-seal.sh
       - name: Pakete bauen
         run: pnpm --filter @sn/shared --filter @sn/db build
       - name: Lint
