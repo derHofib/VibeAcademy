@@ -49,7 +49,7 @@ describe('Meine Nachweise (Teilnehmerkonto, E-25)', () => {
 
   it('fremde Konten können keine Personen übernehmen; unbestätigte E-Mail sieht keine Kandidaten', async () => {
     const mallory = await h.agent();
-    await mallory.post('/api/auth/register-account', { name: 'Mallory', email: 'mallory@example.org', password: 'mallory-pass-1' });
+    await mallory.post('/api/auth/register-account', { name: 'Mallory', email: 'mallory@example.org', password: 'mallory-passwort-1' });
     expect((await mallory.get('/api/me/link-candidates')).body).toEqual([]);
     const ids = (await anna.get('/api/me/link-candidates')).body.map((c: { person_id: string }) => c.person_id);
     expect((await mallory.post('/api/me/link', { personIds: ids })).body.linked).toBe(0);
@@ -57,7 +57,7 @@ describe('Meine Nachweise (Teilnehmerkonto, E-25)', () => {
     expect((await mallory.get('/api/me/evidence')).body).toEqual([]);
     // Gleiche E-Mail, aber noch unbestätigt → keine Kandidaten, nach Code-Bestätigung schon
     const other = await h.agent();
-    await other.post('/api/auth/register-account', { name: 'Tobias', email: 'tobias@example.org', password: 'tobias-pass-1' });
+    await other.post('/api/auth/register-account', { name: 'Tobias', email: 'tobias@example.org', password: 'tobias-passwort-1' });
     await dozentA.post('/api/persons', { name: 'Tobias Meier', email: 'tobias@example.org' });
     expect((await other.get('/api/me/link-candidates')).body).toEqual([]);
     await other.post('/api/auth/email/verify-request');

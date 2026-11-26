@@ -28,6 +28,6 @@ export function mapDbError(e: unknown): never {
 export const email = z.email('Bitte eine gültige E-Mail-Adresse angeben').trim().toLowerCase().max(254);
 export const password = z
   .string()
-  .min(10, 'Das Passwort muss mindestens 10 Zeichen haben')
+  .min(12, 'Das Passwort muss mindestens 12 Zeichen haben')
   .max(200, 'Das Passwort ist zu lang');
 export const displayName = z.string().trim().min(1, 'Bitte einen Namen angeben').max(200);

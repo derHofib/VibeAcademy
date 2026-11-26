@@ -30,7 +30,7 @@ describe('Registrierung und Anmeldung', () => {
     expect((await c.post('/api/auth/register', { ...DOZENT, email: 'DOZENT@example.org' })).status).toBe(409);
     const weak = await c.post('/api/auth/register', { ...DOZENT, email: 'x@example.org', password: 'kurz' });
     expect(weak.status).toBe(400);
-    expect(weak.body.fields[0].message).toMatch(/mindestens 10 Zeichen/);
+    expect(weak.body.fields[0].message).toMatch(/mindestens 12 Zeichen/);
     expect((await c.post('/api/auth/register', { email: 'y@example.org' })).status).toBe(400);
   });
 

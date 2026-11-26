@@ -17,7 +17,8 @@ export class ReportsController {
   ) {}
 
   @Get('dashboard')
-  @Roles('admin', 'verantwortlich', 'auditor', 'vorgesetzter')
+  // Trainer sehen über RLS nur, was ihnen zusteht (eigene Termine)
+  @Roles('admin', 'verantwortlich', 'auditor', 'vorgesetzter', 'trainer')
   dashboard() {
     return this.db.tx(async (c) => {
       const kpi = (

@@ -231,7 +231,7 @@ test('Dozent: registrieren, Schulung anlegen, einladen, Lesenachweis ansehen', a
   // ── Einstellungen: Kollegen einladen ───────────────────────
   const colleague = uniqueEmail('kollege');
   await page.getByRole('link', { name: 'Einstellungen' }).first().click();
-  await expect(page.getByText(email)).toBeVisible();
+  await expect(page.getByText(email).first()).toBeVisible();
   await page.getByRole('button', { name: 'Kollegen einladen' }).click();
   const member = page.getByRole('dialog', { name: 'Kollegen einladen' });
   await member.getByLabel('Name').fill('Kim Kollegin');
@@ -239,7 +239,9 @@ test('Dozent: registrieren, Schulung anlegen, einladen, Lesenachweis ansehen', a
   await member.getByRole('button', { name: 'Kollegen einladen' }).click();
   await expect(page.getByText('Einladung zum Festlegen des Passworts eingereiht.')).toBeVisible();
   await expect(page.getByText(colleague)).toBeVisible();
-  const box = (await (await fetch(`${API}/api/dev/postausgang?an=${encodeURIComponent(colleague)}`)).json()) as Array<{
+  const box = (await (
+    await fetch(`${API}/api/dev/postausgang?an=${encodeURIComponent(colleague)}`)
+  ).json()) as Array<{
     text: string;
   }>;
   const setLink = /\/passwort-festlegen#token=[^\s"<]+/.exec(box.map((m) => m.text).join('\n'))?.[0];
