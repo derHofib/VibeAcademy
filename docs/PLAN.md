@@ -63,16 +63,20 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
   ✔ Lease in Redis, Heartbeat-Ingest mit `applyHeartbeat()`, signierte Seiten-URLs (60 s), strenger Modus serverseitig; Abnahmefälle in `apps/api/test/reading.int.test.ts` mit steuerbarer Uhr. `heartbeat_raw` vorerst ohne Partitionierung (Index auf `server_ts`, Löschjob).
   `packages/shared/rules/reading.ts` (reine Funktion: Heartbeat-Folge → Gutschrift je Seite); Migration `read_session`, `heartbeat_raw` (partitioniert nach Monat), `page_progress`; `POST /invitations/:id/sessions` (Lease), `POST /sessions/:id/heartbeat`, `GET /invitations/:id/progress`, `GET /invitations/:id/page/:n` (signierte URL, strenger Modus).
   **Test (Abnahme 2+3):** Erfüllung nur bei sichtbar ≥ 60 %, Tab aktiv/fokussiert, Eingabe < 30 s, kumuliert ≥ `t_min` über mehrere Sitzungen; manipulierte Heartbeats: Lücke in `seq`, doppelte/rückwärts `seq`, Serverzeit-Sprung > 5 s (gekappt), Client-Zeitstempel in der Zukunft (ignoriert), Heartbeat-Flut (verworfen), zwei parallele Sitzungen (nur aktive zählt, alte erhält 409), Seitenwechsel zwischen Heartbeats (keine Gutschrift); strenger Modus: Seite n+2 → 403, gelesene Seiten bleiben abrufbar; Plausibilitätsflag. Property-Test (fast-check): Gutschrift ≤ reale Serverzeit.
-- [ ] **1.6 Quiz-Durchführung** → 1.3, 1.5
+- [x] **1.6 Quiz-Durchführung** → 1.3, 1.5
+  ✔ Backend fertig (`apps/api/src/quiz`), Tests in `completion.int.test.ts`.
   `GET /invitations/:id/quiz` (zufällige Auswahl, ohne Lösungen), `POST /invitations/:id/quiz/attempts` (Bewertung serverseitig, Feedback + Erklärung), Sperre nach max. Versuchen + Info-Mail an Verantwortlichen; Quiz erst nach allen Seiten.
   **Test (Abnahme 4):** Bestehensgrenze, Versuchslimit, Quiz vor Lese-Erfüllung → 409.
-- [ ] **1.7 Unterschrift** → 1.6, 0.6
+- [x] **1.7 Unterschrift** → 1.6, 0.6
+  ✔ Backend fertig: Step-up per Code (E-Mail) oder Passwort, Unterschrift unveränderlich (Trigger).
   Migration `signature` (unveränderlich); `POST /invitations/:id/signature` mit Step-up-Token, Strichdaten + PNG in MinIO, Bindung an Dokument-Hash, Quiz-Ergebnis, Bestätigungstext-Hash.
   **Test (Abnahme 4):** ohne Step-up → 401; vor Erfüllung → 409; zweite Unterschrift → 409; geänderter Bestätigungstext → Hash-Abweichung erkannt.
-- [ ] **1.8 Nachweis-PDF + Siegel + Verify** (E-09, E-10) → 1.7
+- [x] **1.8 Nachweis-PDF + Siegel + Verify** (E-09, E-10) → 1.7
+  ✔ HTML-Vorlage nach Screen 8, Renderer Playwright-Chromium (Dev) oder Gotenberg (Betrieb), pyHanko PAdES-B-T mit Test-TSA; Prüfung `/verify/:code`; Tests prüfen Pflichtinhalte, Siegel und Manipulation.
   Migration `evidence`; Job `evidence-pdf`: HTML-Template (Screen 8, weicher Stil) mit allen Pflichtinhalten aus SPEZIFIKATION 4.4 → Gotenberg → pyHanko (PAdES-B-T, Dev-Zertifikat + Test-TSA) → MinIO (Object Lock). `GET /evidence/:id/pdf`, öffentliches `GET /verify/:code` + Seite `/verify/:code`.
   **Test (Abnahme 5):** PDF enthält Nachweis-Nr., Prüf-QR, Schulung/Version/SHA-256, Teilnehmer, Ablauf, Seitenprotokoll, Quiz-Versuche, Bestätigungstext im Wortlaut, Signaturbild, Auth-Methode (Textextraktion); Signatur gültig (pyHanko validate), Zeitstempel vorhanden; veränderte PDF-Bytes → Verify meldet „ungültig“.
-- [ ] **1.9 Auswertung** → 1.4–1.8
+- [x] **1.9 Auswertung** → 1.4–1.8
+  ✔ Backend fertig: `/dashboard`, „Alle erinnern“, `/invitations/:id/report`.
   `GET /dashboard` (KPIs, laufende Schulungen, Überfällige, nächste Termine), „Alle erinnern“; `GET /invitations/:id/report` (Lesenachweis je Person inkl. Seitenprotokoll + Audit-Auszug, nur berechtigte Rollen).
   **Test (Abnahme 7):** Vorgesetzter bekommt Status, aber 403/keine Felder für Seitendetails – sowohl API als auch direkt per SQL unter RLS.
 - [x] **1.10 Datenschutz-Jobs** → 1.5
@@ -96,6 +100,7 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
   Playwright: vollständiger Durchlauf Einladung → Lesen → Quiz → Unterschrift → Nachweis → Verify. Screenshots 390 px + 1440 px für Screens 1, 3, 5a, 5b, 5c, 6, 8 nach `docs/screenshots/phase-1/`, nebeneinander mit den JPGs in `docs/screenshots/phase-1/VERGLEICH.md`.
   **Test (Abnahme 8).**
 - [ ] **1.18 Meine Nachweise – optionales Teilnehmerkonto** (E-25) → 0.6, 1.8
+  ✔ Backend fertig (`apps/api/src/account`, Tests `account.int.test.ts`); Oberfläche offen.
   Nach dem Abschluss Angebot „Nachweis in einem Konto sammeln“; Konto anlegen/anmelden, E-Mail per OTP bestätigen, Verknüpfung der Personen mit dieser E-Mail über alle Mandanten (je Verknüpfung bestätigen); Übersicht eigener Nachweise mit Gültigkeit und PDF-Download; neue Einladungen. Kein Mockup → Gestaltung im weichen Stil nach Screen 10b/5a.
   **Test:** Konto sieht Nachweise aus zwei Mandanten, aber keine fremden Personen; Löschen trennt nur die Verknüpfung.
 - [ ] **1.19 Phasenabschluss:** Zusammenfassung (fertig / offen / Annahmen) in `docs/PHASE-1.md`.

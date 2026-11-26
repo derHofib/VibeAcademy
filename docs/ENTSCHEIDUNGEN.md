@@ -73,11 +73,11 @@ Die zeitkritische Logik (Seitenerfüllung, Anwesenheitsintervalle, QR-Fenster, F
 
 **E-08 Step-up vor der Unterschrift.** `POST /auth/step-up` (Konto: Passwort; Teilnehmer ohne Konto: 6-stelliger OTP an die E-Mail-Adresse der Einladung) erzeugt ein Step-up-Token, gebunden an Person + Einladung, gültig 5 min, einmal verwendbar. `POST /invitations/:id/signature` verlangt dieses Token und prüft serverseitig: alle Seiten erfüllt, Quiz bestanden (falls verlangt), Bestätigungstext-Hash passt zur Version.
 
-**E-09 Nachweis-PDF: HTML-Template → Gotenberg (Chromium) → Siegel.** Gotenberg als Compose-Dienst; Template als serverseitig gerendertes HTML mit den Design-Tokens (Screen 8). Für externe Nachweise wird der Beleg als PDF-Anlage angehängt (Bilder werden vorher in PDF-Seiten umgewandelt).
+**E-09 Nachweis-PDF: HTML-Template → Chromium → Siegel.** Renderer austauschbar (`PDF_RENDERER`): Gotenberg als Compose-Dienst im Betrieb, lokales Chromium über playwright-core in Entwicklung und Tests; Template als serverseitig gerendertes HTML mit den Design-Tokens (Screen 8). Für externe Nachweise wird der Beleg als PDF-Anlage angehängt (Bilder werden vorher in PDF-Seiten umgewandelt).
 
 **E-10 Siegel und Zeitstempel hinter Schnittstellen.**
 - `SealProvider.seal(pdf) → pdf` (PAdES-B-T) und `TimestampProvider.timestamp(sha256) → RFC-3161-Token`.
-- Umsetzung: **pyHanko** im Worker-Container (ausgereifte PAdES-Implementierung inkl. Zeitstempel). Dev: selbstsigniertes Zertifikat aus `infra/dev-certs/generate.sh` (nicht im Repo) und lokaler Test-TSA auf Basis von `openssl ts` hinter einem kleinen HTTP-Endpunkt.
+- Umsetzung: **pyHanko** (`infra/seal/seal.py`, Unterprozess). Dev: `scripts/setup-seal.sh` erzeugt Dev-CA, Siegelzertifikat und Test-TSA-Zertifikat unter `.local/certs` (nicht im Repo); ohne `TSA_URL` stempelt pyHankos eingebauter Test-TSA (`DummyTimeStamper`) – im Nachweis als „nicht qualifiziert“ gekennzeichnet. `infra/seal/verify.py` prüft Siegel und Zeitstempel.
 - Produktiv austauschbar per Konfiguration (Firmen-Siegelzertifikat als PKCS#12, TSA-URL); optional später FES/QES-Anbieter (Phase 3).
 - **Da kein Zertifikat vorhanden ist (R4)**: Jede Installation erzeugt beim ersten Start eine eigene Siegel-CA und ein Siegelzertifikat (Schlüssel nur im Secret-Speicher, nie im Repo). PDF-Reader zeigen die Signatur dann als „Identität unbekannt“, die Unveränderbarkeit ist aber prüfbar. Maßgeblich für die Echtheit ist `/verify/:code` (Abgleich SHA-256 mit der Datenbank) plus Audit-Kette. Zeitstempel: konfigurierbare TSA-URL (z. B. ein öffentlicher kostenloser RFC-3161-Dienst), ohne Konfiguration der interne Test-TSA mit Hinweis „Zeitstempel nicht qualifiziert“ im Nachweis. Wechsel auf ein vertrauenswürdiges Siegel ist reine Konfiguration.
 - `/verify/:code` zeigt öffentlich nur Status, Nachweis-Nr., Datum und SHA-256 – keine Personendaten außer Initialen.
@@ -132,3 +132,11 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 - Ein Konto kann gleichzeitig Dozent (Mitglied eines Mandanten) und Teilnehmer anderer Schulungen sein.
 - Eigene externe Nachweise mobil einreichen (Screen 10) geht an den jeweiligen Mandanten, in dem die Person geführt wird.
 - Löschen des Kontos trennt nur die Verknüpfung; Nachweise bleiben beim Mandanten (Aufbewahrungspflicht).
+
+## 9. Ergänzungen während der Umsetzung
+
+**E-26 Objektspeicher-Treiber.** `STORAGE_DRIVER=fs` (Verzeichnis, Entwicklung/Tests; Nachweise schreibgeschützt und nicht überschreibbar) oder `s3` (MinIO/S3 mit Object Lock im Betrieb).
+
+**E-27 Teilnehmer-Schreibzugriffe.** Statuswechsel aus Teilnehmersicht (geöffnet, gelesen, Quiz, Unterschrift) schreibt die API im Systemkontext des Mandanten, nachdem `ParticipantService.resolve()` den Zugriff geprüft hat. Teilnehmer haben per RLS nur Leserechte auf eigene Daten; Mandantentrennung bleibt erzwungen.
+
+**E-28 Fragen während der Online-Schulung (Phase 1).** Das Frage-Sheet im Viewer zeigt in Phase 1 die Kontaktdaten der Ansprechperson; die Frage-Funktion mit Speicherung folgt mit den Live-Fragen in Phase 2.
