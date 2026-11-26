@@ -148,7 +148,7 @@ const deDe = {
         floatText: 'Für Docks, Dialoge und Panels über dem Inhalt.',
         panelNeutral: 'Neutrales Panel auf Seitenhintergrund für gruppierte Inhalte.',
         panelAccent:
-          'Für jede Person entsteht ein versiegelter Nachweis mit dem Beleg als Anlage.',
+          'Für jede Person entsteht ein Nachweis mit dem Beleg als Anlage.',
         panelSuccess: 'Alles bereit – Zeitpunkt und Dokumentversion werden gespeichert.',
         panelWarn: 'Spannungsprüfer vor und nach der Messung auf Funktion prüfen.',
         panelDanger: 'Der Nachweis ist abgelaufen und muss erneuert werden.',

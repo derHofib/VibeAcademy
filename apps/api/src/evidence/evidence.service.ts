@@ -114,7 +114,7 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
       qrSvg: (url) => QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#1D2433', light: '#FFFFFF' } }),
       sealLabel: (tenantName) =>
         this.config.SEAL_MODE === 'none'
-          ? 'ENTWICKLUNGSVERSION – nicht versiegelt.'
+          ? 'Elektronisch erstellt und unveränderbar gespeichert. Prüfcode und SHA-256 sind beim Aussteller hinterlegt.'
           : `Elektronisch versiegelt (PAdES-B-T) für ${tenantName} · Zeitstempel nach RFC 3161 in der Signatur${this.config.TSA_URL ? '' : ' (Test-Zeitstempeldienst, nicht qualifiziert)'}.`,
       fontDir: repoPath(this.config.FONT_DIR),
       now: () => this.clock.now(),

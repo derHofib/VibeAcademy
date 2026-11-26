@@ -97,7 +97,7 @@ export class NachweismappeController {
     zip.file('00_Verzeichnis.pdf', sealed.pdf, { binary: true });
     zip.file(
       'verzeichnis.csv',
-      '﻿' + ['Nachweis-Nr;Person;Personalnr;Org-Einheit;Schulung;Art;Datum;Versiegelt;Prüfcode;SHA-256;Datei']
+      '﻿' + ['Nachweis-Nr;Person;Personalnr;Org-Einheit;Schulung;Art;Datum;Erstellt;Prüfcode;SHA-256;Datei']
         .concat(index.map((r) => [r.nachweisNr, r.person, r.personalnr, r.orgUnit, r.titel, r.art, r.datum, r.versiegelt, r.verifyCode, r.sha256, r.file].map(csvCell).join(';')))
         .join('\r\n'),
     );

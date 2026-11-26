@@ -26,8 +26,8 @@ const schema = z.object({
   /** Nachweis-PDF: playwright (lokales Chromium) oder gotenberg (Dienst, E-09) */
   PDF_RENDERER: z.enum(['playwright', 'gotenberg']).default('playwright'),
   GOTENBERG_URL: z.string().default('http://127.0.0.1:3001'),
-  /** Siegel: pyhanko (PAdES-B-T, E-10) oder none (nur Entwicklung ohne Python) */
-  SEAL_MODE: z.enum(['pyhanko', 'none']).default('pyhanko'),
+  /** Siegel (optional, E-45): none = ohne Siegel/Zeitstempel (Standard), pyhanko = PAdES-B-T mit RFC-3161-Zeitstempel */
+  SEAL_MODE: z.enum(['pyhanko', 'none']).default('none'),
   SEAL_PYTHON: z.string().default('python3'),
   SEAL_SCRIPT: z.string().default('infra/seal/seal.py'),
   SEAL_P12_PATH: z.string().optional(),

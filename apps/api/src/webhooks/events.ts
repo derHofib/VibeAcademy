@@ -12,7 +12,7 @@ export type AnyWebhookEventType = WebhookEventType | 'test.ping';
 
 export const WEBHOOK_EVENT_DESCRIPTIONS: Record<AnyWebhookEventType, string> = {
   'invitation.completed': 'Einladung abgeschlossen (bestätigt/unterschrieben bzw. Anwesenheit angerechnet)',
-  'evidence.created': 'Nachweis-PDF erzeugt und versiegelt',
+  'evidence.created': 'Nachweis-PDF erzeugt',
   'external_record.approved': 'Externer Nachweis freigegeben (auch bei direkter Erfassung durch die Verwaltung oder Import)',
   'attendance.confirmed': 'Anwesenheit eines Präsenz-/Live-Termins bestätigt und abgeschlossen',
   'compliance.state_changed': 'Stand Person × Pflichtschulung hat sich seit dem letzten nächtlichen Lauf geändert',

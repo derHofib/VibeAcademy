@@ -101,7 +101,7 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     device: 'Gerät',
     ipHash: 'IP-Hash',
     confirmSha: 'Best.-Text SHA-256',
-    footerTamper: (url) => `Jede nachträgliche Änderung macht die Versiegelung ungültig. Prüfung über den QR-Code oben rechts: ${url}`,
+    footerTamper: (url) => `Echtheit prüfen: QR-Code oben rechts oder ${url}`,
     authMethods: {
       password: 'Passwort (Re-Auth)', otp_mail: 'Einmalcode per E-Mail', otp_sms: 'Einmalcode per SMS', sso: 'Single Sign-on (Step-up)',
       provider: 'Identifizierung beim Signaturanbieter',
@@ -125,7 +125,7 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     testProvider: 'TEST-ANBIETER – keine rechtsgültige fortgeschrittene oder qualifizierte Signatur',
     signedAtProvider: 'Elektronisch signiert beim Signaturanbieter',
     sealed: (tenant, q) => `Elektronisch versiegelt (PAdES-B-T) für ${tenant} · Zeitstempel nach RFC 3161 in der Signatur${q ? '' : ' (Test-Zeitstempeldienst, nicht qualifiziert)'}.`,
-    unsealed: 'ENTWICKLUNGSVERSION – nicht versiegelt.',
+    unsealed: 'Elektronisch erstellt und unveränderbar gespeichert. Prüfcode und SHA-256 sind beim Aussteller hinterlegt.',
   },
   en: {
     htmlLang: 'en',
@@ -166,7 +166,7 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     device: 'Device',
     ipHash: 'IP hash',
     confirmSha: 'Confirmation text SHA-256',
-    footerTamper: (url) => `Any subsequent change invalidates the seal. Verify via the QR code at the top right: ${url}`,
+    footerTamper: (url) => `Verify authenticity: QR code at the top right or ${url}`,
     authMethods: {
       password: 'Password (re-authentication)', otp_mail: 'One-time code by e-mail', otp_sms: 'One-time code by SMS',
       sso: 'Single sign-on (step-up)', provider: 'Identification by the signature provider',
@@ -190,6 +190,6 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     testProvider: 'TEST PROVIDER – not a legally valid advanced or qualified signature',
     signedAtProvider: 'Signed electronically with the signature provider',
     sealed: (tenant, q) => `Electronically sealed (PAdES-B-T) for ${tenant} · RFC 3161 timestamp in the signature${q ? '' : ' (test timestamp service, not qualified)'}.`,
-    unsealed: 'DEVELOPMENT VERSION – not sealed.',
+    unsealed: 'Created electronically and stored unalterably. Verification code and SHA-256 are held by the issuer.',
   },
 };

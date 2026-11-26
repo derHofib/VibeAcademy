@@ -20,9 +20,10 @@ x-app-env: &app-env
   S3_BUCKET_EVIDENCE: ${S3_BUCKET_EVIDENCE:-sn-evidence}
   GOTENBERG_URL: http://gotenberg:3000
   PDF_RENDERER: gotenberg
-  # Siegelzertifikat (PKCS#12) als Secret einbinden, siehe docs/BETRIEB.md
-  SEAL_P12_PATH: /run/secrets/seal_p12
-  SEAL_P12_PASSWORD: ${SEAL_P12_PASSWORD:?SEAL_P12_PASSWORD setzen}
+  # Siegel/Zeitstempel optional (E-45): Standard „none“. Zum Einschalten SEAL_MODE=pyhanko und Zertifikat einbinden (docs/BETRIEB.md)
+  SEAL_MODE: ${SEAL_MODE:-none}
+  SEAL_P12_PATH: ${SEAL_P12_PATH:-}
+  SEAL_P12_PASSWORD: ${SEAL_P12_PASSWORD:-}
   TSA_URL: ${TSA_URL:-}
 
 services:
@@ -96,7 +97,6 @@ services:
     environment:
       <<: *app-env
       API_PORT: 3000
-    secrets: [seal_p12]
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
       interval: 10s
@@ -120,10 +120,6 @@ services:
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
     volumes: [caddydata:/data, caddyconfig:/config]
-
-secrets:
-  seal_p12:
-    file: ${SEAL_P12_FILE:-../.local/certs/seal.p12}
 
 volumes:
   pgdata:

@@ -7,7 +7,7 @@ import { API, ApiClient, latestOtp } from './participant-seed';
 
 /**
  * Externe Nachweise + Pflichtmatrix (Phase 2, 2.9/2.10/2.13) gegen die echte API inkl. Tesseract-OCR:
- *  1. Verwaltung erfasst eine Gruppe mit einer Teilnahmeliste → versiegelte Nachweise (9a/9b)
+ *  1. Verwaltung erfasst eine Gruppe mit einer Teilnahmeliste → Nachweise (9a/9b)
  *  2. Mitarbeiterin (Konto mit Person verknüpft, E-34) fotografiert ihre Bescheinigung auf 390 px → OCR-Vorschläge → einreichen (10a/10b)
  *  3. Verwaltung prüft (Zertifikat 11a, Papierliste 11b) und gibt frei (11c)
  *  4. Mitarbeiterin sieht den Nachweis, Pflichtmatrix zeigt „gültig“, Dashboard-KPIs, Nachweismappe als ZIP
@@ -251,7 +251,7 @@ test('9a/9b: Verwaltung erfasst eine Gruppe mit einer Teilnahmeliste', async ({ 
 
   await page.getByRole('button', { name: 'Speichern und anrechnen' }).click();
   await expect(page.getByRole('button', { name: 'Gespeichert' })).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText('4 Nachweise angelegt und versiegelt. Status im Dashboard aktualisiert.')).toBeVisible();
+  await expect(page.getByText('4 Nachweise angelegt. Status im Dashboard aktualisiert.')).toBeVisible();
   await shot(page, '09b-extern-erfassen-gespeichert', { fullPage: true });
 });
 
@@ -331,7 +331,7 @@ test('11a–11c: Verwaltung prüft Zertifikat und Papierliste, gibt frei', async
   // 11c: Lea freigeben
   await cards.filter({ hasText: 'Lea Wagner' }).click();
   await page.getByRole('button', { name: 'Freigeben', exact: true }).click();
-  await expect(page.getByText('Nachweis versiegelt, Beleg angehängt, Pflichtmatrix aktualisiert.')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText('Nachweis erstellt, Beleg angehängt, Pflichtmatrix aktualisiert.')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('button', { name: /^Rückgängig \(\d+:\d\d\)$/ })).toBeVisible();
   await expect(cards.filter({ hasText: 'Lea Wagner' })).toContainText('freigegeben');
   await expect(page.getByRole('button', { name: 'Zu prüfen · 2' })).toBeVisible();
@@ -339,7 +339,7 @@ test('11a–11c: Verwaltung prüft Zertifikat und Papierliste, gibt frei', async
   await shot(page, '11c-extern-pruefen-freigegeben');
 });
 
-test('Mitarbeiterin sieht den versiegelten Nachweis', async ({ page }) => {
+test('Mitarbeiterin sieht ihren Nachweis', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page, LEA, `/konto/extern/${seed.leaRecordId}`);
   await expect(page.getByRole('heading', { name: 'Freigegeben' })).toBeVisible();

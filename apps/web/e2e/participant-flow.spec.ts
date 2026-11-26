@@ -149,7 +149,7 @@ async function runFlow(page: Page, inv: SeededInvitation, prefix: string) {
   await shot(page, `${prefix}-06-unterschrift`);
   await submit.click();
 
-  // Abschluss: Nachweis-Nr., Prüfcode, PDF sobald versiegelt
+  // Abschluss: Nachweis-Nr., Prüfcode, PDF sobald erstellt
   await expect(page.getByRole('heading', { name: 'Unterschrieben' })).toBeVisible({ timeout: 20_000 });
   const download = page.getByRole('link', { name: 'Nachweis herunterladen' });
   await expect(download).toBeVisible({ timeout: 60_000 });
@@ -166,7 +166,7 @@ async function runFlow(page: Page, inv: SeededInvitation, prefix: string) {
   const initials = inv.personName.split(' ').map((w) => w[0]).join('');
   await expect(page.getByText(new RegExp(`^${initials}[.]?$`))).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles(pdfPath);
-  await expect(page.getByTestId('file-check')).toContainText('stimmt mit dem versiegelten Nachweis überein');
+  await expect(page.getByTestId('file-check')).toContainText('stimmt mit dem hinterlegten Nachweis überein');
   await shot(page, `${prefix}-08-pruefseite`);
 }
 

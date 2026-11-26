@@ -236,7 +236,7 @@ ${
 }
 </div></div></div>
 
-<div class="foot">${esc(d.seal.label)}<br>Jede nachträgliche Änderung macht die Versiegelung ungültig. Prüfung über den QR-Code oben rechts: ${esc(d.verifyUrl)}</div>
+<div class="foot">${esc(d.seal.label)}<br>Echtheit prüfen: QR-Code oben rechts oder ${esc(d.verifyUrl)}</div>
 </body></html>`;
 }
 

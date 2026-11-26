@@ -101,7 +101,7 @@ const schemas: Record<string, Schema> = {
   Evidence: obj({
     id: uuid, kind: str({ enum: ['online', 'praesenz', 'live', 'extern'] }), status: str({ enum: ['ausstehend', 'erzeugt', 'fehler', 'widerrufen'] }),
     revokedAt: ndateTime, revokedReason: nstr(), nachweisNr: str(), verifyCode: str({ pattern: '^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$' }),
-    sha256: nstr({ description: 'SHA-256 des versiegelten PDFs' }), sealedAt: ndateTime, personId: nuuid, invitationId: nuuid, attendanceId: nuuid,
+    sha256: nstr({ description: 'SHA-256 des Nachweis-PDFs' }), sealedAt: ndateTime, personId: nuuid, invitationId: nuuid, attendanceId: nuuid,
     externalRecordId: nuuid, retainUntil: ndate, pdfUrl: nstr(), createdAt: dateTime,
   }),
   EvidenceVerification: { allOf: [obj({ valid: bool }), ref('Evidence')] },
@@ -332,7 +332,7 @@ const paths: Record<string, Record<string, unknown>> = {
   '/evidence/{id}': { get: op({ tag: 'Nachweise', summary: 'Nachweis (Metadaten)', scope: 'evidence:read', params: [pRef('id')], response: ref('Evidence'), errors: [400, 404] }) },
   '/evidence/{id}/pdf': {
     get: op({
-      tag: 'Nachweise', summary: 'Versiegeltes Nachweis-PDF herunterladen', description: 'Header `X-Content-SHA256` = SHA-256 der Datei (wie `sha256`).',
+      tag: 'Nachweise', summary: 'Nachweis-PDF herunterladen', description: 'Header `X-Content-SHA256` = SHA-256 der Datei (wie `sha256`).',
       scope: 'evidence:read', params: [pRef('id')], response: str({ contentMediaType: 'application/pdf' }), responseType: 'application/pdf', errors: [400, 404],
     }),
   },
@@ -348,7 +348,7 @@ const paths: Record<string, Record<string, unknown>> = {
       tag: 'Externe Nachweise',
       summary: 'Externen Nachweis erfassen (wie „Verwaltung erfasst“)',
       description:
-        'Gilt sofort (Status `freigegeben`, versiegelter Nachweis wird erzeugt, Webhook `external_record.approved`) oder mit `review: true` zur Prüfung. ' +
+        'Gilt sofort (Status `freigegeben`, Nachweis wird erzeugt, Webhook `external_record.approved`) oder mit `review: true` zur Prüfung. ' +
         'Belege als `multipart/form-data` (Feld `data` = JSON, Dateien `receipts`); ein Beleg gilt für alle angegebenen Personen.',
       scope: 'external:write', body: ref('ExternalRecordCreate'), multipart: true, status: 201, response: ref('ExternalRecordCreated'), errors: [400, 413],
     }),

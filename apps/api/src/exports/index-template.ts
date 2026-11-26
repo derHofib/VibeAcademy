@@ -67,8 +67,8 @@ tr{break-inside:avoid}
 <div class="m">${esc(d.tenantName)}</div>
 <h1>Nachweismappe ${esc(d.from)} – ${esc(d.to)}</h1>
 <div class="m">${d.rows.length} Nachweise · erstellt ${esc(d.createdAt)}${d.filter.length ? ` · ${esc(d.filter.join(' · '))}` : ''}</div>
-<div class="m" style="margin-top:4px">Jeder Nachweis liegt als versiegeltes PDF im Ordner „nachweise“. Echtheit prüfen: ${esc(d.verifyBase)}&lt;Prüfcode&gt; – der dort angezeigte SHA-256-Wert muss mit dieser Liste und der Datei übereinstimmen.</div>
-<table><thead><tr><th>#</th><th>Nachweis</th><th>Person</th><th>Schulung</th><th>Datum</th><th>Versiegelt</th><th>Prüfcode</th><th>SHA-256 (PDF)</th></tr></thead>
+<div class="m" style="margin-top:4px">Jeder Nachweis liegt als PDF im Ordner „nachweise“. Echtheit prüfen: ${esc(d.verifyBase)}&lt;Prüfcode&gt; – der dort angezeigte SHA-256-Wert muss mit dieser Liste und der Datei übereinstimmen.</div>
+<table><thead><tr><th>#</th><th>Nachweis</th><th>Person</th><th>Schulung</th><th>Datum</th><th>Erstellt</th><th>Prüfcode</th><th>SHA-256 (PDF)</th></tr></thead>
 <tbody>${rows}</tbody></table>
 </body></html>`;
 }

@@ -103,6 +103,6 @@ ${row('Geprüft und freigegeben', esc(d.reviewed))}
 <div class="m" style="font-size:8.5pt;margin-top:6px">Die Original-Belege folgen auf den nächsten Seiten. Der SHA-256-Wert belegt, dass sie seit dem Hochladen unverändert sind.</div>
 </div>
 
-<div class="foot">${esc(d.sealLabel)}<br>Jede nachträgliche Änderung macht die Versiegelung ungültig. Prüfung über den QR-Code oben rechts: ${esc(d.verifyUrl)}</div>
+<div class="foot">${esc(d.sealLabel)}<br>Echtheit prüfen: QR-Code oben rechts oder ${esc(d.verifyUrl)}</div>
 </body></html>`;
 }

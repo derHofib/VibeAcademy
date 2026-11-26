@@ -498,7 +498,7 @@ export const adm = {
       'quiz_attempt:passed': 'Wissenscheck bestanden',
       'quiz_attempt:failed': 'Wissenscheck nicht bestanden',
       'signature:signed': 'Unterschrift geleistet',
-      'evidence:created': 'Nachweis-PDF versiegelt',
+      'evidence:created': 'Nachweis-PDF erstellt',
     } as Record<string, string>,
     eventScore: (pct: unknown) => `${pct} % richtig`,
     eventAttempt: (n: unknown) => `${n}. Versuch`,
