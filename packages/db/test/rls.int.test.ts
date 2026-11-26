@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { withContext } from '../src/context';
-import { createTestDb, type TestDb } from './helpers';
+import { createTestDb, type TestDb } from '../src/testing';
 
 let db: TestDb;
 let a: { account_id: string; tenant_id: string };

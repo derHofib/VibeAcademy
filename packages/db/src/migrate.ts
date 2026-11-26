@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
-export const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'migrations');
+// funktioniert aus src/ (tsx/vitest) und dist/ (ESM und CJS)
+const here = typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(import.meta.url));
+export const MIGRATIONS_DIR = join(here, '..', 'migrations');
 
 /** Führt alle SQL-Migrationen in Reihenfolge aus, jede in einer eigenen Transaktion. Prüft Checksummen. */
 export async function migrate(migratorUrl: string, dir = MIGRATIONS_DIR, log = console.log): Promise<string[]> {

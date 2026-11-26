@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import pg from 'pg';
-import '../src/cli/env';
-import { bootstrap } from '../src/bootstrap';
-import { migrate } from '../src/migrate';
+import './cli/env';
+import { bootstrap } from './bootstrap';
+import { migrate } from './migrate';
 
 export const ADMIN_URL = process.env.DATABASE_ADMIN_URL ?? 'postgres://postgres@127.0.0.1:54329/postgres';
 const MIGRATOR_PW = process.env.DB_MIGRATOR_PASSWORD ?? 'test-migrator';
@@ -18,6 +18,8 @@ function urlFor(user: string, pw: string, db: string) {
 
 export interface TestDb {
   name: string;
+  /** Verbindungs-URL der Laufzeitrolle app_user */
+  appUrl: string;
   app: pg.Pool;
   migrator: pg.Pool;
   admin: pg.Pool;
@@ -36,6 +38,7 @@ export async function createTestDb(): Promise<TestDb> {
   const admin = new pg.Pool({ connectionString: adminUrl.toString(), max: 2 });
   return {
     name,
+    appUrl: urlFor('app_user', APP_PW, name),
     app,
     migrator,
     admin,
