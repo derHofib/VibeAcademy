@@ -1,0 +1,131 @@
+/*
+ * Design-Tokens Schulungsnachweis – verbindlich ist der „weiche“ Stil
+ * (docs/handoff/docs/DESIGN-UND-SCREENS.md, Abschnitt 1; E-20).
+ * Tailwind v4: jede Variable erzeugt passende Utilities, z. B.
+ *   --color-ink      -> text-ink, bg-ink
+ *   --radius-card    -> rounded-card
+ *   --shadow-float   -> shadow-float
+ *   --font-heading   -> font-heading
+ */
+
+@theme {
+  /* ---- Flächen und Text ---- */
+  --color-bg: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-surface-hover: #fafbfe;
+  --color-ink: #1d2433;
+  --color-ink-2: #3a4456;
+  --color-muted: #5f6b7d;
+  --color-line: #e3e8f2;
+  /* Rand von Bedienelementen (Checkbox): >= 3:1 auf Weiß (WCAG 1.4.11) */
+  --color-control: #7d8aa0;
+  --color-neutral-soft: #edf0f6;
+
+  /* ---- Akzent ---- */
+  --color-accent: #3d63dd;
+  --color-accent-hover: #3457c9;
+  --color-accent-soft: #eaf0fe;
+  --color-accent-ring: #c9d6f8;
+  --color-accent-text: #2e4fb8;
+  --color-accent-text-strong: #223c8f;
+
+  /* ---- Status ---- */
+  --color-success: #1e7a50;
+  --color-success-hover: #1a6b46;
+  --color-success-soft: #e6f4ec;
+  --color-success-line: #9ed3b5;
+  --color-success-text: #1e6a45;
+  --color-success-text-strong: #1e5a3c;
+
+  --color-warn: #f2b544; /* nur Icons/Flächen, nicht für Text */
+  --color-warn-soft: #fff4df;
+  --color-warn-line: #f0c08a;
+  --color-warn-text: #6b4500;
+  --color-warn-text-strong: #5a3a00;
+  --color-warn-strong: #8a4b00; /* Zahlen/Markierungen auf Weiß */
+
+  --color-danger-soft: #fdecea;
+  --color-danger-text: #a1271b;
+
+  --color-disabled: #e4eaf8;
+  --color-disabled-text: #2e3f6e;
+
+  --color-scan-bg: #161b26;
+  --color-scan-bg-2: #2a3142;
+
+  /* ---- Typografie ---- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- Radien ---- */
+  --radius-chip: 999px;
+  --radius-pill: 999px;
+  --radius-input: 16px;
+  --radius-box: 20px; /* Info-Boxen innerhalb von Karten */
+  --radius-card: 24px;
+  --radius-card-lg: 28px;
+  --radius-panel: 26px;
+  --radius-sheet: 30px;
+
+  /* ---- Schatten (keine harten Rahmen) ---- */
+  --shadow-card: 0 1px 2px rgba(29, 36, 51, 0.04), 0 10px 30px rgba(29, 36, 51, 0.06);
+  --shadow-float: 0 2px 6px rgba(29, 36, 51, 0.06), 0 14px 34px rgba(29, 36, 51, 0.14);
+  --shadow-primary: 0 8px 20px rgba(61, 99, 221, 0.28);
+  --shadow-soft: 0 2px 8px rgba(29, 36, 51, 0.06);
+  --shadow-pill: 0 4px 14px rgba(29, 36, 51, 0.1);
+  --shadow-dark: 0 10px 24px rgba(29, 36, 51, 0.22);
+  --shadow-success: 0 10px 24px rgba(30, 122, 80, 0.3);
+  --shadow-sheet: 0 -10px 30px rgba(29, 36, 51, 0.12);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2 {
+    font-weight: 700;
+  }
+
+  h3,
+  h4 {
+    font-weight: 600;
+  }
+
+  /* Sichtbarer Fokus auf allen interaktiven Elementen: Akzent, 2 px Abstand */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+}
+
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

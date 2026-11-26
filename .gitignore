@@ -10,3 +10,4 @@ infra/dev-certs/out/
 playwright-report/
 test-results/
 .local/
+*.tsbuildinfo
