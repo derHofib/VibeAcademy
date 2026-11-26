@@ -230,7 +230,7 @@ test('Dozent: registrieren, Schulung anlegen, einladen, Lesenachweis ansehen', a
 
   // ── Einstellungen: Kollegen einladen ───────────────────────
   const colleague = uniqueEmail('kollege');
-  await page.getByRole('link', { name: 'Einstellungen' }).first().click();
+  await page.getByRole('link', { name: /Einstellungen/ }).first().click();
   await expect(page.getByText(email).first()).toBeVisible();
   await page.getByRole('button', { name: 'Kollegen einladen' }).click();
   const member = page.getByRole('dialog', { name: 'Kollegen einladen' });

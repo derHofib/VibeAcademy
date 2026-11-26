@@ -1,4 +1,4 @@
-import { CalendarDays, FileCheck2, GraduationCap, LayoutDashboard, Settings, ShieldOff, Users } from 'lucide-react';
+import { CalendarDays, FileCheck2, GraduationCap, LayoutDashboard, ShieldOff, Users } from 'lucide-react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router';
 import { AdminLayout, type AdminNavItem } from '@/components/layout/AdminLayout';
 import { Button, Card, EmptyState } from '@/components/ui';
@@ -23,7 +23,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/verwaltung/personen', label: adm.nav.people, icon: Users },
   { to: '/verwaltung/pflichtmatrix', label: tx.nav.matrix, icon: Grid3x3 },
   { to: '/verwaltung/extern', label: tx.nav.external, icon: FileInput },
-  { to: '/verwaltung/einstellungen', label: adm.nav.settings, icon: Settings },
   { to: '/verwaltung/schnittstellen', label: 'Schnittstellen', icon: Plug },
   // Eigene Nachweise als Teilnehmer anderer Schulungen (E-25)
   { to: '/konto', label: ta.nav.myEvidence, icon: FileCheck2 },
@@ -82,7 +81,7 @@ function Shell({ me }: { me: Me }) {
   }
 
   return (
-    <AdminLayout {...layout}>
+    <AdminLayout {...layout} settingsHref="/verwaltung/einstellungen">
       <Outlet context={me} />
     </AdminLayout>
   );

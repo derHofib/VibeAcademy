@@ -4,6 +4,7 @@ name: schulungsnachweis
 
 x-app-env: &app-env
   NODE_ENV: production
+  API_HOST: 0.0.0.0
   DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-schulungsnachweis}
   REDIS_URL: redis://redis:6379
   PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}

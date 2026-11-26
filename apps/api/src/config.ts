@@ -3,6 +3,8 @@ import { z } from 'zod';
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().default(3000),
+  /** Bind-Adresse: lokal nur 127.0.0.1; im Container 0.0.0.0 (Caddy erreicht die API über das Docker-Netz) */
+  API_HOST: z.string().default('127.0.0.1'),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().default('redis://127.0.0.1:63799'),
   REDIS_PREFIX: z.string().default('sn:'),

@@ -35,7 +35,6 @@ export function adminNavItems(externalCount?: number): AdminNavItem[] {
     { to: '/externe-nachweise', label: de.nav.externalRecords, icon: FileCheck2, count: externalCount },
     { to: '/pflichtmatrix', label: de.nav.matrix, icon: Grid3x3 },
     { to: '/personen', label: de.nav.people, icon: Users },
-    { to: '/einstellungen', label: de.nav.settings, icon: Settings },
   ];
 }
 
@@ -111,15 +110,21 @@ function TenantBox({
   userName,
   onLogout,
   logoutLabel,
+  settingsHref,
+  settingsActive,
+  onNavigate,
 }: {
   tenantName?: string;
   userName?: string;
   onLogout?: () => void;
   logoutLabel?: string;
+  settingsHref?: string;
+  settingsActive?: boolean;
+  onNavigate?: () => void;
 }) {
   if (!tenantName && !userName) return null;
-  return (
-    <div className="flex items-center gap-3 rounded-box bg-bg py-3 pr-1.5 pl-3">
+  const who = (
+    <>
       {userName && <Avatar name={userName} size="lg" tone="surface" />}
       <div className="min-w-0 flex-1">
         {userName && <p className="truncate text-[14px] font-semibold text-ink">{userName}</p>}
@@ -130,6 +135,37 @@ function TenantBox({
           </p>
         )}
       </div>
+    </>
+  );
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-1 rounded-box py-1.5 pr-1.5 pl-1.5 transition-colors',
+        settingsActive ? 'bg-accent-soft' : 'bg-bg',
+        settingsHref && !settingsActive && 'has-[a:hover]:bg-line/60',
+      )}
+    >
+      {settingsHref ? (
+        <Link
+          to={settingsHref}
+          onClick={onNavigate}
+          aria-current={settingsActive ? 'page' : undefined}
+          title={de.nav.settings}
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-box py-1.5 pr-2 pl-1.5 focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          {who}
+          <Settings
+            className={cn(
+              'size-[17px] shrink-0 transition-colors',
+              settingsActive ? 'text-accent-text-strong' : 'text-muted group-hover:text-ink',
+            )}
+            aria-hidden="true"
+          />
+          <span className="sr-only">, {de.nav.settings}</span>
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-3 py-1.5 pr-2 pl-1.5">{who}</div>
+      )}
       {onLogout && (
         <IconButton aria-label={logoutLabel ?? 'Abmelden'} variant="ghost" onClick={onLogout}>
           <LogOut aria-hidden="true" />
@@ -154,6 +190,8 @@ export interface AdminLayoutProps {
   logoutLabel?: string;
   /** Ziel des Logos (Standard „/“) */
   homeHref?: string;
+  /** Klick auf die Konto-Karte unten öffnet die Einstellungen (ohne: Karte nicht klickbar) */
+  settingsHref?: string;
 }
 
 /**
@@ -170,11 +208,13 @@ export function AdminLayout({
   onLogout,
   logoutLabel,
   homeHref,
+  settingsHref,
 }: AdminLayoutProps) {
   const location = useLocation();
   const path = currentPath ?? location.pathname;
   const items = navItems ?? adminNavItems(externalCount);
-  const box = { tenantName, userName, onLogout, logoutLabel };
+  const settingsActive = settingsHref ? isActive(settingsHref, path) : false;
+  const box = { tenantName, userName, onLogout, logoutLabel, settingsHref, settingsActive };
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -213,7 +253,7 @@ export function AdminLayout({
             <NavList items={items} currentPath={path} onNavigate={() => setMenuOpen(false)} />
           </nav>
           <div className="mt-4">
-            <TenantBox {...box} />
+            <TenantBox {...box} onNavigate={() => setMenuOpen(false)} />
           </div>
         </Sheet>
       </header>

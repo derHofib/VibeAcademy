@@ -38,4 +38,4 @@ Screenshots Englisch/FES: `docs/screenshots/phase-3/i18n/`. Die Phase-1-Teilnehm
 - **SSO**: Gegenzeichnung des Trainers per Passwort auch bei „nur SSO“; kein Single Logout; SCIM `preferredLanguage` → Sprache der Person noch nicht übernommen; SSO-Texte nur Deutsch.
 - **Webhooks**: kleines DNS-Rebinding-Fenster zwischen Prüfung und Verbindungsaufbau.
 - **Mehrsprachigkeit**: Verwaltung, Anmeldung und API-Fehlermeldungen bleiben Deutsch.
-- Weiterhin offen aus Phase 1/2: Mailanbieter, Siegelzertifikat/TSA, Docker-Stack auf echtem Host, Standardwerte mit der Fachkraft für Arbeitssicherheit, DSFA/Betriebsvereinbarung, Sammelnachweis je Termin.
+- Weiterhin offen aus Phase 1/2: Mailanbieter, Siegelzertifikat/TSA, Standardwerte mit der Fachkraft für Arbeitssicherheit, DSFA/Betriebsvereinbarung, Sammelnachweis je Termin.
