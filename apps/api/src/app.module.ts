@@ -34,6 +34,7 @@ import { QuizController } from './quiz/quiz.controller';
 import { SignatureController } from './signature/signature.controller';
 import { EvidenceController } from './evidence/evidence.controller';
 import { ReportsController } from './reports/reports.controller';
+import { MyAccountController } from './account/my-account.controller';
 import { EvidenceService } from './evidence/evidence.service';
 import { GotenbergRenderer, PDF_RENDERER, PlaywrightRenderer } from './evidence/pdf-renderer';
 import { NoSealer, PyHankoSealer, SEALER } from './evidence/sealer';
@@ -54,7 +55,7 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
-        PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController,
+        PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController, MyAccountController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

@@ -57,6 +57,20 @@ export class AuthService {
       .txAs({}, (c) => c.query('SELECT app.auth_register_account($1, $2, $3) AS id', [i.email, i.name, hash]))
       .then((r) => r.rows[0].id as string)
       .catch(mapDbError);
+    // Aus einer Einladungslink-Sitzung heraus: Der Link kam an diese E-Mail-Adresse → Adresse gilt als bestätigt,
+    // die eingeladene Person wird direkt verknüpft (E-25).
+    const s = currentRequest()?.session;
+    if (s?.kind === 'invitation') {
+      const email = await this.db
+        .txAs({ tenantId: s.tenantId, roles: ['system'] }, (c) => c.query('SELECT email FROM person WHERE id = $1', [s.personId]))
+        .then((r) => (r.rows[0]?.email as string | undefined)?.toLowerCase());
+      if (email && email === i.email.toLowerCase()) {
+        await this.db.txAs({}, async (c) => {
+          await c.query('SELECT app.auth_mark_email_verified($1)', [id]);
+          await c.query('SELECT app.link_persons($1, $2)', [id, [s.personId]]);
+        });
+      }
+    }
     return this.sessions.create({ kind: 'account', accountId: id, tenantId: null });
   }
 

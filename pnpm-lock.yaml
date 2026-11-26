@@ -189,6 +189,9 @@ importers:
       lucide-react:
         specifier: ^1.81.0
         version: 1.81.0(@types/react@19.3.3)(react@19.3.1)
+      pdfjs-dist:
+        specifier: 5.7.284
+        version: 5.7.284
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -198,6 +201,9 @@ importers:
       react-router:
         specifier: ^7.18.7
         version: 7.18.7(@types/react@19.3.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      signature_pad:
+        specifier: ^5.1.7
+        version: 5.1.7
       tailwind-merge:
         specifier: ^3.7.1
         version: 3.7.1
@@ -3508,6 +3514,9 @@ packages:
 
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
+
+  signature_pad@5.1.7:
+    resolution: {integrity: sha512-qlAdrVK8wlr1EJLz/ZxBL4doOesdsCZm+zr/y/keF/yX+Eg9Gn1scmg331X4cLGnhsNjSk+hqF6+CQ195G6Myw==}
 
   smtp-server@3.21.7:
     resolution: {integrity: sha512-HZtF8LivEuPtcVuoCYHa60GTHohwPpwz90GHUwm88Xg2tI4ZJCHWTzuS08uufMkme4qvReqD7vEQSdyRGbRQ2Q==}
@@ -6952,6 +6961,8 @@ snapshots:
       side-channel-weakmap: 1.0.2
 
   siginfo@2.0.0: {}
+
+  signature_pad@5.1.7: {}
 
   smtp-server@3.21.7:
     dependencies:

@@ -27,9 +27,11 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.81.0",
+    "pdfjs-dist": "5.7.284",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router": "^7.18.7",
+    "signature_pad": "^5.1.7",
     "tailwind-merge": "^3.7.1"
   },
   "devDependencies": {
