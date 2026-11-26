@@ -1,6 +1,6 @@
 # Umsetzungsplan – Schulungsnachweis
 
-Status: **Phase 0 und 1 umgesetzt (26.11.2026), Phase 2 offen.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
+Status: **Phase 0, 1 und 2 umgesetzt (26.11.2026). Phase 3 nur nach Rücksprache.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
 Spezifikation: `docs/handoff/docs/SPEZIFIKATION.md` · Design: `docs/handoff/docs/DESIGN-UND-SCREENS.md`.
 
 Legende: `[ ]` offen · `[x]` erledigt · **→** Abhängigkeit · **Test:** was den Schritt abnimmt.
@@ -147,13 +147,20 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 ### Frontend
 
-- [ ] **2.8 Präsenz-QR intern (Screen 7)** – rotierender QR, Anwesenheitsliste, Agenda, „Termin abschließen & gegenzeichnen“, Kiosk-Ansicht.
-- [ ] **2.9 Pflichtmatrix-Verwaltung** (kein Mockup; im Stil von Screen 9/11 gestaltet, vor Umsetzung Skizze zur Freigabe).
-- [ ] **2.10 Extern erfassen (9a/9b)**, **mobil einreichen (10a/10b)** mit Kamera/Datei + OCR-Markierungen, **prüfen/freigeben (11a–11c)**.
-- [ ] **2.11 Live-Organisator (12a–12f)** – Start-/Ende-QR, Vollbild für Beamer, Aushang drucken, Reiter Anwesenheit/Fragen/Kontrollfragen, Bestätigungsdialog „offiziell beenden“, beendeter Zustand.
-- [ ] **2.12 Live-Teilnehmer (13a–13i)** – Sucher mit `qr-scanner`, Uhr, Kontrollfrage-Overlay, Fragen mit „Ich auch“/anonym, ohne QR ausloggen, Zusammenfassung, bestätigen; Offline-Queue für Scans.
-- [ ] **2.13 E2E + Screenshots** Screens 7, 9–13 in allen abgebildeten Zuständen (Abnahme 7) nach `docs/screenshots/phase-2/`.
-- [ ] **2.14 Phasenabschluss** `docs/PHASE-2.md`.
+- [x] **2.8 Präsenz-QR intern (Screen 7)** – rotierender QR, Anwesenheitsliste, Agenda, „Termin abschließen & gegenzeichnen“, Kiosk-Ansicht.
+  ✔ `/verwaltung/termine/:id` (Termin), Kiosk `/verwaltung/termine/:id/kiosk`, Aushang; Agenda nur Platzhalter.
+- [x] **2.9 Pflichtmatrix-Verwaltung** (kein Mockup; im Stil von Screen 9/11 gestaltet, vor Umsetzung Skizze zur Freigabe).
+  ✔ `/verwaltung/pflichtmatrix` – ohne Mockup im Stil der Screens 9/11 gestaltet (Raster Person × Anforderung, Kacheln, Verwaltung der Anforderungen/Qualifikationen/Ausnahmen). Bitte Gestaltung prüfen.
+- [x] **2.10 Extern erfassen (9a/9b)**, **mobil einreichen (10a/10b)** mit Kamera/Datei + OCR-Markierungen, **prüfen/freigeben (11a–11c)**.
+  ✔ `/verwaltung/extern(/neu)`, mobil `/konto/extern/neu|:id` mit OCR-Markierungen.
+- [x] **2.11 Live-Organisator (12a–12f)** – Start-/Ende-QR, Vollbild für Beamer, Aushang drucken, Reiter Anwesenheit/Fragen/Kontrollfragen, Bestätigungsdialog „offiziell beenden“, beendeter Zustand.
+  ✔ `/verwaltung/termine/:id` (live_extern), Beamer-Vollbild, SSE mit Polling-Rückfall.
+- [x] **2.12 Live-Teilnehmer (13a–13i)** – Sucher mit `qr-scanner`, Uhr, Kontrollfrage-Overlay, Fragen mit „Ich auch“/anonym, ohne QR ausloggen, Zusammenfassung, bestätigen; Offline-Queue für Scans.
+  ✔ `/teilnahme/:id/live`, `/q/:token`, Kamera-Scan mit manueller Eingabe als Rückfall, Offline-Queue.
+- [x] **2.13 E2E + Screenshots** Screens 7, 9–13 in allen abgebildeten Zuständen (Abnahme 7) nach `docs/screenshots/phase-2/`.
+  ✔ E2E `live-flow`, `external-flow` (+ Regression Phase 1) gegen die echte API, in der CI; Screenshots `docs/screenshots/phase-2/{live,external}/`.
+- [x] **2.14 Phasenabschluss** `docs/PHASE-2.md`.
+  ✔ `docs/PHASE-2.md`.
 
 **Parallelisierbar:** Paket E „QR + Anwesenheit + Tests“ (2.3, 2.4) · Paket F „Fristen-Engine“ (2.1, 2.2) · Paket G „Extern + OCR“ (2.6, 2.10) · Paket H „Live-UI“ (2.11, 2.12 gegen SSE-Mock).
 
