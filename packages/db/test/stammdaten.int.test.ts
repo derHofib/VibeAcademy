@@ -6,7 +6,7 @@ let db: TestDb;
 let A: { account_id: string; tenant_id: string };
 let B: { account_id: string; tenant_id: string };
 let chefAccount: string;
-const ids: Record<string, string> = {};
+const ids = {} as Record<'werk' | 'elektro' | 'pruef' | 'verw' | 'chef' | 'p1' | 'p2' | 'p3', string>;
 
 const staff = (t = A): DbContext => ({ tenantId: t.tenant_id, accountId: t.account_id, roles: ['admin', 'verantwortlich'] });
 const q = async (ctx: DbContext, sql: string, params: unknown[] = []) => withContext(db.app, ctx, (c) => c.query(sql, params));
