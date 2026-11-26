@@ -364,10 +364,10 @@ export class ExternalService implements OnModuleInit, OnModuleDestroy {
     const ev = await this.evidenceFor(c, members.map((m) => m.id));
     const previous = await this.previousValidity(c, rec.person_id, rec.requirement_id, rec.training_id, rec.id);
     const label = rec.qualification_name ?? rec.training_title;
-    const effect = !validUntil || !label
-      ? { text: rec.is_medical ? 'Teilnahme an der Vorsorge wird dokumentiert.' : 'Nur Dokumentation – keine Anrechnung auf die Pflichtmatrix.', previousValidUntil: null, newValidUntil: null }
-      : members.length > 1
-        ? { text: `Alle ${members.length} Personen erhalten den Nachweis „${rec.title}“${validUntil ? ` (gültig bis ${de(validUntil)})` : ''}.`, previousValidUntil: null, newValidUntil: validUntil }
+    const effect = members.length > 1
+      ? { text: `Alle ${members.length} Personen erhalten den Nachweis „${rec.title ?? 'Externe Schulung'}“${validUntil ? ` (gültig bis ${de(validUntil)})` : ''}.`, previousValidUntil: null, newValidUntil: validUntil }
+      : !validUntil || !label
+        ? { text: rec.is_medical ? 'Teilnahme an der Vorsorge wird dokumentiert.' : 'Nur Dokumentation – keine Anrechnung auf die Pflichtmatrix.', previousValidUntil: null, newValidUntil: null }
         : { text: `${rec.person_name}: ${label} gültig bis ${de(validUntil)}${previous ? ` (bisher bis ${mmyy(previous)})` : ''}.`, previousValidUntil: previous, newValidUntil: validUntil };
     const perms = await this.permissions(c, rec);
     return {

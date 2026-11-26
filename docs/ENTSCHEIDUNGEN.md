@@ -140,3 +140,19 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 **E-27 Teilnehmer-Schreibzugriffe.** Statuswechsel aus Teilnehmersicht (geöffnet, gelesen, Quiz, Unterschrift) schreibt die API im Systemkontext des Mandanten, nachdem `ParticipantService.resolve()` den Zugriff geprüft hat. Teilnehmer haben per RLS nur Leserechte auf eigene Daten; Mandantentrennung bleibt erzwungen.
 
 **E-28 Fragen während der Online-Schulung (Phase 1).** Das Frage-Sheet im Viewer zeigt in Phase 1 die Kontaktdaten der Ansprechperson; die Frage-Funktion mit Speicherung folgt mit den Live-Fragen in Phase 2.
+
+## 10. Phase 2
+
+**E-29 Präsenz/Live-Termine** sind `run.typ` `termin` (intern, mit Gegenzeichnung des Trainers per Passwort-Step-up) bzw. `live_extern` (Katalog-Schulung oder freier Titel + Anbieter). Teilnehmer kommen wie in Phase 1 über persönliche Einladungen (Link-Sitzung) oder ihr Konto; spontane Teilnahme („Walk-in“) mit Name + E-Mail ist je Termin abschaltbar (`allowWalkIn`, Standard an – Risiko wie ein weitergeleiteter Link). Ohne Smartphone: Tablet-Kiosk des Organisators mit Unterschrift.
+
+**E-30 Anwesenheit** liegt in `attendance` + Kindtabelle `attendance_interval` (statt jsonb); nach Bestätigung unveränderlich. Nachweis entsteht erst, wenn bestätigt, kein offenes Intervall, Vermerk akzeptiert, bei „teilweise“ Freigabe entschieden und bei `termin` gegengezeichnet. Ohne offizielles Ende schließt ein Job (alle 15 min) nach Ablauf des Zeitfensters mit Status „prüfen“; Erinnerung zur Bestätigung nach 48 h genau einmal.
+
+**E-31 Live-Fragen/Kontrollfragen:** anonyme Fragen ohne `person_id` und ohne Person im Audit; Stimmungsbild-Antworten ohne Person (Trigger), Doppelantworten über separate Teilnahme-Tabelle ohne Option verhindert. Echtzeit per SSE mit Redis-Pub/Sub (nur Themen-Signale, keine Personendaten im Bus); nach Wiederverbindung wird ein vollständiger Snapshot gesendet.
+
+**E-32 Pflichtmatrix** wird live per `app.compliance(at)` mit der RLS des Aufrufers berechnet (keine Materialized View): Vorgesetzten-Sicht bleibt korrekt, Zeitreise-Tests übergeben die Uhrzeit. Quellen sind die Views `app.completion_events_{online,external,attendance}`. Externe Kurstypen sind Schulungen mit `format='extern'`; eine Anforderung verweist immer auf eine Schulung.
+
+**E-33 Fristen-Engine:** nächtlich 02:00 Europe/Berlin je Mandant mit Advisory-Lock; jede Stufe genau einmal über das Protokoll `deadline_notice` (Schlüssel je Mandant). `ueberfaellig` nur für `offen`/`geoeffnet`. Wiedereinladung `reinvite_days` (Standard 30) vor Ablauf in eine automatische Kampagne je Version und Monat; externe/Präsenz-Kurse erhalten „neuen Termin buchen“. Inhaltliche neue Version → Neueinladung mit `changed_pages`.
+
+**E-34 Externe Nachweise:** mobil einreichen nur über das mit der Person verknüpfte Konto (E-25), kein eigener Einreiche-Link. OCR (Tesseract deu, PDF über pdftoppm) füllt nur leere Felder von Entwürfen, sonst nur Vorschläge. Vier-Augen-Prinzip: niemand gibt eigene Nachweise frei; Vorgesetzte nur selbst eingereichte ihres Teams. Gruppen werden als ein Fall geprüft. Rückgängig nach Freigabe (10 min) = Widerruf: Nachweis wird „widerrufen“ (auch auf `/verify`), eine Kopie geht zurück in die Prüfung. Arbeitsmedizinische Vorsorge: nur Teilnahme + Datum, keine OCR.
+
+**E-35 Web-Push** über VAPID (`web-push`), Abos je Konto oder Person (Link-Sitzung), nur über SECURITY-DEFINER-Funktionen schreibbar; ohne Schlüssel Log-Platzhalter. Nachweismappe-Export synchron (bis 5.000 Nachweise) als ZIP mit versiegeltem Verzeichnis-PDF und CSV.

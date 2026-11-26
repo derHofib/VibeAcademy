@@ -2,6 +2,7 @@ import { BadRequestException, Controller, Get, HttpCode, Post, Query } from '@ne
 import { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { Roles } from '../auth/decorators';
+import { currentRequest } from '../common/request-context';
 import { DbService } from '../db/db.service';
 import { DeadlineService } from './deadline.service';
 
@@ -13,12 +14,12 @@ export class DeadlinesController {
     private readonly audit: AuditService,
   ) {}
 
-  /** Fristen-Scan sofort auslösen (alle Mandanten; idempotent). Sonst nächtlich 02:00 Europe/Berlin. */
+  /** Fristen-Scan für den eigenen Mandanten sofort auslösen (idempotent). Sonst nächtlich 02:00 Europe/Berlin für alle. */
   @Post('admin/deadlines/run')
   @Roles('admin', 'verantwortlich')
   @HttpCode(200)
   async run() {
-    const report = await this.deadlines.run();
+    const report = await this.deadlines.runOne(currentRequest()!.session!.tenantId!);
     await this.db.tx((c) => this.audit.record(c, { entity: 'deadlines', action: 'run_manual', payload: { ...report } }));
     return report;
   }

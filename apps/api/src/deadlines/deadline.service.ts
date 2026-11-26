@@ -87,6 +87,12 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
     return total;
   }
 
+  /** Nur ein Mandant (manueller Lauf aus der Verwaltung – keine Zahlen anderer Mandanten). */
+  async runOne(tenantId: string): Promise<DeadlineReport> {
+    const now = this.clock.now();
+    return { at: now.toISOString(), tenants: 1, ...(await this.runTenant(tenantId, now)) };
+  }
+
   /** Ein Mandant in einer Transaktion (Advisory-Lock verhindert parallele Läufe). */
   async runTenant(tenantId: string, now: Date) {
     const counts = { reminders: 0, escalations: 0, overdue: 0, reinvitations: 0, bookCourse: 0, newVersion: 0, expiredExternal: 0 };

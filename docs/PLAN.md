@@ -118,24 +118,31 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 ### Backend
 
-- [ ] **2.1 Pflichtmatrix** → 1.1
+- [x] **2.1 Pflichtmatrix** → 1.1
+  ✔ `app.compliance()` statt Materialized View (E-32); Tests `matrix.int.test.ts`.
   Migration `qualification`, `person_qualification`, `requirement`, Materialized View `compliance_status` (Refresh nach Nachweis/Freigabe + nächtlich); CRUD-API, `GET /compliance`.
-- [ ] **2.2 Fristen-Engine** (E-13, E-14) → 2.1, 1.4
+- [x] **2.2 Fristen-Engine** (E-13, E-14) → 2.1, 1.4
+  ✔ Job `deadlines`, Protokoll `deadline_notice`, Web-Push (E-33, E-35); Zeitreise-Tests über 14 Monate in `deadlines.int.test.ts`.
   Job `deadlines`: Ablauf je Person/Requirement, Erinnerungen T−7/T−2/T+1, Eskalation an Vorgesetzten, automatische Wiedereinladung, Hinweis „neuen Termin buchen“ bei externen Kursen, neue Version „inhaltlich“ → Neueinladung (optional nur geänderte Seiten). Web-Push-Abos.
   **Test:** Zeitreise-Tests über 14 Monate: genau eine Erinnerung je Stufe, Eskalation, Wiedereinladung, keine Duplikate bei Job-Wiederholung.
-- [ ] **2.3 QR-Token-Dienst** (E-16) → 0.4
+- [x] **2.3 QR-Token-Dienst** (E-16) → 0.4
+  ✔ `packages/shared/src/rules/qr.ts`, `apps/api/src/presence/qr.service.ts`.
   `packages/shared/rules/qr.ts` + `GET /runs/:id/qr?kind=start|end`.
   **Test (Abnahme 1):** Rotation 30 s, Signatur, Bindung an Termin + Art, vorheriger Slot ok / vorletzter nicht, gedruckter Code nur im Fenster, nach Beenden ungültig, Scanzeit = Serverzeit, Offline-Scan nutzt signierten Slot.
-- [ ] **2.4 Anwesenheit** (E-17) → 2.3
+- [x] **2.4 Anwesenheit** (E-17) → 2.3
+  ✔ `apps/api/src/presence/*` (E-29, E-30); Tests `presence.int.test.ts` (API + DB).
   Migration `attendance`; `POST /checkin`, `POST /checkout`, `POST /checkout/manual` (Grund + Vermerk ≥ 10 Zeichen), `POST /attendance/:id/review`, `POST /runs/:id/start|end` (offizielles Ende für alle Eingecheckten, Tokens ungültig, Push), `POST /attendance/:id/confirm` (48 h, sonst Erinnerung), Trainer-Gegenzeichnung, Tablet-Kiosk-Modus.
   **Test (Abnahme 2–4):** Wiedereintritt (zwei Intervalle addiert), vergessenes Auschecken, manuelles Ausloggen → „Vermerk prüfen“, Vollständigkeit ≥ 90 % vs. „teilweise“, Kappung auf offizielles Ende.
-- [ ] **2.5 Live-Kanal + Fragen + Kontrollfragen** (E-15) → 2.4
+- [x] **2.5 Live-Kanal + Fragen + Kontrollfragen** (E-15) → 2.4
+  ✔ `apps/api/src/live/*` (SSE, Fragen, Kontrollfragen; E-31).
   SSE `GET /runs/:id/live`; Migration `live_question`, `live_question_vote`, `live_poll`, `live_poll_answer`; Fragen (anonym ohne `person_id`), „Ich auch“ einmal je Person (PK), Sortierung, Status; Polls senden/beantworten/schließen, Modi Stimmungsbild (anonym gespeichert) vs. Wissenscheck (personenbezogen, optional Bedingung für „vollständig“), Nachholen nach Ende; nur eingecheckt.
   **Test (Abnahme 5):** anonyme Frage hat in der DB keinen Personenbezug; doppelte Stimme abgelehnt; Poll erreicht alle Eingecheckten per SSE; Stimmungsbild-Antworten ohne `person_id`; Nachweis enthält nur Wissenscheck.
-- [ ] **2.6 Externe Nachweise** (E-18) → 2.1, 1.8
+- [x] **2.6 Externe Nachweise** (E-18) → 2.1, 1.8
+  ✔ `apps/api/src/external/*` inkl. OCR, Import, Prüfen/Freigeben/Widerruf (E-34); Tests `external.int.test.ts`.
   Migration `external_record`; `POST /external-records` (einzeln/Gruppe, gilt sofort), `POST /me/external-records` (Foto → OCR-Job → Vorschlag), `POST /imports/external` (CSV + ZIP), Abweichungs-Checks (Name ≠ Person, Datum fehlt, …), approve/return (Begründung Pflicht), Rückgängig, `valid_until` aus Intervall, versiegelter Nachweis mit Beleg als Anlage, Anrechnung in `compliance_status`. Arbeitsmedizinische Vorsorge: nur Teilnahme + Datum.
   **Test (Abnahme 6).**
-- [ ] **2.7 Präsenz-/Live-Nachweis-PDF + Nachweismappe** → 2.4–2.6, 1.8
+- [x] **2.7 Präsenz-/Live-Nachweis-PDF + Nachweismappe** → 2.4–2.6, 1.8
+  ✔ Collector `praesenz`/`live`/`extern`, Beleg als PDF-Anlage, `POST /exports/nachweismappe`. Offen: Sammelnachweis je Termin.
   Nachweis mit Ein-/Auscheckzeiten, Methode, Vermerk, Gegenzeichnung, Rückfrage-Vermerk, Wissenscheck; Sammelnachweis je Termin; `POST /exports/nachweismappe` (ZIP mit Index-PDF, Zeitraum, Auditor-Rolle).
 
 ### Frontend
