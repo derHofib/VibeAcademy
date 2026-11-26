@@ -26,7 +26,7 @@ const short = (h: string) => `${h.slice(0, 6)}…${h.slice(-8)}`;
 
 let fontCss: string | null = null;
 /** Schriften als data:-URLs einbetten – das PDF braucht keine Netzwerkzugriffe. */
-function fonts(fontDir: string): string {
+export function fonts(fontDir: string): string {
   if (fontCss) return fontCss;
   const face = (family: string, file: string, weight: number) => {
     try {

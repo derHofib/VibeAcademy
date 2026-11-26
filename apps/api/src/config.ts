@@ -39,6 +39,16 @@ const schema = z.object({
   FONT_DIR: z.string().default('apps/web/public/fonts'),
   /** Aufbewahrung im WORM-Speicher ab Ablage (Jahre, E-24) */
   EVIDENCE_LOCK_YEARS: z.coerce.number().int().min(1).max(30).default(3),
+  /** Web-Push (VAPID, E-12). Ohne Schlüssel: Push nur ins Log. Erzeugen: `npx web-push generate-vapid-keys` */
+  VAPID_PUBLIC_KEY: z.string().default(''),
+  VAPID_PRIVATE_KEY: z.string().default(''),
+  VAPID_SUBJECT: z.string().default('mailto:admin@example.org'),
+  /** Texterkennung externer Belege (E-18): Tesseract mit Sprachpaket deu */
+  TESSERACT_BIN: z.string().default('tesseract'),
+  OCR_LANG: z.string().default('deu'),
+  /** Externe Nachweise: Upload-Grenze je Beleg in MB, Rückgängig-Frist nach Freigabe in Minuten */
+  EXTERNAL_UPLOAD_MAX_MB: z.coerce.number().int().positive().default(20),
+  EXTERNAL_UNDO_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
   RUN_WORKERS: z
     .enum(['true', 'false'])
     .default('true')

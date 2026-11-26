@@ -5,6 +5,9 @@ import { DbService } from '../db/db.service';
 import { NotificationService } from '../notifications/notification.service';
 import { InvitationService } from '../runs/invitation.service';
 import { parseSettings } from '../trainings/settings';
+import { berlinDate } from '@sn/shared';
+import { Clock } from '../common/clock';
+import { ComplianceService } from '../compliance/compliance.service';
 
 /** Auswertung (Schritt 1.9): Dashboard (Screen 1) und Lesenachweis je Person (Screen 3). */
 @Controller()
@@ -14,7 +17,36 @@ export class ReportsController {
     private readonly audit: AuditService,
     private readonly invitations: InvitationService,
     private readonly notifications: NotificationService,
+    private readonly compliance: ComplianceService,
+    private readonly clock: Clock,
   ) {}
+
+  /** Dashboard-Kennzahlen aus Pflichtmatrix und Fristen-Engine (Paket FG): Erfüllungsquote, „läuft in 30 Tagen ab“, eskaliert, externe zu prüfen. */
+  private async complianceKpi(c: import('pg').PoolClient) {
+    const now = this.clock.now();
+    const rows = await this.compliance.rows(c, now);
+    const s = this.compliance.summarize(rows);
+    const next = rows
+      .filter((r) => r.state === 'laeuft_ab' && r.reinviteOn)
+      .map((r) => (r.reinviteOn! < berlinDate(now) ? berlinDate(now) : r.reinviteOn!))
+      .sort()[0] ?? null;
+    const esc = (
+      await c.query(
+        `SELECT count(DISTINCT i.id)::int AS n FROM invitation i JOIN deadline_notice d ON d.invitation_id = i.id AND d.kind = 'eskalation'
+          WHERE i.status NOT IN ('bestaetigt','befreit') AND i.due_at < $1`,
+        [now],
+      )
+    ).rows[0].n;
+    const ext = (await c.query(`SELECT count(DISTINCT coalesce(group_id, id))::int AS n FROM external_record WHERE status = 'eingereicht'`)).rows[0].n;
+    return {
+      compliance: {
+        erfuellungsquote: s.erfuellungsquote, gesamt: s.total, erfuellt: s.gueltig + s.laeuft_ab, laeuftAb30: s.laeuft_ab, abgelaufen: s.abgelaufen,
+        fehlt: s.fehlt, befreit: s.befreit, naechsteWiedereinladung: next,
+      },
+      eskaliert: esc,
+      externZuPruefen: ext,
+    };
+  }
 
   @Get('dashboard')
   // Trainer sehen über RLS nur, was ihnen zusteht (eigene Termine)
@@ -53,6 +85,7 @@ export class ReportsController {
         kpi: { ...kpi, erfuellungsquote: kpi.gesamt ? Math.round((kpi.erledigt / kpi.gesamt) * 100) : null },
         laufend: runs,
         ueberfaellig: overdue,
+        ...(await this.complianceKpi(c)),
         termine: [], // Präsenztermine folgen in Phase 2
       };
     });

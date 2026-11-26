@@ -36,7 +36,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Systempakete (poppler-utils für Vorschaubilder)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-deu
       - name: Chromium für Nachweis-PDF
         run: pnpm --filter @sn/api exec playwright-core install --with-deps chromium
       - name: Siegel-Werkzeug (pyHanko, Dev-Zertifikate)
@@ -81,7 +81,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Systempakete und Chromium
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-deu
           pnpm --filter @sn/web exec playwright install --with-deps chromium
           pnpm --filter @sn/api exec playwright-core install chromium
       - name: .env für die Ende-zu-Ende-Tests

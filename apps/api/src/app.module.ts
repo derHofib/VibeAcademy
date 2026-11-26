@@ -41,6 +41,25 @@ import { NoSealer, PyHankoSealer, SEALER } from './evidence/sealer';
 import { FsStorage, OBJECT_STORAGE, S3Storage } from './storage/storage';
 import { AnalysisService } from './trainings/analysis.service';
 import { TrainingsController } from './trainings/trainings.controller';
+import { ComplianceService } from './compliance/compliance.service';
+import { MatrixController } from './compliance/matrix.controller';
+import { DeadlineService } from './deadlines/deadline.service';
+import { DeadlinesController } from './deadlines/deadlines.controller';
+import { NachweismappeController } from './exports/nachweismappe.controller';
+import { ExternalController } from './external/external.controller';
+import { ExternalService } from './external/external.service';
+import { ExternalImportController } from './external/import.controller';
+import { MyExternalController } from './external/my-external.controller';
+import { PushController } from './push/push.controller';
+import { defaultWebPushSender, WEB_PUSH_SENDER, WebPushProvider, type WebPushSender } from './push/web-push.provider';
+import { AttendanceService } from './presence/attendance.service';
+import { CheckinController } from './presence/checkin.controller';
+import { PresenceController } from './presence/presence.controller';
+import { QrService } from './presence/qr.service';
+import { RunAccess } from './presence/run-access.service';
+import { LiveBus } from './live/live-bus.service';
+import { LiveController } from './live/live.controller';
+import { LiveService } from './live/live.service';
 
 export interface AppModuleOptions {
   config: AppConfig;
@@ -55,7 +74,9 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
+        PresenceController, CheckinController, LiveController,
         PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController, MyAccountController,
+        MatrixController, DeadlinesController, PushController, ExternalController, MyExternalController, ExternalImportController, NachweismappeController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -68,7 +89,15 @@ export class AppModule implements NestModule {
               : new LogMailProvider(config.NODE_ENV !== 'production'),
         },
         { provide: SMS_PROVIDER, useFactory: () => new LogSmsProvider() },
-        { provide: PUSH_PROVIDER, useFactory: () => new LogPushProvider() },
+        { provide: WEB_PUSH_SENDER, useValue: defaultWebPushSender },
+        {
+          provide: PUSH_PROVIDER,
+          inject: [DbService, WEB_PUSH_SENDER],
+          useFactory: (db: DbService, sender: WebPushSender) =>
+            config.VAPID_PUBLIC_KEY && config.VAPID_PRIVATE_KEY
+              ? new WebPushProvider(db, { publicKey: config.VAPID_PUBLIC_KEY, privateKey: config.VAPID_PRIVATE_KEY, subject: config.VAPID_SUBJECT }, sender)
+              : new LogPushProvider(),
+        },
         {
           provide: OBJECT_STORAGE,
           useFactory: () =>
@@ -103,6 +132,8 @@ export class AppModule implements NestModule {
         ReadingService,
         RetentionService,
         EvidenceService,
+        RunAccess, QrService, LiveBus, AttendanceService, LiveService,
+        ComplianceService, DeadlineService, ExternalService,
         ...overrides,
       ],
     };

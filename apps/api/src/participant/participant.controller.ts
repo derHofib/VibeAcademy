@@ -74,8 +74,9 @@ export class ParticipantController {
       return this.participants.read(p, async (c) =>
         (
           await c.query(
-            `SELECT i.id AS invitation_id, i.tenant_id, te.name AS tenant_name, t.titel AS training_titel, i.status, i.due_at, i.completed_at
-               FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id JOIN tenant te ON te.id = i.tenant_id
+            `SELECT i.id AS invitation_id, i.tenant_id, te.name AS tenant_name, CASE WHEN r.typ = 'kampagne' THEN t.titel ELSE coalesce(r.titel, t.titel) END AS training_titel, i.status, i.due_at,
+                    i.completed_at, r.typ, r.id AS run_id, r.start_at
+               FROM invitation i JOIN run r ON r.id = i.run_id LEFT JOIN training t ON t.id = r.training_id JOIN tenant te ON te.id = i.tenant_id
               WHERE i.id = $1`,
             [s.invitationId],
           )
