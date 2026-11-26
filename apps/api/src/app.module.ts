@@ -26,6 +26,10 @@ import { ParticipantController } from './participant/participant.controller';
 import { ParticipantService } from './participant/participant.service';
 import { InvitationService } from './runs/invitation.service';
 import { RunsController } from './runs/runs.controller';
+import { SignedTokens } from './common/signed-token';
+import { ReadingController } from './reading/reading.controller';
+import { ReadingService } from './reading/reading.service';
+import { RetentionService } from './retention/retention.service';
 import { FsStorage, OBJECT_STORAGE, S3Storage } from './storage/storage';
 import { AnalysisService } from './trainings/analysis.service';
 import { TrainingsController } from './trainings/trainings.controller';
@@ -43,7 +47,7 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
-        PersonsController, TrainingsController, RunsController, ParticipantController,
+        PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -81,6 +85,9 @@ export class AppModule implements NestModule {
         AnalysisService,
         InvitationService,
         ParticipantService,
+        SignedTokens,
+        ReadingService,
+        RetentionService,
         ...overrides,
       ],
     };

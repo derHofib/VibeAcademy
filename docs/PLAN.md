@@ -55,11 +55,12 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
   **Test (Abnahme 1):** Fixture-PDFs (Text, leere Seite, Bildseite, mit/ohne Outline): SHA-256, Seitenzahl, Wörter, `t_min` nach Formel inkl. Clamping, Seiten ohne Text markiert; veröffentlichte Version nicht änderbar.
 - [x] **1.3 Quiz-Fragenpool** → 1.2
   Migration: `quiz_question`; CRUD; Einstellungen (Anzahl, Bestehensgrenze, Versuche) in `training.settings`.
-- [ ] **1.4 Durchführung + Einladungen** → 1.2
+- [x] **1.4 Durchführung + Einladungen** → 1.2
+  ✔ API inkl. Link-Sitzung, Link neu erzeugen, Erinnern, OTP-Step-up; Tests in `apps/api/test/runs.int.test.ts`.
   Migration: `run`, `invitation`; `POST /runs`, `POST /runs/:id/invite` (Personen/Org-Einheiten), Einladungs-Token (Hash), Benachrichtigung über die Outbox mit Vorlage nach Screen 4, Links zusätzlich kopierbar und als QR-Liste druckbar, `POST /invitations/:id/remind`, `GET /me/invitations`, Statusmaschine `offen → geoeffnet → gelesen → bestanden → bestaetigt` (+ `ueberfaellig`, `befreit`).
   **Test:** Statusübergänge nur in erlaubter Reihenfolge; Mail landet in Mailpit mit persönlichem Link.
-- [ ] **1.5 Tracking-Ingest** (Kern, E-06) → 1.4
-  ✔ Teil 1 erledigt: reine Regel-Engine `applyHeartbeat()` mit 37 Tests inkl. Property-Tests. Offen: Tabellen, Endpunkte, Lease.
+- [x] **1.5 Tracking-Ingest** (Kern, E-06) → 1.4
+  ✔ Lease in Redis, Heartbeat-Ingest mit `applyHeartbeat()`, signierte Seiten-URLs (60 s), strenger Modus serverseitig; Abnahmefälle in `apps/api/test/reading.int.test.ts` mit steuerbarer Uhr. `heartbeat_raw` vorerst ohne Partitionierung (Index auf `server_ts`, Löschjob).
   `packages/shared/rules/reading.ts` (reine Funktion: Heartbeat-Folge → Gutschrift je Seite); Migration `read_session`, `heartbeat_raw` (partitioniert nach Monat), `page_progress`; `POST /invitations/:id/sessions` (Lease), `POST /sessions/:id/heartbeat`, `GET /invitations/:id/progress`, `GET /invitations/:id/page/:n` (signierte URL, strenger Modus).
   **Test (Abnahme 2+3):** Erfüllung nur bei sichtbar ≥ 60 %, Tab aktiv/fokussiert, Eingabe < 30 s, kumuliert ≥ `t_min` über mehrere Sitzungen; manipulierte Heartbeats: Lücke in `seq`, doppelte/rückwärts `seq`, Serverzeit-Sprung > 5 s (gekappt), Client-Zeitstempel in der Zukunft (ignoriert), Heartbeat-Flut (verworfen), zwei parallele Sitzungen (nur aktive zählt, alte erhält 409), Seitenwechsel zwischen Heartbeats (keine Gutschrift); strenger Modus: Seite n+2 → 403, gelesene Seiten bleiben abrufbar; Plausibilitätsflag. Property-Test (fast-check): Gutschrift ≤ reale Serverzeit.
 - [ ] **1.6 Quiz-Durchführung** → 1.3, 1.5
@@ -74,7 +75,8 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 - [ ] **1.9 Auswertung** → 1.4–1.8
   `GET /dashboard` (KPIs, laufende Schulungen, Überfällige, nächste Termine), „Alle erinnern“; `GET /invitations/:id/report` (Lesenachweis je Person inkl. Seitenprotokoll + Audit-Auszug, nur berechtigte Rollen).
   **Test (Abnahme 7):** Vorgesetzter bekommt Status, aber 403/keine Felder für Seitendetails – sowohl API als auch direkt per SQL unter RLS.
-- [ ] **1.10 Datenschutz-Jobs** → 1.5
+- [x] **1.10 Datenschutz-Jobs** → 1.5
+  ✔ Täglicher Job 03:15 Europe/Berlin, Test mit gealterten Zeilen.
   `retention`: Heartbeats > 90 Tage löschen, verdichten nach Abschluss; IP nur als HMAC-Hash.
   **Test:** Zeitreise-Test 91 Tage.
 
