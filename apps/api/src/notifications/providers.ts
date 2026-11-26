@@ -64,3 +64,23 @@ export class LogSmsProvider implements SmsProvider {
     return { messageId: `log-${Date.now()}` };
   }
 }
+
+/** Web-Push (E-12). Empfänger: „person:<uuid>“ oder „account:<uuid>“; der Provider löst die Abos auf. */
+export interface PushProvider {
+  readonly name: string;
+  send(recipient: string, msg: { title: string; body: string; url?: string }): Promise<{ messageId: string }>;
+}
+export const PUSH_PROVIDER = Symbol('PUSH_PROVIDER');
+
+/** Platzhalter, bis Web-Push (VAPID) eingerichtet ist (Schritt 2.2). */
+export class LogPushProvider implements PushProvider {
+  readonly name = 'log';
+  private readonly log = new Logger('Push');
+  readonly recent: Array<{ recipient: string; title: string; body: string; url?: string; at: Date }> = [];
+  async send(recipient: string, msg: { title: string; body: string; url?: string }) {
+    this.recent.unshift({ recipient, ...msg, at: new Date() });
+    this.recent.splice(50);
+    this.log.log(`→ ${recipient}: ${msg.title}`);
+    return { messageId: `log-${Date.now()}` };
+  }
+}

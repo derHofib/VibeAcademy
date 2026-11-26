@@ -18,7 +18,7 @@ import { DbService, PG_POOL } from './db/db.service';
 import { HealthController } from './health.controller';
 import { DevNotificationsController } from './notifications/dev.controller';
 import { NotificationService } from './notifications/notification.service';
-import { LogMailProvider, LogSmsProvider, MAIL_PROVIDER, SMS_PROVIDER, SmtpMailProvider } from './notifications/providers';
+import { LogMailProvider, LogPushProvider, LogSmsProvider, MAIL_PROVIDER, PUSH_PROVIDER, SMS_PROVIDER, SmtpMailProvider } from './notifications/providers';
 import { RedisService } from './redis/redis.service';
 import { MembersController } from './tenant/members.controller';
 import { PersonsController } from './persons/persons.controller';
@@ -68,6 +68,7 @@ export class AppModule implements NestModule {
               : new LogMailProvider(config.NODE_ENV !== 'production'),
         },
         { provide: SMS_PROVIDER, useFactory: () => new LogSmsProvider() },
+        { provide: PUSH_PROVIDER, useFactory: () => new LogPushProvider() },
         {
           provide: OBJECT_STORAGE,
           useFactory: () =>

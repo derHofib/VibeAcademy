@@ -11,40 +11,72 @@ import { RedisService } from '../redis/redis.service';
 import { OBJECT_STORAGE, type ObjectStorage } from '../storage/storage';
 import { parseSettings } from '../trainings/settings';
 import { renderEvidenceHtml, type EvidenceData } from './evidence-template';
+import { PDFDocument } from 'pdf-lib';
 import { PDF_RENDERER, type PdfRenderer } from './pdf-renderer';
 import { SEALER, type Sealer } from './sealer';
+
+export type EvidenceKind = 'online' | 'praesenz' | 'live' | 'extern';
+export interface EvidenceRef {
+  invitationId?: string;
+  attendanceId?: string;
+  externalRecordId?: string;
+}
+/** Angaben für die öffentliche Prüfung – keine Klarnamen (E-10). */
+export interface EvidenceSubject {
+  titel: string;
+  version?: number | null;
+  initialen: string;
+}
+export interface CollectedEvidence {
+  html: string;
+  nachweisNr: string;
+  tenantName: string;
+  /** PDFs, die als Anlage angehängt werden (z. B. Beleg eines externen Nachweises) */
+  attachments?: Buffer[];
+  /** Austrittsdatum der Person → retain_until = Austritt + 3 Jahre (E-24) */
+  austritt: string | null;
+}
+export interface EvidenceHelpers {
+  verifyUrl(code: string): string;
+  qrSvg(url: string): Promise<string>;
+  sealLabel(tenantName: string): string;
+  fontDir: string;
+  now(): Date;
+}
+/** Liefert HTML (und optional Anlagen) für einen Nachweis einer bestimmten Art. */
+export type EvidenceCollector = (evidenceId: string, tenantId: string, h: EvidenceHelpers) => Promise<CollectedEvidence>;
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const code = () =>
   Array.from({ length: 3 }, () => Array.from({ length: 4 }, () => ALPHABET[randomInt(0, ALPHABET.length)]).join('')).join('-');
 
-const TZ = 'Europe/Berlin';
-const dt = (d: Date | string | null, withTime = true) =>
+export const TZ = 'Europe/Berlin';
+export const dt = (d: Date | string | null, withTime = true) =>
   d
     ? new Intl.DateTimeFormat('de-DE', {
         timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
       }).format(new Date(d))
     : '–';
-const dayMonth = (d: Date | string | null) =>
+export const dayMonth = (d: Date | string | null) =>
   d ? new Intl.DateTimeFormat('de-DE', { timeZone: TZ, day: '2-digit', month: '2-digit' }).format(new Date(d)) : '–';
-const mmss = (ms: number) => {
+export const mmss = (ms: number) => {
   const s = Math.round(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
-const minSec = (ms: number) => {
+export const minSec = (ms: number) => {
   const s = Math.round(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`;
 };
-function device(ua: string | null): string {
+export function device(ua: string | null): string {
   if (!ua) return 'unbekannt';
   const kind = /Mobile|Android|iPhone|iPad/i.test(ua) ? 'Mobil' : 'PC';
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
   return `${kind}, ${browser}`;
 }
-const AUTH_LABEL: Record<string, string> = {
+export const AUTH_LABEL: Record<string, string> = {
   password: 'Passwort (Re-Auth)', otp_mail: 'Einmalcode per E-Mail', otp_sms: 'Einmalcode per SMS', sso: 'Single Sign-on (Step-up)',
 };
-const FORMAT_LABEL: Record<string, string> = {
+export const FORMAT_LABEL: Record<string, string> = {
   online: 'Online mit Wissenscheck', praesenz: 'Präsenz', hybrid: 'Hybrid', extern: 'Extern',
 };
 
@@ -53,6 +85,7 @@ const FORMAT_LABEL: Record<string, string> = {
 export class EvidenceService implements OnModuleInit, OnModuleDestroy {
   private readonly log = new Logger(EvidenceService.name);
   private runner!: JobRunner<{ evidenceId: string; tenantId: string }>;
+  private readonly collectors = new Map<EvidenceKind, EvidenceCollector>();
 
   constructor(
     private readonly db: DbService,
@@ -65,7 +98,30 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
     @Inject(SEALER) private readonly sealer: Sealer,
   ) {}
 
+  /** Weitere Nachweisarten melden ihren Collector hier an (Präsenz/Live, extern). */
+  registerCollector(kind: EvidenceKind, fn: EvidenceCollector) {
+    this.collectors.set(kind, fn);
+  }
+
+  helpers(): EvidenceHelpers {
+    return {
+      verifyUrl: (c) => this.verifyUrl(c),
+      qrSvg: (url) => QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#1D2433', light: '#FFFFFF' } }),
+      sealLabel: (tenantName) =>
+        this.config.SEAL_MODE === 'none'
+          ? 'ENTWICKLUNGSVERSION – nicht versiegelt.'
+          : `Elektronisch versiegelt (PAdES-B-T) für ${tenantName} · Zeitstempel nach RFC 3161 in der Signatur${this.config.TSA_URL ? '' : ' (Test-Zeitstempeldienst, nicht qualifiziert)'}.`,
+      fontDir: repoPath(this.config.FONT_DIR),
+      now: () => this.clock.now(),
+    };
+  }
+
   onModuleInit() {
+    this.registerCollector('online', async (id, tenantId, h) => {
+      const { data, austritt } = await this.collect(id, tenantId);
+      data.seal.label = h.sealLabel(data.tenantName);
+      return { html: renderEvidenceHtml(data, h.fontDir), nachweisNr: data.nachweisNr, tenantName: data.tenantName, austritt };
+    });
     this.runner = new JobRunner('evidence-pdf', this.redis, this.config, (d) => this.generate(d.evidenceId, d.tenantId), 1);
   }
   async onModuleDestroy() {
@@ -77,22 +133,42 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
     return `${this.config.PUBLIC_BASE_URL}/verify/${c}`;
   }
 
-  /** Nachweis anlegen (Status „ausstehend“) und Erzeugung einreihen. */
-  async createForInvitation(tenantId: string, invitationId: string) {
+  /**
+   * Nachweis anlegen (Status „ausstehend“) und Erzeugung einreihen. Idempotent je Bezug.
+   * Kann in einer laufenden Transaktion (client) oder eigenständig aufgerufen werden.
+   */
+  async create(tenantId: string, kind: EvidenceKind, ref: EvidenceRef, subject: EvidenceSubject) {
+    const col = ref.invitationId ? 'invitation_id' : ref.attendanceId ? 'attendance_id' : 'external_record_id';
+    const refId = ref.invitationId ?? ref.attendanceId ?? ref.externalRecordId;
+    if (!refId) throw new Error('Nachweis ohne Bezug');
     const ev = await this.db.txAs({ tenantId, roles: ['system'] }, async (c) => {
-      const existing = (await c.query('SELECT id, verify_code, nachweis_nr FROM evidence WHERE invitation_id = $1', [invitationId])).rows[0];
+      const existing = (await c.query(`SELECT id, verify_code, nachweis_nr FROM evidence WHERE ${col} = $1`, [refId])).rows[0];
       if (existing) return existing;
       await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 1))', [`evidence:${tenantId}`]);
       const year = new Intl.DateTimeFormat('de-DE', { timeZone: TZ, year: 'numeric' }).format(this.clock.now());
       const n = Number((await c.query(`SELECT count(*) AS n FROM evidence WHERE nachweis_nr LIKE $1`, [`N-${year}-%`])).rows[0].n) + 1;
       const r = await c.query(
-        `INSERT INTO evidence (invitation_id, kind, verify_code, nachweis_nr) VALUES ($1, 'online', $2, $3) RETURNING id, verify_code, nachweis_nr`,
-        [invitationId, code(), `N-${year}-${String(n).padStart(5, '0')}`],
+        `INSERT INTO evidence (${col}, kind, verify_code, nachweis_nr, subject) VALUES ($1, $2, $3, $4, $5) RETURNING id, verify_code, nachweis_nr`,
+        [refId, kind, code(), `N-${year}-${String(n).padStart(5, '0')}`, subject],
       );
       return r.rows[0];
     });
     await this.runner.add({ evidenceId: ev.id, tenantId }, { jobId: `evidence-${ev.id}`, attempts: 3, backoff: { type: 'exponential', delay: 10_000 } });
     return { id: ev.id as string, verifyCode: ev.verify_code as string, nachweisNr: ev.nachweis_nr as string };
+  }
+
+  async createForInvitation(tenantId: string, invitationId: string) {
+    const subject = await this.db.txAs({ tenantId, roles: ['system'] }, async (c) =>
+      (
+        await c.query(
+          `SELECT t.titel, v.version_no AS version, app.initials(p.name) AS initialen
+             FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id
+             JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = r.training_version_id WHERE i.id = $1`,
+          [invitationId],
+        )
+      ).rows[0] as EvidenceSubject,
+    );
+    return this.create(tenantId, 'online', { invitationId }, subject);
   }
 
   private async collect(evidenceId: string, tenantId: string): Promise<{ data: EvidenceData; austritt: string | null }> {
@@ -193,13 +269,13 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
     const st = (await this.db.txAs({ tenantId, roles: ['system'] }, (c) => c.query('SELECT status FROM evidence WHERE id = $1', [evidenceId]))).rows[0];
     if (!st || st.status === 'erzeugt') return;
     try {
-      const { data, austritt } = await this.collect(evidenceId, tenantId);
-      data.seal.label =
-        this.config.SEAL_MODE === 'none'
-          ? 'ENTWICKLUNGSVERSION – nicht versiegelt.'
-          : `Elektronisch versiegelt (PAdES-B-T) für ${data.tenantName} · Zeitstempel nach RFC 3161 in der Signatur${this.config.TSA_URL ? '' : ' (Test-Zeitstempeldienst, nicht qualifiziert)'}.`;
-      const html = renderEvidenceHtml(data, repoPath(this.config.FONT_DIR));
-      const raw = await this.renderer.render(html);
+      const kind = (await this.db.txAs({ tenantId, roles: ['system'] }, (c) => c.query('SELECT kind FROM evidence WHERE id = $1', [evidenceId]))).rows[0].kind as EvidenceKind;
+      const collector = this.collectors.get(kind);
+      if (!collector) throw new Error(`Keine Nachweisvorlage für Art „${kind}“`);
+      const { html, nachweisNr, attachments, austritt } = await collector(evidenceId, tenantId, this.helpers());
+      let raw = await this.renderer.render(html);
+      if (attachments?.length) raw = await appendPdfs(raw, attachments);
+      const data = { nachweisNr };
       const sealed = await this.sealer.seal(raw);
       const hash = sha256(sealed.pdf);
       const key = `evidence/${tenantId}/${data.nachweisNr}-${hash.slice(0, 12)}.pdf`;
@@ -223,4 +299,14 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
       throw e;
     }
   }
+}
+
+/** Hängt PDFs (Belege) hinter den Nachweis – vor dem Versiegeln, damit das Siegel alles abdeckt. */
+export async function appendPdfs(main: Buffer, extras: Buffer[]): Promise<Buffer> {
+  const doc = await PDFDocument.load(main);
+  for (const x of extras) {
+    const src = await PDFDocument.load(x, { ignoreEncryption: true });
+    for (const p of await doc.copyPages(src, src.getPageIndices())) doc.addPage(p);
+  }
+  return Buffer.from(await doc.save());
 }

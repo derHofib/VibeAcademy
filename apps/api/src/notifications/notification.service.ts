@@ -4,13 +4,13 @@ import type pg from 'pg';
 import { APP_CONFIG, type AppConfig } from '../config';
 import { DbService } from '../db/db.service';
 import { RedisService } from '../redis/redis.service';
-import { MAIL_PROVIDER, SMS_PROVIDER, type MailProvider, type SmsProvider } from './providers';
+import { MAIL_PROVIDER, PUSH_PROVIDER, SMS_PROVIDER, type MailProvider, type PushProvider, type SmsProvider } from './providers';
 import { render, type TemplateName } from './templates';
 
 export interface EnqueueInput {
   tenantId: string | null;
   accountId?: string | null;
-  channel: 'mail' | 'sms';
+  channel: 'mail' | 'sms' | 'push';
   recipient: string;
   template: TemplateName;
   /** wird protokolliert */
@@ -40,6 +40,7 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(MAIL_PROVIDER) private readonly mail: MailProvider,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
+    @Inject(PUSH_PROVIDER) private readonly push: PushProvider,
   ) {}
 
   onModuleInit() {
@@ -106,12 +107,14 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
       const res =
         row.channel === 'mail'
           ? await this.mail.send({ to: row.recipient, ...msg })
-          : await this.sms.send(row.recipient, msg.text);
+          : row.channel === 'push'
+            ? await this.push.send(row.recipient, { title: msg.subject, body: msg.text, url: row.data?.url })
+            : await this.sms.send(row.recipient, msg.text);
       await this.db.txAs({ tenantId, roles: ['system'] }, (c) =>
         c.query(
           `UPDATE notification SET status = 'sent', sent_at = now(), provider = $2, provider_message_id = $3, last_error = NULL
             WHERE id = $1`,
-          [id, row.channel === 'mail' ? this.mail.name : this.sms.name, res.messageId],
+          [id, row.channel === 'mail' ? this.mail.name : row.channel === 'push' ? this.push.name : this.sms.name, res.messageId],
         ),
       );
       if (row.has_secret) await this.redis.client.del(`notif-secret:${id}`);
