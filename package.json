@@ -1,0 +1,24 @@
+{
+  "name": "schulungsnachweis",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 run build",
+    "dev": "pnpm -r --parallel --filter ./apps/* run dev",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "test:int": "pnpm -r run test:int",
+    "db:migrate": "pnpm --filter @sn/db run migrate",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.6.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0"
+  }
+}

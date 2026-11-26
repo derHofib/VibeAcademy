@@ -9,3 +9,4 @@ infra/dev-certs/out/
 *.pem
 playwright-report/
 test-results/
+.local/
