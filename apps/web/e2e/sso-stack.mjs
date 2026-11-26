@@ -32,6 +32,7 @@ const config = loadConfig({
   PUBLIC_BASE_URL: `http://127.0.0.1:${WEB_PORT}`,
   API_PORT: String(API_PORT),
   SSO_ALLOW_HTTP_ISSUER: 'true',
+  SSO_DOMAIN_VERIFICATION: 'trust',
   STORAGE_DRIVER: 'fs',
   STORAGE_DIR: storage,
   SEAL_MODE: 'none',

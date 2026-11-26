@@ -345,9 +345,9 @@ export function diffPages(oldPages: readonly PageTextInput[], newPages: readonly
   });
 
   // Entfernte Seiten hinter dem Vorgänger (alte Reihenfolge) einreihen
-  const removed = a.map((x, i) => ({ x, i })).filter(({ i }) => !usedOld.has(i));
+  const removed = a.filter((_, i) => !usedOld.has(i));
   const result: PageDiffEntry[] = [...entries];
-  for (const { x, i } of removed) {
+  for (const x of removed) {
     const entry: PageDiffEntry = { pageNo: null, oldPageNo: x.pageNo, status: 'entfernt', similarity: 0, moved: false, noText: x.noText, excerpt: x.tokens.length ? { removed: clip(x.norm, excerptLength), added: '' } : null };
     // Position: nach der letzten neuen Seite, deren alte Seite vor i liegt
     let pos = 0;

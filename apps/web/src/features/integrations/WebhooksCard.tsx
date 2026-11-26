@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, Plus, RefreshCw, Send, Webhook } from 'lucide-react';
 import { Button, Card, CardDescription, CardHeader, CardTitle, CheckboxField, EmptyState, Field, Input, Panel, Sheet, StatusChip } from '@/components/ui';
@@ -84,6 +84,11 @@ function DeliveryLog({ endpoint, onNotice }: { endpoint: WebhookEndpoint; onNoti
     queryFn: () => integrationsApi.deliveries(endpoint.id),
     refetchInterval: (q) => (q.state.data?.data.some((d) => d.status === 'pending' || d.status === 'sending') ? 3000 : false),
   });
+  // Status des Endpunkts (letzte Zustellung, Fehlversuche) mit dem Protokoll aktuell halten
+  const updated = log.dataUpdatedAt;
+  useEffect(() => {
+    if (updated) void qc.invalidateQueries({ queryKey: iqk.webhooks });
+  }, [updated, qc]);
   const redeliver = useMutation({
     mutationFn: (deliveryId: string) => integrationsApi.redeliver(endpoint.id, deliveryId),
     onSuccess: async () => {
@@ -96,7 +101,7 @@ function DeliveryLog({ endpoint, onNotice }: { endpoint: WebhookEndpoint; onNoti
   if (log.isError) return <ErrorPanel error={log.error} onRetry={() => log.refetch()} />;
   if (!log.data.data.length) return <p className="py-3 text-[13.5px] text-muted">Noch keine Zustellungen. Mit „Test senden“ können Sie den Empfang prüfen.</p>;
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-[13.5px]">
         <caption className="sr-only">Zustellprotokoll für {endpoint.url}</caption>
         <thead className="text-[12.5px] text-muted">
@@ -125,7 +130,7 @@ function DeliveryLog({ endpoint, onNotice }: { endpoint: WebhookEndpoint; onNoti
                 </td>
                 <td className="py-2.5 pr-3 tabular-nums">{d.attempts}</td>
                 <td className="py-2.5 pr-3">
-                  {d.responseCode ? <span className="tabular-nums">HTTP {d.responseCode}</span> : '—'}
+                  {d.responseCode ? <span className="whitespace-nowrap tabular-nums">HTTP {d.responseCode}</span> : '—'}
                   {d.lastError && d.status !== 'succeeded' && <p className="mt-0.5 text-[12px] break-words text-danger-text">{d.lastError}</p>}
                 </td>
                 <td className="py-2.5 text-right">

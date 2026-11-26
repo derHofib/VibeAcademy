@@ -42,7 +42,7 @@ export class Client {
   }
 }
 
-export async function startHarness(overrides: Provider[] = []): Promise<Harness> {
+export async function startHarness(overrides: Provider[] = [], env: Record<string, string> = {}): Promise<Harness> {
   const db = await createTestDb();
   const storageDir = mkdtempSync(join(tmpdir(), 'sn-storage-'));
   const config = loadConfig({
@@ -57,6 +57,7 @@ export async function startHarness(overrides: Provider[] = []): Promise<Harness>
     STORAGE_DRIVER: 'fs',
     STORAGE_DIR: storageDir,
     ...sealEnv(),
+    ...env,
   });
   const app = await createApp({ config, overrides });
   await app.init();

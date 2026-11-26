@@ -22,6 +22,7 @@ import { qk, type Member } from '@/features/admin/api';
 import { formatShortDateTime } from '@/features/admin/format';
 import { ConfirmSheet, CopyButton, ErrorPanel, Loading, errorMessage } from '@/features/admin/components/common';
 import { fieldErrors } from '@/features/auth/session';
+import { DomainVerification } from './DomainVerification';
 import { useCreateScimToken, useRevokeScimToken, useSaveSso, useSsoSettings, useTestSso, type ScimToken, type SsoSettings } from './api';
 import { ssoPayload, validateSsoForm, type SsoFormValues } from './model';
 import { tsso } from './texts';
@@ -114,6 +115,7 @@ function SsoForm({ data, onNotice }: { data: SsoSettings; onNotice: (m: string, 
       <Field label={t.domains} hint={t.domainsHint} error={fe.emailDomains} required={v.enabled}>
         <Input value={v.domains} onChange={(e) => set('domains', e.target.value)} placeholder="firma.de" autoComplete="off" spellCheck={false} />
       </Field>
+      <DomainVerification data={data} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t.scopes} error={fe.scopes}>
           <Input value={v.scopes} onChange={(e) => set('scopes', e.target.value)} autoComplete="off" spellCheck={false} />

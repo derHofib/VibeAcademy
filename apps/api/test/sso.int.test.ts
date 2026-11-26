@@ -46,7 +46,7 @@ async function ssoLogin(c: Client, start = `/api/auth/sso/start?tenant=${SLUG}`)
 
 beforeAll(async () => {
   idp = await FakeIdp.start();
-  h = await startHarness();
+  h = await startHarness([], { SSO_DOMAIN_VERIFICATION: 'trust' });
   dozent = await registerDozent(h);
 });
 afterAll(async () => {
@@ -92,11 +92,11 @@ describe('Einstellungen (Admin)', () => {
     expect(bad.body.ok).toBe(false);
   });
 
-  it('eine Domain gehört höchstens einer Organisation', async () => {
+  it('eine Domain ist höchstens für eine Organisation bestätigt', async () => {
     const other = await registerDozent(h, { ...DOZENT, email: 'zweite@example.org', organisation: 'Zweite GmbH' });
     const r = await put(other, '/api/tenant/sso', { ...baseConfig(), slug: 'zweite' });
     expect(r.status).toBe(409);
-    expect(r.body.message).toContain('firma.example');
+    expect(r.body.message).toContain('andere Organisation');
   });
 
   it('nur Admins', async () => {

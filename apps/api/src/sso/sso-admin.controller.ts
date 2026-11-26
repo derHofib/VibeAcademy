@@ -1,11 +1,11 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import { ROLES, type Role } from '@sn/shared';
 import { z } from 'zod';
 import { Roles } from '../auth/decorators';
 import { ZodBody } from '../common/errors';
 import { currentRequest } from '../common/request-context';
 import { OidcClients } from './oidc-client';
-import { SsoConfigService } from './sso-config.service';
+import { SsoConfigService, DOMAIN_TXT_RESOLVER, type TxtResolver } from './sso-config.service';
 
 const domain = z
   .string()
@@ -58,6 +58,7 @@ export class SsoAdminController {
   constructor(
     private readonly configs: SsoConfigService,
     private readonly oidc: OidcClients,
+    @Inject(DOMAIN_TXT_RESOLVER) private readonly resolveTxt: TxtResolver,
   ) {}
 
   @Get()
@@ -87,6 +88,14 @@ export class SsoAdminController {
     } catch (e) {
       return { ok: false, error: `Der Identitätsanbieter ist nicht erreichbar oder liefert keine gültigen Metadaten (${(e as Error).message})` };
     }
+  }
+
+  /** Domain-Nachweis per DNS-TXT (Migration 018). */
+  @Post('domains/:domain/verify')
+  @HttpCode(200)
+  verifyDomain(@Param('domain') domain: string) {
+    if (!/^[a-z0-9.-]{3,253}$/i.test(domain)) throw new BadRequestException('Ungültige Domain');
+    return this.configs.verifyDomain(domain, this.resolveTxt);
   }
 
   @Post('scim-tokens')

@@ -9,6 +9,19 @@ import { DbService } from '../db/db.service';
 import { OidcClients, type IdpSettings } from './oidc-client';
 import { SecretBox } from './secret-box';
 
+export const DOMAIN_TXT_PREFIX = '_schulungsnachweis';
+export const DOMAIN_TXT_VALUE_PREFIX = 'schulungsnachweis-verify=';
+/** DNS-TXT-Abfrage, in Tests ersetzbar. */
+export type TxtResolver = (name: string) => Promise<string[][]>;
+export const DOMAIN_TXT_RESOLVER = Symbol('DOMAIN_TXT_RESOLVER');
+export interface DomainStatus {
+  domain: string;
+  verified: boolean;
+  verifiedAt: Date | null;
+  txtName: string;
+  txtValue: string;
+}
+
 export interface SsoConfigRow {
   tenant_id: string;
   enabled: boolean;
@@ -25,7 +38,9 @@ export interface SsoConfigRow {
 }
 
 export interface SsoConfig extends SsoConfigRow {
+  /** nur bestätigte Domains */
   domains: string[];
+  domainStatus: DomainStatus[];
 }
 
 export interface SsoConfigInput {
@@ -73,10 +88,19 @@ export class SsoConfigService {
   private async read(c: pg.PoolClient, tenantId: string): Promise<SsoConfig | null> {
     const row = (await c.query('SELECT * FROM tenant_sso_config WHERE tenant_id = $1', [tenantId])).rows[0] as SsoConfigRow | undefined;
     if (!row) return null;
-    const domains = (await c.query('SELECT domain FROM sso_email_domain WHERE tenant_id = $1 ORDER BY domain', [tenantId])).rows.map(
-      (r) => r.domain as string,
-    );
-    return { ...row, domains };
+    const all = (
+      await c.query('SELECT domain, verified_at, verification_token FROM sso_email_domain WHERE tenant_id = $1 ORDER BY domain', [tenantId])
+    ).rows;
+    // Nur bestätigte Domains zählen für Weiterleitung, JIT und E-Mail-Verknüpfung (Migration 018).
+    const domains = all.filter((r) => r.verified_at).map((r) => String(r.domain));
+    const domainStatus = all.map((r) => ({
+      domain: String(r.domain),
+      verified: !!r.verified_at,
+      verifiedAt: r.verified_at as Date | null,
+      txtName: `${DOMAIN_TXT_PREFIX}.${r.domain}`,
+      txtValue: `${DOMAIN_TXT_VALUE_PREFIX}${r.verification_token}`,
+    }));
+    return { ...row, domains, domainStatus };
   }
 
   /** Konfiguration im Systemkontext des Mandanten (Anmeldeablauf, ohne Sitzung). */
@@ -92,6 +116,38 @@ export class SsoConfigService {
       clientSecret: cfg.client_secret_enc ? this.box.open(cfg.client_secret_enc, cfg.tenant_id) : null,
       version: new Date(cfg.updated_at).toISOString(),
     };
+  }
+
+  /**
+   * Domain-Nachweis: TXT-Eintrag `_schulungsnachweis.<domain>` muss `schulungsnachweis-verify=<token>` enthalten.
+   * Eine Domain kann nur von einer Organisation bestätigt sein.
+   */
+  async verifyDomain(domain: string, resolve: TxtResolver) {
+    const d = domain.trim().toLowerCase();
+    return this.db.tx(async (c) => {
+      const row = (await c.query('SELECT verification_token, verified_at FROM sso_email_domain WHERE tenant_id = app.tenant_id() AND domain = $1', [d])).rows[0];
+      if (!row) throw new NotFoundException('Domain ist nicht eingetragen');
+      if (row.verified_at) return { domain: d, verified: true, verifiedAt: row.verified_at };
+      const expected = `${DOMAIN_TXT_VALUE_PREFIX}${row.verification_token}`;
+      let records: string[][] = [];
+      try {
+        records = await resolve(`${DOMAIN_TXT_PREFIX}.${d}`);
+      } catch {
+        records = [];
+      }
+      const found = records.map((parts) => parts.join('')).some((txt) => txt.trim() === expected);
+      if (!found) {
+        throw new BadRequestException(`Der TXT-Eintrag wurde nicht gefunden. Bitte bei ${DOMAIN_TXT_PREFIX}.${d} den Wert „${expected}“ hinterlegen (DNS-Änderungen können etwas dauern).`);
+      }
+      await c.query('UPDATE sso_email_domain SET verified_at = now() WHERE tenant_id = app.tenant_id() AND domain = $1', [d]).catch(
+        (e: { constraint?: string }) => {
+          if (e.constraint === 'sso_email_domain_verified_uq') throw new ConflictException('Die Domain ist bereits für eine andere Organisation bestätigt');
+          throw e;
+        },
+      );
+      await this.audit.record(c, { entity: 'sso_config', entityId: currentRequest()!.session!.tenantId!, action: 'domain_verified', payload: { domain: d } });
+      return { domain: d, verified: true, verifiedAt: new Date() };
+    });
   }
 
   /** Sicht für die Einstellungen (Admin). Ohne Client-Secret. */
@@ -112,7 +168,8 @@ export class SsoConfigService {
         clientId: cfg?.client_id ?? '',
         hasClientSecret: !!cfg?.client_secret_enc,
         scopes: cfg?.scopes ?? 'openid email profile',
-        emailDomains: cfg?.domains ?? [],
+        emailDomains: cfg?.domainStatus.map((d) => d.domain) ?? [],
+        emailDomainStatus: cfg?.domainStatus ?? [],
         ssoOnly: cfg?.sso_only ?? false,
         emergencyAdminAccountId: cfg?.emergency_admin_account_id ?? null,
         jitEnabled: cfg?.jit_enabled ?? true,
@@ -182,18 +239,19 @@ export class SsoConfigService {
         if (e.constraint === 'tenant_sso_config_slug_key') throw new ConflictException('Dieser Kurzname ist bereits vergeben');
         throw e;
       });
-      await c.query('DELETE FROM sso_email_domain WHERE tenant_id = app.tenant_id()');
+      // Bestehende Domains (mit ihrem Nachweis) behalten, entfernte löschen, neue unbestätigt anlegen.
+      await c.query('DELETE FROM sso_email_domain WHERE tenant_id = app.tenant_id() AND NOT (domain = ANY($1::citext[]))', [i.emailDomains]);
       if (i.emailDomains.length) {
-        const ins = await c.query(
-          `INSERT INTO sso_email_domain (domain, tenant_id) SELECT unnest($1::citext[]), app.tenant_id()
-           ON CONFLICT (domain) DO NOTHING RETURNING domain`,
-          [i.emailDomains],
-        );
-        const got = new Set(ins.rows.map((r) => String(r.domain).toLowerCase()));
-        const taken = i.emailDomains.filter((d) => !got.has(d));
-        if (taken.length) {
-          throw new ConflictException(`Die Domain ${taken.join(', ')} wird bereits von einer anderen Organisation verwendet`);
-        }
+        await c.query(
+          `INSERT INTO sso_email_domain (domain, tenant_id, verified_at) SELECT d, app.tenant_id(), $2::timestamptz FROM unnest($1::citext[]) d
+           ON CONFLICT (domain, tenant_id) DO NOTHING`,
+          [i.emailDomains, this.config.SSO_DOMAIN_VERIFICATION === 'trust' ? new Date() : null],
+        ).catch((e: { constraint?: string }) => {
+          if (e.constraint === 'sso_email_domain_verified_uq') {
+            throw new ConflictException('Die Domain ist bereits für eine andere Organisation bestätigt');
+          }
+          throw e;
+        });
       }
       await this.audit.record(c, {
         entity: 'sso_config',

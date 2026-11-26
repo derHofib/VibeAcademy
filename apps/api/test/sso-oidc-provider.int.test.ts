@@ -91,7 +91,7 @@ beforeAll(async () => {
       res.end(String(e));
     }
   });
-  h = await startHarness();
+  h = await startHarness([], { SSO_DOMAIN_VERIFICATION: 'trust' });
   dozent = await registerDozent(h);
   const r = await dozent.http
     .put('/api/tenant/sso')

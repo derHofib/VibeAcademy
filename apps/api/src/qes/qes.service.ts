@@ -14,6 +14,7 @@ import { parseSettings } from '../trainings/settings';
 import { buildDeclarationPdf } from './declaration-pdf';
 import { SignatureProviders } from './signature-providers';
 import { TestQesProvider } from './test-qes.provider';
+import { WebhookEmitter } from '../webhooks/webhook-emitter';
 
 const CALLBACK_TTL_S = 2 * 3600;
 
@@ -167,6 +168,7 @@ export class QesService implements OnModuleInit {
          http?.ipHash ?? null, res.signedAt ?? now, req.provider, req.transaction_id, signedKey, signedSha, res.format ?? 'PAdES', res.signer ?? null],
       );
       await c.query(`UPDATE invitation SET status = 'bestaetigt', completed_at = $2 WHERE id = $1`, [req.invitation_id, now]);
+      await WebhookEmitter.emit(c, tenantId, 'invitation.completed', { invitationId: req.invitation_id }); // E-37
       await c.query(`UPDATE signature_request SET status = 'abgeschlossen', completed_at = $2 WHERE id = $1`, [requestId, now]);
       await this.audit.record(c, {
         entity: 'signature', entityId: s.rows[0].id, action: 'signed',

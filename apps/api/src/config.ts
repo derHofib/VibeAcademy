@@ -64,6 +64,8 @@ const schema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  /** SSO-Domains: dns = Nachweis per TXT-Eintrag; trust = sofort bestätigt (nur Entwicklung/Tests, nie in Produktion) */
+  SSO_DOMAIN_VERIFICATION: z.enum(['dns', 'trust']).default('dns'),
   RUN_WORKERS: z
     .enum(['true', 'false'])
     .default('true')
@@ -78,6 +80,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Ungültige Konfiguration: ${msg}`);
+  }
+  if (parsed.data.NODE_ENV === 'production' && parsed.data.SSO_DOMAIN_VERIFICATION === 'trust') {
+    throw new Error('Ungültige Konfiguration: SSO_DOMAIN_VERIFICATION=trust ist in Produktion nicht erlaubt');
   }
   return parsed.data;
 }
