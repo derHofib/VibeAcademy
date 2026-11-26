@@ -43,8 +43,17 @@ export async function publishedTraining(
 export async function invitedParticipant(h: Harness, dozent: Client, trainingId: string, person = { name: 'Anna Schulz', email: 'anna@example.org' }) {
   const run = (await dozent.post('/api/runs', { trainingId })).body.id as string;
   const personId = (await dozent.post('/api/persons', person)).body.id as string;
+  // Postausgang ist in der Entwicklung prozessweit: auf eine NEUE Einladungsmail an diese Adresse warten.
+  const invitationMails = async () =>
+    ((await dozent.get(`/api/dev/postausgang?an=${person.email}`)).body as Array<{ subject: string; text: string }>).filter((m) =>
+      m.subject.includes('bitte bis'),
+    );
+  const before = (await invitationMails()).length;
   await dozent.post(`/api/runs/${run}/invite`, { personIds: [personId] });
-  const mail = await waitFor(async () => (await dozent.get(`/api/dev/postausgang?an=${person.email}`)).body[0]);
+  const mail = await waitFor(async () => {
+    const list = await invitationMails();
+    return list.length > before && list[0];
+  });
   const token = /\/s\/([A-Za-z0-9_-]+)/.exec(mail.text)![1]!;
   const participant = await h.agent();
   const open = await participant.post('/api/participant/session', { token });
