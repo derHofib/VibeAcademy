@@ -11,3 +11,7 @@ export const Public = () => SetMetadata(IS_PUBLIC, true);
 export const AnyAccount = () => SetMetadata(ANY_ACCOUNT, true);
 /** Mindestens eine dieser Rollen im aktiven Mandanten. */
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES, roles);
+
+export const PARTICIPANT = 'sn:participant';
+/** Erreichbar für Teilnehmer: Einladungslink-Sitzung oder angemeldetes Konto (Zugriff prüft der ParticipantService). */
+export const ParticipantRoute = () => SetMetadata(PARTICIPANT, true);

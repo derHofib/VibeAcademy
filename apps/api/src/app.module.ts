@@ -22,6 +22,10 @@ import { LogMailProvider, LogSmsProvider, MAIL_PROVIDER, SMS_PROVIDER, SmtpMailP
 import { RedisService } from './redis/redis.service';
 import { MembersController } from './tenant/members.controller';
 import { PersonsController } from './persons/persons.controller';
+import { ParticipantController } from './participant/participant.controller';
+import { ParticipantService } from './participant/participant.service';
+import { InvitationService } from './runs/invitation.service';
+import { RunsController } from './runs/runs.controller';
 import { FsStorage, OBJECT_STORAGE, S3Storage } from './storage/storage';
 import { AnalysisService } from './trainings/analysis.service';
 import { TrainingsController } from './trainings/trainings.controller';
@@ -39,7 +43,7 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
-        PersonsController, TrainingsController,
+        PersonsController, TrainingsController, RunsController, ParticipantController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -75,6 +79,8 @@ export class AppModule implements NestModule {
         AuthService,
         NotificationService,
         AnalysisService,
+        InvitationService,
+        ParticipantService,
         ...overrides,
       ],
     };

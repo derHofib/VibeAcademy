@@ -42,7 +42,9 @@ export class SessionMiddleware implements NestMiddleware {
     const sessionId = (req.cookies?.[SESSION_COOKIE] as string | undefined) ?? null;
     let session = sessionId ? await this.sessions.get(sessionId) : null;
     let roles: Role[] = [];
-    if (session?.tenantId) {
+    if (session?.kind === 'invitation') {
+      roles = ['teilnehmer'];
+    } else if (session?.tenantId) {
       // Rollen je Request frisch: entzogene Mitgliedschaft wirkt sofort.
       const r = await this.db.txAs({ accountId: session.accountId }, (c) =>
         c.query('SELECT roles FROM membership WHERE account_id = $1 AND tenant_id = $2', [
@@ -52,7 +54,7 @@ export class SessionMiddleware implements NestMiddleware {
       );
       if (r.rowCount) roles = r.rows[0].roles;
       else {
-        session = { ...session, tenantId: null };
+        session = { ...session, tenantId: null } as typeof session;
         await this.sessions.update(sessionId!, { tenantId: null });
       }
     }

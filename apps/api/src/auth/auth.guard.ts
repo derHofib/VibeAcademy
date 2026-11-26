@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Unauthor
 import { Reflector } from '@nestjs/core';
 import type { Role } from '@sn/shared';
 import { currentRequest } from '../common/request-context';
-import { ANY_ACCOUNT, IS_PUBLIC, ROLES } from './decorators';
+import { ANY_ACCOUNT, IS_PUBLIC, PARTICIPANT, ROLES } from './decorators';
 
 /** Globaler Guard: Standard ist „angemeldet + aktiver Mandant“, Ausnahmen per Decorator. */
 @Injectable()
@@ -14,6 +14,9 @@ export class AuthGuard implements CanActivate {
     if (get<boolean>(IS_PUBLIC)) return true;
     const r = currentRequest();
     if (!r?.session) throw new UnauthorizedException('Bitte anmelden');
+    if (get<boolean>(PARTICIPANT)) return true;
+    // Einladungslink-Sitzungen kommen ausschließlich an Teilnehmer-Routen
+    if (r.session.kind === 'invitation') throw new ForbiddenException('Keine Berechtigung');
     if (get<boolean>(ANY_ACCOUNT)) return true;
     if (!r.session.tenantId) throw new ForbiddenException('Kein Mandant ausgewählt');
     const required = get<Role[]>(ROLES);

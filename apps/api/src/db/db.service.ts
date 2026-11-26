@@ -16,6 +16,7 @@ export class DbService implements OnModuleDestroy {
     return {
       tenantId: r?.session?.tenantId ?? null,
       accountId: r?.session?.accountId ?? null,
+      personId: r?.session?.kind === 'invitation' ? r.session.personId : null,
       roles: r?.roles ?? [],
     };
   }

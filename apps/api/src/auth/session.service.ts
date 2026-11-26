@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomToken, sha256 } from '../common/crypto';
-import type { SessionData } from '../common/request-context';
+import type { AccountSession as AccountSessionInput, InvitationSession, SessionData } from '../common/request-context';
 import { RedisService } from '../redis/redis.service';
 
 export const SESSION_COOKIE = 'sn_session';
@@ -19,9 +19,9 @@ export class SessionService {
     return `sess:${sha256(id)}`;
   }
 
-  async create(data: Omit<SessionData, 'createdAt'>): Promise<string> {
+  async create(data: Omit<AccountSessionInput, 'createdAt'> | Omit<InvitationSession, 'createdAt'>): Promise<string> {
     const id = randomToken();
-    const full: SessionData = { ...data, createdAt: Date.now() };
+    const full = { ...data, createdAt: Date.now() } as SessionData;
     await this.redis.client.set(this.key(id), JSON.stringify(full), 'EX', IDLE_TTL_S);
     return id;
   }
@@ -39,9 +39,9 @@ export class SessionService {
     return s;
   }
 
-  async update(id: string, patch: Partial<SessionData>): Promise<void> {
+  async update(id: string, patch: Partial<AccountSessionInput>): Promise<void> {
     const s = await this.get(id);
-    if (!s) return;
+    if (!s || s.kind !== 'account') return;
     await this.redis.client.set(this.key(id), JSON.stringify({ ...s, ...patch }), 'EX', IDLE_TTL_S);
   }
 

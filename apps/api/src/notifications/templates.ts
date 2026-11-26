@@ -68,6 +68,29 @@ export const TEMPLATES = {
         button(String(d.loginUrl), 'Anmelden'),
     ),
   }),
+  /** Einladung zur Online-Unterweisung (Screen 4) */
+  invitation: (d: Data, s: Secret): Rendered => {
+    const link = s?.link ?? '#';
+    const facts = `${d.pages} Seiten · ca. ${d.minutes} Minuten${d.questions ? ` · ${d.questions} Fragen` : ''}`;
+    return {
+      subject: `${d.reminder ? 'Erinnerung: ' : ''}${d.trainingTitle} – bitte bis ${d.dueDate} bearbeiten`,
+      text:
+        `Hallo ${d.personName},\n\n${d.reminder ? 'zur Erinnerung: ' : ''}bitte bearbeiten Sie die Unterweisung „${d.trainingTitle}“ bis ${d.dueDate}.\n` +
+        `Umfang: ${facts}.\n\nZur Unterweisung: ${link}\n\n` +
+        `Erfasst wird nur, welche Seiten Sie wie lange geöffnet hatten, Ihre Antworten im Wissenscheck und Ihre Bestätigung. ` +
+        `Keine Kamera, kein Standort.\n${d.contact ? `Fragen? ${d.contact}\n` : ''}`,
+      html: frame(
+        String(d.trainingTitle),
+        p(`Hallo ${esc(d.personName)},`) +
+          p(`${d.reminder ? 'zur Erinnerung: ' : ''}bitte bearbeiten Sie diese Unterweisung bis <strong>${esc(d.dueDate)}</strong>.`) +
+          `<p style="background:#EAF0FE;color:#223C8F;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 8px">${esc(facts)}</p>` +
+          button(link, 'Unterweisung starten') +
+          p('Erfasst wird nur, welche Seiten Sie wie lange geöffnet hatten, Ihre Antworten im Wissenscheck und Ihre Bestätigung. Keine Kamera, kein Standort.') +
+          (d.contact ? p(`Fragen? ${esc(d.contact)}`) : ''),
+        `${d.tenantName} · Dieser Link ist persönlich – bitte nicht weitergeben.`,
+      ),
+    };
+  },
 } satisfies Record<string, (d: Data, s: Secret) => Rendered>;
 
 export type TemplateName = keyof typeof TEMPLATES;
@@ -80,6 +103,13 @@ export function render(template: string, data: Data, secret: Secret): Rendered {
 
 /** Beispieldaten für die Vorschau-Route (nur Entwicklung). */
 export const SAMPLE_DATA: Record<TemplateName, { data: Data; secret: Secret }> = {
+  invitation: {
+    data: {
+      personName: 'Anna Schulz', trainingTitle: 'Sicherheitsunterweisung 2026', dueDate: '15.12.2026', pages: 14, minutes: 7,
+      questions: 10, contact: 'Dennis Hofmann, Telefon 0761 123456', tenantName: 'Muster Elektro GmbH', reminder: false,
+    },
+    secret: { link: 'http://localhost:5173/s/beispiel-token' },
+  },
   otp: { data: { purposeLabel: 'Unterschrift „Sicherheitsunterweisung 2026“' }, secret: { code: '482913' } },
   'member-invite': {
     data: { tenantName: 'Muster Elektro GmbH', inviterName: 'Dennis Hofmann', rolesLabel: 'Trainer / Dozent' },

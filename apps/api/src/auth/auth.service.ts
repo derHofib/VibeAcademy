@@ -84,6 +84,7 @@ export class AuthService {
   async me() {
     const r = currentRequest()!;
     const s = r.session!;
+    if (s.kind !== 'account') throw new UnauthorizedException('Bitte anmelden');
     return this.db.txAs({ accountId: s.accountId, tenantId: s.tenantId }, async (c) => {
       const account = (
         await c.query('SELECT id, email, display_name, email_verified_at FROM account WHERE id = $1', [s.accountId])
@@ -111,6 +112,7 @@ export class AuthService {
 
   async switchTenant(tenantId: string) {
     const r = currentRequest()!;
+    if (r.session?.kind !== 'account') throw new UnauthorizedException('Bitte anmelden');
     const ok = await this.db
       .txAs({ accountId: r.session!.accountId }, (c) =>
         c.query('SELECT 1 FROM membership WHERE account_id = $1 AND tenant_id = $2', [r.session!.accountId, tenantId]),
@@ -123,6 +125,7 @@ export class AuthService {
   /** Step-up per Passwort (E-08). purpose bindet das Token an den Vorgang, z. B. „signature:<invitationId>“. */
   async stepUpWithPassword(password: string, purpose: string) {
     const s = currentRequest()!.session!;
+    if (s.kind !== 'account') throw new UnauthorizedException('Bitte mit Code bestätigen');
     await this.rate.hit(`stepup:${s.accountId}`, 10, 900);
     const hash = await this.db
       .txAs({}, (c) => c.query('SELECT app.auth_get_password_hash($1) AS h', [s.accountId]))
