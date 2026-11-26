@@ -98,7 +98,7 @@ export class ParticipantController {
       const r = (
         await c.query(
           `SELECT i.id, i.status, i.due_at, i.opened_at, i.read_completed_at, i.completed_at, i.reading_time_factor,
-                  p.name AS person_name, t.titel, t.kategorie, t.rechtsgrundlage, t.ansprechpartner, t.quiz_required, t.settings,
+                  p.name AS person_name, p.email AS person_email, t.titel, t.kategorie, t.rechtsgrundlage, t.ansprechpartner, t.quiz_required, t.settings,
                   v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name
              FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id
              JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = r.training_version_id
@@ -126,6 +126,7 @@ export class ParticipantController {
         status: r.status,
         dueAt: r.due_at,
         personName: r.person_name,
+        personEmail: r.person_email,
         tenantName: r.tenant_name,
         training: { titel: r.titel, kategorie: r.kategorie, rechtsgrundlage: r.rechtsgrundlage, ansprechpartner: r.ansprechpartner },
         version: { id: r.version_id, versionNo: r.version_no, pageCount: r.page_count, sha256: r.sha256 },

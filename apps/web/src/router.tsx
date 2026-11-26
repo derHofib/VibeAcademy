@@ -28,6 +28,9 @@ export const router = createBrowserRouter([
   { path: '/teilnahme/:id/lesen', lazy: async () => ({ Component: (await import('@/pages/participant/ReaderPage')).default }) },
   { path: '/teilnahme/:id/wissenscheck', lazy: async () => ({ Component: (await import('@/pages/participant/QuizPage')).default }) },
   { path: '/teilnahme/:id/abschluss', lazy: async () => ({ Component: (await import('@/pages/participant/SignaturePage')).default }) },
+  // „Meine Nachweise“ – optionales Teilnehmerkonto (Phase 1, Schritt 1.18, E-25)
+  { path: '/konto', lazy: async () => ({ Component: (await import('@/pages/account/AccountPage')).default }) },
+  { path: '/konto/geloescht', lazy: async () => ({ Component: (await import('@/pages/account/AccountDeletedPage')).default }) },
   { path: '/verify/:code', lazy: async () => ({ Component: (await import('@/pages/verify/VerifyPage')).default }) },
   // Entwicklungsseiten (Design-System), lazy geladen
   {

@@ -33,6 +33,8 @@ export interface InvitationStart {
   chapters: Chapter[];
   pages: Array<{ pageNo: number; title: string | null; tMinSeconds: number }>;
   hasAccount: boolean;
+  /** E-Mail-Adresse der eingeladenen Person, falls die API sie liefert (Vorbelegung „Konto anlegen“, E-25) */
+  personEmail?: string | null;
 }
 
 export interface PageProgress {

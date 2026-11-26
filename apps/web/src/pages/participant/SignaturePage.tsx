@@ -20,6 +20,7 @@ import {
   type SignatureInfo,
 } from '@/features/participant/api';
 import { ErrorScreen, LoadingScreen } from '@/features/participant/ScreenStates';
+import { participantRegisterPath } from '@/features/account/model';
 import { MIN_SIGNATURE_POINTS, SignatureField, type SignatureFieldHandle } from '@/features/participant/SignatureField';
 
 /** Bestätigung und Unterschrift (Screen 6), danach Abschluss mit Nachweis. */
@@ -325,7 +326,7 @@ function DoneView({
             <h2 className="font-heading text-[16px] font-bold text-ink">{tp.done.accountTitle}</h2>
             <p className="mt-1 text-[13.5px] leading-[1.5] text-muted">{tp.done.accountText}</p>
             <Button asChild variant="soft" size="sm" className="mt-3">
-              <Link to="/registrieren?teilnehmer=1">{tp.done.accountAction}</Link>
+              <Link to={participantRegisterPath(start.personEmail)}>{tp.done.accountAction}</Link>
             </Button>
           </div>
         </Card>

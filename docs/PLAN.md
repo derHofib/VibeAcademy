@@ -106,11 +106,11 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
   ✔ Playwright gegen die echte API: `participant-flow.spec.ts` (390 + 1440 px, Übernahme durch zweites Fenster), `admin-flow.spec.ts`, `admin-screenshots.spec.ts`; axe ohne schwere Verstöße. Läuft lokal, noch nicht in der CI (braucht laufende API).
   Playwright: vollständiger Durchlauf Einladung → Lesen → Quiz → Unterschrift → Nachweis → Verify. Screenshots 390 px + 1440 px für Screens 1, 3, 5a, 5b, 5c, 6, 8 nach `docs/screenshots/phase-1/`, nebeneinander mit den JPGs in `docs/screenshots/phase-1/VERGLEICH.md`.
   **Test (Abnahme 8).**
-- [ ] **1.18 Meine Nachweise – optionales Teilnehmerkonto** (E-25) → 0.6, 1.8
-  ✔ Backend fertig (`apps/api/src/account`, Tests `account.int.test.ts`); Oberfläche offen.
+- [x] **1.18 Meine Nachweise – optionales Teilnehmerkonto** (E-25) → 0.6, 1.8
+  ✔ Backend (`apps/api/src/account`) und Oberfläche `/konto`, `/registrieren?teilnehmer=1`; E2E `account-flow.spec.ts`.
   Nach dem Abschluss Angebot „Nachweis in einem Konto sammeln“; Konto anlegen/anmelden, E-Mail per OTP bestätigen, Verknüpfung der Personen mit dieser E-Mail über alle Mandanten (je Verknüpfung bestätigen); Übersicht eigener Nachweise mit Gültigkeit und PDF-Download; neue Einladungen. Kein Mockup → Gestaltung im weichen Stil nach Screen 10b/5a.
   **Test:** Konto sieht Nachweise aus zwei Mandanten, aber keine fremden Personen; Löschen trennt nur die Verknüpfung.
-- [ ] **1.19 Phasenabschluss:** Zusammenfassung (fertig / offen / Annahmen) in `docs/PHASE-1.md`.
+- [x] **1.19 Phasenabschluss:** Zusammenfassung (fertig / offen / Annahmen) in `docs/PHASE-1.md`.
 
 **Parallelisierbar** (nach 0.x): Paket A „Tracking-Ingest + Tests“ (1.5) · Paket B „Viewer-Komponenten“ (1.14, gegen Mock-API aus `packages/shared`-Schemas) · Paket C „Nachweis-PDF + Siegel“ (1.8 mit Fixture-Daten) · Paket D „Verwaltungs-Screens“ (1.11, 1.12).
 

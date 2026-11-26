@@ -15,7 +15,7 @@ Stand: 26.11.2026 · Branch `claude/great-sagan-5a78lf` · Details je Schritt in
 - Schulung anlegen (Screen 2): PDF-Upload, SHA-256, Seitenanalyse (Wörter, `t_min`, Seiten ohne Text, Kapitel aus Lesezeichen, Vorschaubilder), Regeln, Fragenpool, Veröffentlichen (unveränderlich), Zielgruppe, Einladen, Links kopieren/drucken.
 - Teilnehmer: Link → Start (5a) → Viewer mobil/Desktop (5b/5c) mit serverseitiger Lese-Erfassung → Wissenscheck → Unterschrift (6) → versiegeltes Nachweis-PDF (8) → Prüfseite `/verify/:code`.
 - Verwaltung: Dashboard (1), Durchführung mit Status je Person, Lesenachweis je Person (3) mit Audit-Kettenprüfung, Personen/Org-Einheiten mit CSV-Import, Mitglieder.
-- „Meine Nachweise“: Teilnehmerkonto sammelt Nachweise über Organisationen hinweg (E-25).
+- „Meine Nachweise“ (`/konto`): Teilnehmerkonto sammelt Nachweise über Organisationen hinweg (E-25); Konto direkt vom Abschluss-Bildschirm, E-Mail vorausgefüllt.
 
 ## Abnahmekriterien Phase 1
 
@@ -28,7 +28,7 @@ Stand: 26.11.2026 · Branch `claude/great-sagan-5a78lf` · Details je Schritt in
 | Nachweis-PDF mit Pflichtinhalten, versiegelt, über `/verify/:code` prüfbar | `completion.int.test.ts` (Textprüfung, pyHanko-Validierung, Manipulation erkannt), Bild: `docs/screenshots/phase-1/08-nachweis-pdf.png` |
 | Audit-Trail erkennt nachträglich geänderte Zeile | `packages/db/test/audit.int.test.ts` |
 | RLS: Mandanten getrennt; Vorgesetzte ohne Seitendetails | `packages/db/test/rls.int.test.ts`, `stammdaten.int.test.ts`, `reading.int.test.ts` |
-| UI wie Screens 1, 3, 5a, 5b, 5c, 6, 8 (390/1440 px) | `docs/screenshots/phase-1/{admin,participant}/`, E2E `apps/web/e2e/*-flow.spec.ts` mit axe |
+| UI wie Screens 1, 3, 5a, 5b, 5c, 6, 8 (390/1440 px) | `docs/screenshots/phase-1/{admin,participant,account}/`, E2E `apps/web/e2e/*-flow.spec.ts` mit axe, in der CI als eigener Job |
 
 ## Bewusste Abweichungen
 

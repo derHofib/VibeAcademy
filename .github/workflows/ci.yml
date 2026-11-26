@@ -110,6 +110,8 @@ jobs:
         run: pnpm --filter @sn/web exec playwright test -c playwright.participant.config.ts --trace off
       - name: E2E Verwaltung
         run: pnpm --filter @sn/web exec playwright test -c playwright.admin.config.ts --trace off
+      - name: E2E Meine Nachweise
+        run: pnpm --filter @sn/web exec playwright test -c playwright.account.config.ts --trace off
       - name: API-Log bei Fehler
         if: failure()
         run: tail -n 200 api.log
