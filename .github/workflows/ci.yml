@@ -53,3 +53,63 @@ jobs:
         run: pnpm test:int
       - name: Web-Build
         run: pnpm --filter @sn/web build
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: checks
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Systempakete und Chromium
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          pnpm --filter @sn/web exec playwright install --with-deps chromium
+          pnpm --filter @sn/api exec playwright-core install chromium
+      - name: .env für die Ende-zu-Ende-Tests
+        run: |
+          cat > .env <<ENV
+          DATABASE_ADMIN_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres
+          DB_NAME=schulungsnachweis
+          DB_MIGRATOR_PASSWORD=ci-migrator
+          DATABASE_MIGRATOR_URL=postgres://app_migrator:ci-migrator@127.0.0.1:5432/schulungsnachweis
+          DB_APP_PASSWORD=ci-app
+          DATABASE_URL=postgres://app_user:ci-app@127.0.0.1:5432/schulungsnachweis
+          REDIS_URL=redis://127.0.0.1:6379
+          SESSION_SECRET=$(openssl rand -hex 32)
+          HMAC_MASTER_SECRET=$(openssl rand -hex 32)
+          NODE_ENV=development
+          ENV
+          scripts/setup-seal.sh | grep = >> .env
+      - name: Bauen, migrieren, API starten
+        run: |
+          pnpm --filter @sn/shared --filter @sn/db build
+          pnpm --filter @sn/db run bootstrap && pnpm db:migrate
+          pnpm --filter @sn/api build
+          (cd apps/api && nohup node dist/main.js > ../../api.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf 127.0.0.1:3000/api/health && break; sleep 1; done
+      - name: E2E Teilnehmer
+        run: pnpm --filter @sn/web exec playwright test -c playwright.participant.config.ts --trace off
+      - name: E2E Verwaltung
+        run: pnpm --filter @sn/web exec playwright test -c playwright.admin.config.ts --trace off
+      - name: API-Log bei Fehler
+        if: failure()
+        run: tail -n 200 api.log

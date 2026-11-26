@@ -1,6 +1,6 @@
 # Umsetzungsplan – Schulungsnachweis
 
-Status: **Rückfragen beantwortet (26.11.2026), Phase 0 in Arbeit.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
+Status: **Phase 0 und 1 umgesetzt (26.11.2026), Phase 2 offen.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
 Spezifikation: `docs/handoff/docs/SPEZIFIKATION.md` · Design: `docs/handoff/docs/DESIGN-UND-SCREENS.md`.
 
 Legende: `[ ]` offen · `[x]` erledigt · **→** Abhängigkeit · **Test:** was den Schritt abnimmt.
@@ -86,17 +86,24 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 ### Frontend
 
-- [ ] **1.11 Verwaltung: Schulung anlegen (Screen 2)** → 0.7, 1.2, 1.3
+- [x] **1.11 Verwaltung: Schulung anlegen (Screen 2)** → 0.7, 1.2, 1.3
+  ✔ `/verwaltung/schulungen/neu|:id` (Assistent), Screenshots `docs/screenshots/phase-1/admin/schulung-anlegen-*`.
   Stepper (Grunddaten · Dokument & Regeln · Zielgruppe · Prüfen & einladen), PDF-Karte mit Hash, Kennzahlen, Seiten-Thumbnails mit `t_min`, Regeln, Kapitel bearbeiten, Fragenpool, Bestätigungstext.
-- [ ] **1.12 Dashboard (Screen 1)** und **Lesenachweis je Person (Screen 3)** → 1.9
+- [x] **1.12 Dashboard (Screen 1)** und **Lesenachweis je Person (Screen 3)** → 1.9
+  ✔ `/verwaltung` und `/verwaltung/nachweise/:invitationId`.
   TanStack Table; Seitenprotokoll mit Balken Ist vs. Soll-Marke; Audit-Trail-Liste.
-- [ ] **1.13 Teilnehmer-Start (5a)** → 1.4 — Kennzahlen, Ablauf in 3 Schritten, „Was erfasst wird“, „Los geht’s“.
-- [ ] **1.14 Viewer mobil + Desktop (5b/5c)** → 1.5
+- [x] **1.13 Teilnehmer-Start (5a)** → 1.4 — Kennzahlen, Ablauf in 3 Schritten, „Was erfasst wird“, „Los geht’s“.
+  ✔ `/s/:token`, `/teilnahme/:id`.
+- [x] **1.14 Viewer mobil + Desktop (5b/5c)** → 1.5
+  ✔ `/teilnahme/:id/lesen`, Hook `useReadingTracker` mit 14 Tests.
   `usePageTracking` (IntersectionObserver ≥ 60 %, Visibility, Fokus, Eingabe-Alter, Heartbeat alle 5 s, Offline-Queue), PDF.js-Seite aus signierter URL, Lese-Dock mit Ring-Button (Countdown aus Serverfortschritt), Segment-Fortschritt, Status-Pille (erfasst/pausiert), Inhaltsverzeichnis als Bottom-Sheet (pausiert Erfassung mobil) bzw. Schwebe-Panel, Kapitel-Leiste mit Ringen (Desktop), Zoom 90–130 %, „Noch da?“-Hinweis, Frage-Sheet (Frage an Verantwortlichen per Mail – Phase 1 ohne Live).
   **Test:** Komponententests für den Tracking-Hook mit Fake-Timern; E2E: Seite wird erst nach `t_min` erfüllt, Pause bei verstecktem Tab und offenem Inhaltsverzeichnis.
-- [ ] **1.15 Quiz (5f/5g/5j)** → 1.6 — Quiz-Optionen mit Feedback, Ergebnis, erneuter Versuch.
-- [ ] **1.16 Unterschrift (Screen 6)** → 1.7 — Checkbox, `signature_pad` (Pointer-Events, Löschen), Passwort/OTP, Button erst aktiv wenn alles erfüllt, Hinweis was fehlt.
-- [ ] **1.17 E2E + Screenshots** → alle
+- [x] **1.15 Quiz (5f/5g/5j)** → 1.6 — Quiz-Optionen mit Feedback, Ergebnis, erneuter Versuch.
+  ✔ `/teilnahme/:id/wissenscheck`.
+- [x] **1.16 Unterschrift (Screen 6)** → 1.7 — Checkbox, `signature_pad` (Pointer-Events, Löschen), Passwort/OTP, Button erst aktiv wenn alles erfüllt, Hinweis was fehlt.
+  ✔ `/teilnahme/:id/abschluss`, Prüfseite `/verify/:code`.
+- [x] **1.17 E2E + Screenshots** → alle
+  ✔ Playwright gegen die echte API: `participant-flow.spec.ts` (390 + 1440 px, Übernahme durch zweites Fenster), `admin-flow.spec.ts`, `admin-screenshots.spec.ts`; axe ohne schwere Verstöße. Läuft lokal, noch nicht in der CI (braucht laufende API).
   Playwright: vollständiger Durchlauf Einladung → Lesen → Quiz → Unterschrift → Nachweis → Verify. Screenshots 390 px + 1440 px für Screens 1, 3, 5a, 5b, 5c, 6, 8 nach `docs/screenshots/phase-1/`, nebeneinander mit den JPGs in `docs/screenshots/phase-1/VERGLEICH.md`.
   **Test (Abnahme 8).**
 - [ ] **1.18 Meine Nachweise – optionales Teilnehmerkonto** (E-25) → 0.6, 1.8
