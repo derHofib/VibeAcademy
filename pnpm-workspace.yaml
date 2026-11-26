@@ -6,3 +6,4 @@ onlyBuiltDependencies:
   - esbuild
   - "@swc/core"
   - "@nestjs/core"
+  - msgpackr-extract

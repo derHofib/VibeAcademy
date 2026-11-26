@@ -10,25 +10,31 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 ## Phase 0 – Fundament (Voraussetzung für alles)
 
-- [ ] **0.1 Monorepo-Gerüst** (E-02): pnpm Workspaces, TS-Basiskonfiguration, ESLint/Prettier, Vitest, `apps/web`, `apps/api`, `apps/worker`, `packages/shared`, `packages/db`.
+- [x] **0.1 Monorepo-Gerüst** (E-02): pnpm Workspaces, TS-Basiskonfiguration, ESLint/Prettier, Vitest, `apps/web`, `apps/api`, `apps/worker`, `packages/shared`, `packages/db`.
   **Test:** `pnpm lint && pnpm typecheck && pnpm test` läuft leer grün.
-- [ ] **0.2 Infrastruktur** (E-22, E-23): `infra/docker-compose.yml` (postgres 16, redis, minio mit Object-Lock-Bucket, mailpit, gotenberg, caddy), `docker-compose.test.yml`, `.env.example`, Skripte für Dev-Zertifikate, VAPID-Schlüssel, Secrets.
+- [x] **0.2 Infrastruktur** (E-22, E-23): `infra/docker-compose.yml` (postgres 16, redis, minio mit Object-Lock-Bucket, mailpit, gotenberg, caddy), `docker-compose.test.yml`, `.env.example`, Skripte für Dev-Zertifikate, VAPID-Schlüssel, Secrets.
+  ✔ Compose/Dockerfiles/Caddy geschrieben; hier ohne Docker-Daemon nicht gestartet. Für Dev/Tests: `scripts/local-services.sh` (Postgres 16 + Redis lokal).
   **Test:** `pnpm dev:infra` startet alle Dienste; Health-Checks grün.
-- [ ] **0.3 CI** (E-21): GitHub Actions mit Services Postgres/Redis/MinIO; Jobs Lint, Typecheck, Unit, Integration; E2E ab Phase 1.
-- [ ] **0.4 Datenbank-Basis + RLS-Rahmen** (E-03, E-04) → 0.1, 0.2
+- [x] **0.3 CI** (E-21): GitHub Actions mit Services Postgres/Redis/MinIO; Jobs Lint, Typecheck, Unit, Integration; E2E ab Phase 1.
+- [x] **0.4 Datenbank-Basis + RLS-Rahmen** (E-03, E-04) → 0.1, 0.2
+  ✔ 19 DB-Integrationstests (RLS-Rahmen, Audit).
   Migration 001: Rollen `app_migrator`/`app_user`, `tenant`, `account` (mandantenunabhängig), `membership` (Konto ↔ Mandant + Rollen), Hilfsfunktionen `app.current_tenant()`, `app.has_role()`, Policy-Vorlage, `FORCE RLS`.
   NestJS: `DbModule` mit Request-Transaktion + `set_config`-Interceptor, `TenantContext` (AsyncLocalStorage), `Clock`-Service (E-14).
   **Test:** RLS-Rahmentest – zwei Mandanten, Abfrage ohne Kontext liefert 0 Zeilen, Kontext A sieht keine Zeilen von B, `app_user` kann RLS nicht umgehen.
-- [ ] **0.5 Audit-Hash-Kette** (E-11) → 0.4
+- [x] **0.5 Audit-Hash-Kette** (E-11) → 0.4
+  ✔ TSA-Tagesanker folgt mit 1.8 (Zeitstempel-Schnittstelle).
   Migration: `audit_event` + Trigger (append-only), `AuditService.record()`, `GET /audit`, `GET /audit/verify`.
   **Test:** Kette über 1.000 Ereignisse gültig; geänderte Zeile → `verify` meldet genau diese ID; UPDATE/DELETE als `app_user` scheitert; parallele Inserts bleiben eine Kette.
-- [ ] **0.6 Auth und RBAC** (E-07, E-08, E-25) → 0.4
+- [x] **0.6 Auth und RBAC** (E-07, E-08, E-25) → 0.4
+  ✔ Dozenten-Registrierung, Teilnehmerkonto, Login, Mitglieder einladen, Step-up (Passwort). OTP-Step-up für Teilnehmer ohne Konto wird mit 1.4/1.7 angebunden.
   Dozenten-Registrierung (legt Konto + Mandant an), Login (argon2id), Redis-Sitzungen, CSRF, Rollen-Guard (`@Roles()`), Mitglieder einladen, Einladungslink-Sitzung für Teilnehmer ohne Konto, OTP, Step-up-Token; Rate-Limits auf Login/Registrierung/OTP.
   **Test:** Rollen-Matrix aus SPEZIFIKATION Kap. 2 als Tabellen-Test; Registrierung erzeugt isolierten Mandanten; Step-up-Token einmalig und an Einladung gebunden; abgelaufener OTP abgelehnt.
-- [ ] **0.6b Benachrichtigungs-Outbox** (E-12) → 0.4
+- [x] **0.6b Benachrichtigungs-Outbox** (E-12) → 0.4
+  ✔ Outbox, Log-/SMTP-Adapter, Sweeper; Web-Push-Adapter folgt mit 2.2.
   Tabelle `notification`, Job `notify`, Adapter `log`/`smtp`/`webpush`, `sms:log`; Vorschau-Route für Vorlagen (Dev).
   **Test:** Nachricht landet in Outbox; Adapter `smtp` gegen Mailpit; Wiederholung nach Fehler mit Backoff.
-- [ ] **0.7 Frontend-Basis + Design-System** (E-19, E-20) → 0.1
+- [x] **0.7 Frontend-Basis + Design-System** (E-19, E-20) → 0.1
+  ✔ Komponenten-Galerie `/dev/komponenten`, 28 Komponententests, axe ohne schwere Verstöße, Screenshots `docs/screenshots/phase-0/`.
   Tailwind-Theme aus den Design-Tokens, lokale Schriften, shadcn-Varianten: Button (Pille, primär/sekundär/dunkel/deaktiviert), Karte, Status-Chip, Status-Pille, Segment-Umschalter, Personen-Chip, Bottom-Sheet/Schwebe-Panel, Eingabefeld ohne Rahmen; App-Layout Verwaltung (helle Navigation statt dunkler Seitenleiste), Login-Seite, `de.ts`.
   **Test:** Storybook-freie Komponenten-Galerie-Route `/dev/komponenten` + Playwright-Screenshot; axe-Check ohne Verstöße (Kontrast, Labels, Fokus).
 
@@ -36,21 +42,24 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 ### Backend
 
-- [ ] **1.1 Stammdaten** → 0.4, 0.6
+- [x] **1.1 Stammdaten** → 0.4, 0.6
+  ✔ API: Personen, Org-Einheiten, CSV-Import; Vorgesetzten-Sicht per RLS getestet.
   Migration: `person` (+ `austritt_am`), `org_unit`; CRUD-API, CSV-Import Personen; `PersonDirectory`-Schnittstelle (E-01).
   **Test:** RLS je Tabelle; Vorgesetzter sieht nur Personen seiner Org-Einheit(en) inkl. Unterbäume.
-- [ ] **1.2 Schulungen + Versionen + Upload** → 1.1
+- [x] **1.2 Schulungen + Versionen + Upload** → 1.1
+  ✔ Speicher-Schnittstelle (fs/S3), Analyse-Job, Thumbnails, Veröffentlichen; Tests mit erzeugten Fixture-PDFs.
   Migration: `training`, `training_version` (unveränderlich nach `published_at`, Trigger), `page_meta`, `chapter` (E-05).
   `POST /trainings/:id/versions` (multipart): SHA-256 beim Streamen, Ablage in MinIO, Job `pdf-analysis`.
   Worker: pdfjs-dist Text je Seite → Wortzahl, `has_text`, `t_min` (E-06); Outline → Kapitel; pdf-lib → Einzelseiten-PDFs; pdftoppm → Thumbnails.
   `GET /trainings/:id/versions/:v/pages`, `PATCH /trainings/:id/settings` (Neuberechnung `t_min`), manueller `t_min` für Seiten ohne Text.
   **Test (Abnahme 1):** Fixture-PDFs (Text, leere Seite, Bildseite, mit/ohne Outline): SHA-256, Seitenzahl, Wörter, `t_min` nach Formel inkl. Clamping, Seiten ohne Text markiert; veröffentlichte Version nicht änderbar.
-- [ ] **1.3 Quiz-Fragenpool** → 1.2
+- [x] **1.3 Quiz-Fragenpool** → 1.2
   Migration: `quiz_question`; CRUD; Einstellungen (Anzahl, Bestehensgrenze, Versuche) in `training.settings`.
 - [ ] **1.4 Durchführung + Einladungen** → 1.2
   Migration: `run`, `invitation`; `POST /runs`, `POST /runs/:id/invite` (Personen/Org-Einheiten), Einladungs-Token (Hash), Benachrichtigung über die Outbox mit Vorlage nach Screen 4, Links zusätzlich kopierbar und als QR-Liste druckbar, `POST /invitations/:id/remind`, `GET /me/invitations`, Statusmaschine `offen → geoeffnet → gelesen → bestanden → bestaetigt` (+ `ueberfaellig`, `befreit`).
   **Test:** Statusübergänge nur in erlaubter Reihenfolge; Mail landet in Mailpit mit persönlichem Link.
 - [ ] **1.5 Tracking-Ingest** (Kern, E-06) → 1.4
+  ✔ Teil 1 erledigt: reine Regel-Engine `applyHeartbeat()` mit 37 Tests inkl. Property-Tests. Offen: Tabellen, Endpunkte, Lease.
   `packages/shared/rules/reading.ts` (reine Funktion: Heartbeat-Folge → Gutschrift je Seite); Migration `read_session`, `heartbeat_raw` (partitioniert nach Monat), `page_progress`; `POST /invitations/:id/sessions` (Lease), `POST /sessions/:id/heartbeat`, `GET /invitations/:id/progress`, `GET /invitations/:id/page/:n` (signierte URL, strenger Modus).
   **Test (Abnahme 2+3):** Erfüllung nur bei sichtbar ≥ 60 %, Tab aktiv/fokussiert, Eingabe < 30 s, kumuliert ≥ `t_min` über mehrere Sitzungen; manipulierte Heartbeats: Lücke in `seq`, doppelte/rückwärts `seq`, Serverzeit-Sprung > 5 s (gekappt), Client-Zeitstempel in der Zukunft (ignoriert), Heartbeat-Flut (verworfen), zwei parallele Sitzungen (nur aktive zählt, alte erhält 409), Seitenwechsel zwischen Heartbeats (keine Gutschrift); strenger Modus: Seite n+2 → 403, gelesene Seiten bleiben abrufbar; Plausibilitätsflag. Property-Test (fast-check): Gutschrift ≤ reale Serverzeit.
 - [ ] **1.6 Quiz-Durchführung** → 1.3, 1.5
