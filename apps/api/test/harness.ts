@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createTestDb, type TestDb } from '@sn/db/testing';
 import request from 'supertest';
@@ -55,6 +56,7 @@ export async function startHarness(overrides: Provider[] = []): Promise<Harness>
     RUN_WORKERS: 'true',
     STORAGE_DRIVER: 'fs',
     STORAGE_DIR: storageDir,
+    ...sealEnv(),
   });
   const app = await createApp({ config, overrides });
   await app.init();
@@ -83,4 +85,16 @@ export async function waitFor<T>(fn: () => Promise<T | undefined | null | false>
     if (Date.now() > end) throw new Error('Zeitüberschreitung beim Warten');
     await new Promise((r) => setTimeout(r, 50));
   }
+}
+
+/** Siegel in Tests: pyHanko aus scripts/setup-seal.sh, falls eingerichtet; sonst ohne Siegel. */
+export const ROOT = join(__dirname, '..', '..', '..');
+export function sealEnv(): Record<string, string> {
+  const venv = join(ROOT, '.local/seal-venv/bin/python');
+  const certs = join(ROOT, '.local/certs');
+  if (!existsSync(venv) || !existsSync(join(certs, 'seal.p12'))) return { SEAL_MODE: 'none' };
+  return {
+    SEAL_MODE: 'pyhanko', SEAL_PYTHON: venv, SEAL_P12_PATH: join(certs, 'seal.p12'), SEAL_P12_PASSWORD: 'dev-seal',
+    SEAL_DEV_TSA_KEY: join(certs, 'tsa.key'), SEAL_DEV_TSA_CERT: join(certs, 'tsa.pem'),
+  };
 }

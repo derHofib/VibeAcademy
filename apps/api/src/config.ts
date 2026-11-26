@@ -23,6 +23,22 @@ const schema = z.object({
   S3_BUCKET_EVIDENCE: z.string().default('sn-evidence'),
   /** Maximale PDF-Größe in MB */
   UPLOAD_MAX_MB: z.coerce.number().int().positive().default(50),
+  /** Nachweis-PDF: playwright (lokales Chromium) oder gotenberg (Dienst, E-09) */
+  PDF_RENDERER: z.enum(['playwright', 'gotenberg']).default('playwright'),
+  GOTENBERG_URL: z.string().default('http://127.0.0.1:3001'),
+  /** Siegel: pyhanko (PAdES-B-T, E-10) oder none (nur Entwicklung ohne Python) */
+  SEAL_MODE: z.enum(['pyhanko', 'none']).default('pyhanko'),
+  SEAL_PYTHON: z.string().default('python3'),
+  SEAL_SCRIPT: z.string().default('infra/seal/seal.py'),
+  SEAL_P12_PATH: z.string().optional(),
+  SEAL_P12_PASSWORD: z.string().default(''),
+  TSA_URL: z.string().default(''),
+  SEAL_DEV_TSA_KEY: z.string().optional(),
+  SEAL_DEV_TSA_CERT: z.string().optional(),
+  /** Schriften für das Nachweis-PDF (woff2) */
+  FONT_DIR: z.string().default('apps/web/public/fonts'),
+  /** Aufbewahrung im WORM-Speicher ab Ablage (Jahre, E-24) */
+  EVIDENCE_LOCK_YEARS: z.coerce.number().int().min(1).max(30).default(3),
   RUN_WORKERS: z
     .enum(['true', 'false'])
     .default('true')
@@ -39,4 +55,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(`Ungültige Konfiguration: ${msg}`);
   }
   return parsed.data;
+}
+
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, join } from 'node:path';
+
+/** Relative Pfade aus der Konfiguration gelten ab dem Repo-Root (gesucht ab dem Arbeitsverzeichnis). */
+export function repoPath(p: string): string {
+  if (isAbsolute(p)) return p;
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return join(dir, p);
+    const up = dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return join(process.cwd(), p);
 }

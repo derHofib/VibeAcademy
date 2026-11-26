@@ -68,6 +68,15 @@ export const TEMPLATES = {
         button(String(d.loginUrl), 'Anmelden'),
     ),
   }),
+  'quiz-failed': (d: Data): Rendered => ({
+    subject: `Wissenscheck nicht bestanden: ${d.personName} – ${d.trainingTitle}`,
+    text: `${d.personName} hat den Wissenscheck zu „${d.trainingTitle}“ in ${d.attempts} Versuchen nicht bestanden. Bitte klären Sie das weitere Vorgehen (z. B. persönliches Gespräch, Versuche zurücksetzen).`,
+    html: frame(
+      'Wissenscheck nicht bestanden',
+      p(`${esc(d.personName)} hat den Wissenscheck zu „${esc(d.trainingTitle)}“ in ${esc(d.attempts)} Versuchen nicht bestanden.`) +
+        p('Bitte klären Sie das weitere Vorgehen, z. B. ein persönliches Gespräch oder das Zurücksetzen der Versuche.'),
+    ),
+  }),
   /** Einladung zur Online-Unterweisung (Screen 4) */
   invitation: (d: Data, s: Secret): Rendered => {
     const link = s?.link ?? '#';
@@ -103,6 +112,7 @@ export function render(template: string, data: Data, secret: Secret): Rendered {
 
 /** Beispieldaten für die Vorschau-Route (nur Entwicklung). */
 export const SAMPLE_DATA: Record<TemplateName, { data: Data; secret: Secret }> = {
+  'quiz-failed': { data: { personName: 'Jonas Krüger', trainingTitle: 'EFK-Unterweisung', attempts: 3 }, secret: null },
   invitation: {
     data: {
       personName: 'Anna Schulz', trainingTitle: 'Sicherheitsunterweisung 2026', dueDate: '15.12.2026', pages: 14, minutes: 7,

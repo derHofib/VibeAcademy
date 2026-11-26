@@ -30,6 +30,13 @@ import { SignedTokens } from './common/signed-token';
 import { ReadingController } from './reading/reading.controller';
 import { ReadingService } from './reading/reading.service';
 import { RetentionService } from './retention/retention.service';
+import { QuizController } from './quiz/quiz.controller';
+import { SignatureController } from './signature/signature.controller';
+import { EvidenceController } from './evidence/evidence.controller';
+import { ReportsController } from './reports/reports.controller';
+import { EvidenceService } from './evidence/evidence.service';
+import { GotenbergRenderer, PDF_RENDERER, PlaywrightRenderer } from './evidence/pdf-renderer';
+import { NoSealer, PyHankoSealer, SEALER } from './evidence/sealer';
 import { FsStorage, OBJECT_STORAGE, S3Storage } from './storage/storage';
 import { AnalysisService } from './trainings/analysis.service';
 import { TrainingsController } from './trainings/trainings.controller';
@@ -47,7 +54,7 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
-        PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController,
+        PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -70,6 +77,11 @@ export class AppModule implements NestModule {
                 )
               : new FsStorage(config.STORAGE_DIR),
         },
+        {
+          provide: PDF_RENDERER,
+          useFactory: () => (config.PDF_RENDERER === 'gotenberg' ? new GotenbergRenderer(config.GOTENBERG_URL) : new PlaywrightRenderer()),
+        },
+        { provide: SEALER, useFactory: () => (config.SEAL_MODE === 'none' ? new NoSealer() : new PyHankoSealer(config)) },
         { provide: APP_GUARD, useClass: AuthGuard },
         Clock,
         DbService,
@@ -88,6 +100,7 @@ export class AppModule implements NestModule {
         SignedTokens,
         ReadingService,
         RetentionService,
+        EvidenceService,
         ...overrides,
       ],
     };

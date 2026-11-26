@@ -158,7 +158,9 @@ export class ReadingService {
       const next = { ...m, progress: d.progress };
       if (d.newlyFulfilled.length && isComplete(next.pages, next.progress)) {
         const upd = await c.query(
-          `UPDATE invitation SET status = 'gelesen', read_completed_at = $2 WHERE id = $1 AND status IN ('offen','geoeffnet','ueberfaellig') RETURNING id`,
+          `UPDATE invitation i SET status = CASE WHEN t.quiz_required THEN 'gelesen' ELSE 'bestanden' END, read_completed_at = $2
+             FROM run r JOIN training t ON t.id = r.training_id
+            WHERE i.id = $1 AND r.id = i.run_id AND i.status IN ('offen','geoeffnet','ueberfaellig') RETURNING i.id`,
           [p.invitationId, now],
         );
         if (upd.rowCount) await this.audit.record(c, { entity: 'invitation', entityId: p.invitationId, action: 'reading_completed' });
