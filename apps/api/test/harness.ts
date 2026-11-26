@@ -1,4 +1,7 @@
 import { randomBytes } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createTestDb, type TestDb } from '@sn/db/testing';
 import request from 'supertest';
@@ -28,6 +31,11 @@ export class Client {
   patch(url: string, body?: object) {
     return this.http.patch(url).set('x-csrf-token', this.csrf).send(body ?? {});
   }
+  upload(url: string, field: string, file: Buffer, name: string, fields: Record<string, string> = {}) {
+    let r = this.http.post(url).set('x-csrf-token', this.csrf).attach(field, file, name);
+    for (const [k, v] of Object.entries(fields)) r = r.field(k, v);
+    return r;
+  }
   delete(url: string) {
     return this.http.delete(url).set('x-csrf-token', this.csrf);
   }
@@ -35,6 +43,7 @@ export class Client {
 
 export async function startHarness(overrides: Provider[] = []): Promise<Harness> {
   const db = await createTestDb();
+  const storageDir = mkdtempSync(join(tmpdir(), 'sn-storage-'));
   const config = loadConfig({
     NODE_ENV: 'test',
     DATABASE_URL: db.appUrl,
@@ -44,6 +53,8 @@ export async function startHarness(overrides: Provider[] = []): Promise<Harness>
     HMAC_MASTER_SECRET: randomBytes(32).toString('hex'),
     PUBLIC_BASE_URL: 'http://localhost:5173',
     RUN_WORKERS: 'true',
+    STORAGE_DRIVER: 'fs',
+    STORAGE_DIR: storageDir,
   });
   const app = await createApp({ config, overrides });
   await app.init();
@@ -58,6 +69,7 @@ export async function startHarness(overrides: Provider[] = []): Promise<Harness>
     async close() {
       await app.close();
       await db.drop();
+      rmSync(storageDir, { recursive: true, force: true });
     },
   };
 }

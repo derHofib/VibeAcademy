@@ -21,6 +21,10 @@ import { NotificationService } from './notifications/notification.service';
 import { LogMailProvider, LogSmsProvider, MAIL_PROVIDER, SMS_PROVIDER, SmtpMailProvider } from './notifications/providers';
 import { RedisService } from './redis/redis.service';
 import { MembersController } from './tenant/members.controller';
+import { PersonsController } from './persons/persons.controller';
+import { FsStorage, OBJECT_STORAGE, S3Storage } from './storage/storage';
+import { AnalysisService } from './trainings/analysis.service';
+import { TrainingsController } from './trainings/trainings.controller';
 
 export interface AppModuleOptions {
   config: AppConfig;
@@ -33,7 +37,10 @@ export class AppModule implements NestModule {
   static forRoot({ config, overrides = [] }: AppModuleOptions): DynamicModule {
     return {
       module: AppModule,
-      controllers: [HealthController, AuthController, AuditController, MembersController, DevNotificationsController],
+      controllers: [
+        HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
+        PersonsController, TrainingsController,
+      ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         { provide: PG_POOL, useFactory: () => new pg.Pool({ connectionString: config.DATABASE_URL, max: 20 }) },
@@ -45,6 +52,16 @@ export class AppModule implements NestModule {
               : new LogMailProvider(config.NODE_ENV !== 'production'),
         },
         { provide: SMS_PROVIDER, useFactory: () => new LogSmsProvider() },
+        {
+          provide: OBJECT_STORAGE,
+          useFactory: () =>
+            config.STORAGE_DRIVER === 's3'
+              ? new S3Storage(
+                  { endpoint: config.S3_ENDPOINT!, region: config.S3_REGION, accessKeyId: config.S3_ACCESS_KEY!, secretAccessKey: config.S3_SECRET_KEY! },
+                  { uploads: config.S3_BUCKET_UPLOADS, evidence: config.S3_BUCKET_EVIDENCE },
+                )
+              : new FsStorage(config.STORAGE_DIR),
+        },
         { provide: APP_GUARD, useClass: AuthGuard },
         Clock,
         DbService,
@@ -57,6 +74,7 @@ export class AppModule implements NestModule {
         StepUpService,
         AuthService,
         NotificationService,
+        AnalysisService,
         ...overrides,
       ],
     };

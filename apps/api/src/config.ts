@@ -13,6 +13,16 @@ const schema = z.object({
   MAIL_FROM: z.string().default('Schulungsnachweis <no-reply@example.org>'),
   SMTP_URL: z.string().optional(),
   SMS_PROVIDER: z.enum(['log']).default('log'),
+  STORAGE_DRIVER: z.enum(['fs', 's3']).default('fs'),
+  STORAGE_DIR: z.string().default('.local/storage'),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().default('eu-central-1'),
+  S3_ACCESS_KEY: z.string().optional(),
+  S3_SECRET_KEY: z.string().optional(),
+  S3_BUCKET_UPLOADS: z.string().default('sn-uploads'),
+  S3_BUCKET_EVIDENCE: z.string().default('sn-evidence'),
+  /** Maximale PDF-Größe in MB */
+  UPLOAD_MAX_MB: z.coerce.number().int().positive().default(50),
   RUN_WORKERS: z
     .enum(['true', 'false'])
     .default('true')
