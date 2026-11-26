@@ -11,7 +11,9 @@ import type { Me } from '@/features/auth/session';
 import { de } from '@/i18n/de';
 import { ta } from '@/i18n/account';
 import { useMyEvidence } from '@/features/account/api';
-import { firstNameOf, groupEvidence } from '@/features/account/model';
+import { evidenceKey, firstNameOf, groupEvidence } from '@/features/account/model';
+import { ExternalSection } from '@/features/account/ExternalCards';
+import { PushToggle } from '@/features/account/PushToggle';
 import { DoneEvidenceCard, OpenEvidenceCard } from '@/features/account/EvidenceCards';
 import { LinkCard } from '@/features/account/LinkCard';
 import { AccountCard } from '@/features/account/AccountCard';
@@ -53,6 +55,8 @@ function MyEvidencePage({ me }: { me: Me }) {
         )}
       </section>
 
+      <ExternalSection />
+
       {evidence.isPending ? (
         <Card className="flex items-center justify-center gap-2.5 text-[15px] text-muted" role="status">
           <Loader2 aria-hidden="true" className="size-5 animate-spin" />
@@ -80,7 +84,7 @@ function MyEvidencePage({ me }: { me: Me }) {
           {groups.open.length > 0 && (
             <Group id="gruppe-offen" title={ta.groups.open} count={groups.open.length} hint={ta.groups.openHint}>
               {groups.open.map((e) => (
-                <li key={e.invitation_id}>
+                <li key={evidenceKey(e)}>
                   <OpenEvidenceCard e={e} />
                 </li>
               ))}
@@ -89,7 +93,7 @@ function MyEvidencePage({ me }: { me: Me }) {
           {groups.done.length > 0 && (
             <Group id="gruppe-erledigt" title={ta.groups.done} count={groups.done.length}>
               {groups.done.map((e) => (
-                <li key={e.invitation_id}>
+                <li key={evidenceKey(e)}>
                   <DoneEvidenceCard e={e} />
                 </li>
               ))}
@@ -99,6 +103,7 @@ function MyEvidencePage({ me }: { me: Me }) {
       ) : null}
 
       <div className="mt-2 flex flex-col gap-3.5">
+        <PushToggle />
         <LinkCard me={me} />
         <AccountCard me={me} />
       </div>

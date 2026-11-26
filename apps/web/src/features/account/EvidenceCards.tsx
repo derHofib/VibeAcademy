@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { formatDate } from '@/features/admin/format';
 import { participantPath } from '@/features/participant/api';
 import { ta } from '@/i18n/account';
+import { tx } from '@/i18n/external';
 import { evidencePdfUrl } from './api';
 import { canDownload, type MyEvidence, type Validity, type ValidityKind } from './model';
 
@@ -30,7 +31,14 @@ function CardHead({ e, aside }: { e: MyEvidence; aside?: ReactNode }) {
   return (
     <div className="flex items-start gap-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] text-muted">{e.tenant_name}</p>
+        <p className="flex min-w-0 items-center gap-2 text-[13px] text-muted">
+          <span className="truncate">{e.tenant_name}</span>
+          {e.kind && e.kind !== 'online' && (
+            <StatusChip tone="neutral" className="px-2 py-0.5 text-[11.5px]" data-testid="nachweis-art">
+              {tx.account.kind[e.kind] ?? e.kind}
+            </StatusChip>
+          )}
+        </p>
         <h3 className="mt-0.5 font-heading text-[16.5px] leading-snug font-bold break-words text-ink">{e.training_titel}</h3>
       </div>
       {aside}
@@ -97,7 +105,7 @@ export function DoneEvidenceCard({ e }: { e: MyEvidence & { validity: Validity }
           <div className="flex flex-col gap-2 sm:flex-row" aria-live="polite">
             {canDownload(e) ? (
               <Button asChild variant="tonal" size="md" className="sm:flex-1">
-                <a href={evidencePdfUrl(e.invitation_id)} download aria-label={ta.card.downloadAria(e.training_titel)}>
+                <a href={e.download_url ?? evidencePdfUrl(e.invitation_id)} download aria-label={ta.card.downloadAria(e.training_titel)}>
                   <Download aria-hidden="true" className="size-[18px]" />
                   {ta.card.download}
                 </a>

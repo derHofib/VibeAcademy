@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, Panel } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { nextStep, participantPath, useInvitation, useProgress } from '@/feature
 import { neededCorrect } from '@/features/participant/quizLogic';
 import { ErrorScreen, LoadingScreen } from '@/features/participant/ScreenStates';
 import { contactLine, firstName, parseContact } from '@/features/participant/viewerModel';
+import { useLiveInvitationRedirect } from '@/features/live/useLiveRedirect';
 
 /** Startbildschirm (5a): Umfang, Ablauf, was erfasst wird, Einstieg bzw. nächster Schritt. */
 export default function StartPage() {
@@ -15,7 +16,11 @@ export default function StartPage() {
   const navigate = useNavigate();
   const inv = useInvitation(id);
   const progress = useProgress(id);
+  // Präsenz-/Live-Termine → Live-Ansicht statt Lese-Start
+  const live = useLiveInvitationRedirect(id, inv.error);
 
+  if (live.target) return <Navigate to={live.target} replace />;
+  if (live.checking) return <LoadingScreen />;
   if (inv.isError) return <ErrorScreen message={inv.error.message} />;
   const s = inv.data;
   if (!s) return <LoadingScreen />;

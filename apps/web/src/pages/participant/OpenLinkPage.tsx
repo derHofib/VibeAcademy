@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { tp } from '@/i18n/participant';
 import { participantPath } from '@/features/participant/api';
 import { LoadingScreen } from '@/features/participant/ScreenStates';
+import { invitationKind, isLiveTyp, livePath } from '@/features/live/api';
 
 /** Persönlicher Einladungslink `/s/:token` → Sitzung für diese Einladung → Startbildschirm. */
 export default function OpenLinkPage() {
@@ -26,7 +27,9 @@ export default function OpenLinkPage() {
         const { invitationId } = await post<{ invitationId: string }>('/participant/session', { token });
         // Frische Sitzung: zwischengespeicherte Daten einer früheren Einladung verwerfen
         qc.removeQueries({ queryKey: ['teilnahme'] });
-        navigate(participantPath.start(invitationId), { replace: true });
+        // Präsenz-/Live-Termine haben keinen Lese-Start → direkt zur Live-Ansicht
+        const kind = await invitationKind(invitationId).catch(() => null);
+        navigate(isLiveTyp(kind?.typ) ? livePath.participant(invitationId) : participantPath.start(invitationId), { replace: true });
       } catch (e) {
         const status = e instanceof ApiError ? e.status : 0;
         setError({

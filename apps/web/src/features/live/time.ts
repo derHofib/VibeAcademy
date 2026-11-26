@@ -50,13 +50,14 @@ export function durShort(totalSeconds: number): string {
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
 }
 
-/** Zusammenfassung Teilnehmer: „7 h 28 min“, unter einer Stunde „5 min“, unter einer Minute „< 1 min“. */
+/** Zusammenfassung Teilnehmer: „7 h 28 min“, volle Stunden „2 h“, unter einer Stunde „5 min“, unter einer Minute „< 1 min“. */
 export function durLong(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
   if (s < 60) return s === 0 ? '0 min' : '< 1 min';
   const m = Math.floor(s / 60);
   const h = Math.floor(m / 60);
-  return h ? `${h} h ${m % 60} min` : `${m} min`;
+  if (!h) return `${m} min`;
+  return m % 60 ? `${h} h ${m % 60} min` : `${h} h`;
 }
 
 /** Versatz Server − Gerät in ms (positiv: Server geht vor). */

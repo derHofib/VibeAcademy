@@ -16,6 +16,17 @@ export interface MyEvidence {
   nachweis_nr: string | null;
   verify_code: string | null;
   evidence_status: 'ausstehend' | 'erzeugt' | 'fehler' | null;
+  /** Phase 2: Art des Nachweises (online | praesenz | live | extern) */
+  kind?: 'online' | 'praesenz' | 'live' | 'extern' | null;
+  /** Einladung bzw. externer Nachweis (bei extern ist invitation_id null) */
+  record_id?: string | null;
+  /** Download-Pfad des versiegelten Nachweises (je Art verschieden) */
+  download_url?: string | null;
+}
+
+/** Stabiler Schlüssel je Zeile (externe Nachweise haben keine Einladung). */
+export function evidenceKey(e: Pick<MyEvidence, 'invitation_id' | 'record_id' | 'kind'>): string {
+  return `${e.kind ?? 'online'}-${e.record_id ?? e.invitation_id}`;
 }
 
 /** Zeile aus `GET /api/me/link-candidates`. */
@@ -52,16 +63,17 @@ export function validity(validUntil: string | null | undefined, now: Date = new 
 }
 
 /** Erledigt = bestätigt (Nachweis vorhanden) oder befreit; alles andere ist noch offen („Weiter“). */
-export function isDone(e: Pick<MyEvidence, 'status'>): boolean {
-  return e.status === 'bestaetigt' || e.status === 'befreit';
+export function isDone(e: Pick<MyEvidence, 'status'> & { kind?: MyEvidence['kind'] }): boolean {
+  // Externe Nachweise erscheinen erst nach der Freigabe (auch wenn inzwischen abgelaufen)
+  return e.kind === 'extern' || e.status === 'bestaetigt' || e.status === 'befreit';
 }
 
 /** Ein erledigter Eintrag mit Nachweis (befreit hat keinen). */
-export function hasEvidence(e: Pick<MyEvidence, 'status'>): boolean {
-  return e.status === 'bestaetigt';
+export function hasEvidence(e: Pick<MyEvidence, 'status'> & { kind?: MyEvidence['kind'] }): boolean {
+  return e.status === 'bestaetigt' || (e.kind === 'extern' && e.status !== 'befreit');
 }
 
-export function canDownload(e: Pick<MyEvidence, 'status' | 'evidence_status'>): boolean {
+export function canDownload(e: Pick<MyEvidence, 'status' | 'evidence_status'> & { kind?: MyEvidence['kind'] }): boolean {
   return hasEvidence(e) && e.evidence_status === 'erzeugt';
 }
 

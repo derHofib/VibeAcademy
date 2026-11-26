@@ -1,4 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { FolderDown } from 'lucide-react';
+import { hasRole } from '@/features/auth/session';
+import type { DashboardCompliance } from '@/features/matrix/api';
+import { NachweismappeSheet } from '@/features/matrix/NachweismappeSheet';
+import { tx } from '@/i18n/external';
 import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -162,6 +167,10 @@ export default function DashboardPage() {
   const subtitle = t.subtitle(today, persons.data?.length ?? 0, units.data?.length ?? 0);
   const isFresh = trainings.data?.length === 0 && (dash.data?.laufend.length ?? 0) === 0;
   const kpi = dash.data?.kpi;
+  const phase2 = dash.data as (Dashboard & DashboardCompliance) | undefined;
+  const comp = phase2?.compliance;
+  const [exportOpen, setExportOpen] = useState(false);
+  const canExport = hasRole(me, 'admin', 'verantwortlich', 'auditor');
   const rows = useMemo(() => dash.data?.laufend ?? [], [dash.data]);
 
   return (
@@ -170,16 +179,25 @@ export default function DashboardPage() {
         title={t.title}
         description={subtitle}
         actions={
-          manage && (
-            <Button asChild>
-              <Link to="/verwaltung/schulungen/neu">
-                <Plus aria-hidden="true" className="size-[18px]" />
-                {t.newTraining}
-              </Link>
-            </Button>
-          )
+          <>
+            {canExport && (
+              <Button variant="secondary" onClick={() => setExportOpen(true)}>
+                <FolderDown aria-hidden="true" className="size-[18px]" />
+                {tx.dashboard.export}
+              </Button>
+            )}
+            {manage && (
+              <Button asChild>
+                <Link to="/verwaltung/schulungen/neu">
+                  <Plus aria-hidden="true" className="size-[18px]" />
+                  {t.newTraining}
+                </Link>
+              </Button>
+            )}
+          </>
         }
       />
+      {exportOpen && <NachweismappeSheet open={exportOpen} onOpenChange={setExportOpen} />}
       <NoticeRegion notice={notice} className="mb-4 empty:hidden" />
 
       {dash.isPending ? (
@@ -191,33 +209,53 @@ export default function DashboardPage() {
       ) : (
         <>
           <section aria-label={t.title} className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-            <KpiTile
-              label={t.kpiQuota}
-              value={
-                kpi?.erfuellungsquote === null || kpi?.erfuellungsquote === undefined
-                  ? '—'
-                  : `${kpi.erfuellungsquote} %`
-              }
-              hint={kpi ? t.kpiQuotaHint(kpi.erledigt, kpi.gesamt) : undefined}
-            >
-              <LinearProgress
-                value={(kpi?.erfuellungsquote ?? 0) / 100}
+            {comp && comp.gesamt > 0 ? (
+              // Phase 2: Erfüllungsquote aus der Pflichtmatrix
+              <KpiTile
+                label={tx.dashboard.quota}
+                value={comp.erfuellungsquote === null ? '—' : `${comp.erfuellungsquote} %`}
+                hint={tx.dashboard.quotaHint(comp.erfuellt, comp.gesamt - comp.befreit)}
+              >
+                <LinearProgress value={(comp.erfuellungsquote ?? 0) / 100} label={tx.dashboard.quota} className="mt-1" />
+              </KpiTile>
+            ) : (
+              <KpiTile
                 label={t.kpiQuota}
-                className="mt-1"
-              />
-            </KpiTile>
+                value={
+                  kpi?.erfuellungsquote === null || kpi?.erfuellungsquote === undefined
+                    ? '—'
+                    : `${kpi.erfuellungsquote} %`
+                }
+                hint={kpi ? t.kpiQuotaHint(kpi.erledigt, kpi.gesamt) : undefined}
+              >
+                <LinearProgress
+                  value={(kpi?.erfuellungsquote ?? 0) / 100}
+                  label={t.kpiQuota}
+                  className="mt-1"
+                />
+              </KpiTile>
+            )}
             <KpiTile
               label={t.kpiOverdue}
               value={kpi?.ueberfaellig ?? 0}
               tone={kpi?.ueberfaellig ? 'danger' : 'default'}
-              hint={t.kpiOverdueHint}
+              hint={phase2?.eskaliert !== undefined ? tx.dashboard.overdueHint(phase2.eskaliert) : t.kpiOverdueHint}
             />
-            <KpiTile
-              label={t.kpiExpiring}
-              value={kpi?.laeuft_ab ?? 0}
-              tone={kpi?.laeuft_ab ? 'warn' : 'default'}
-              hint={t.kpiExpiringHint}
-            />
+            {comp && comp.gesamt > 0 ? (
+              <KpiTile
+                label={tx.dashboard.expiring}
+                value={comp.laeuftAb30}
+                tone={comp.laeuftAb30 ? 'warn' : 'default'}
+                hint={tx.dashboard.expiringHint(comp.naechsteWiedereinladung ? formatDate(comp.naechsteWiedereinladung).slice(0, 6) : null)}
+              />
+            ) : (
+              <KpiTile
+                label={t.kpiExpiring}
+                value={kpi?.laeuft_ab ?? 0}
+                tone={kpi?.laeuft_ab ? 'warn' : 'default'}
+                hint={t.kpiExpiringHint}
+              />
+            )}
             <KpiTile
               label={t.kpiOpen}
               value={kpi?.offen ?? 0}

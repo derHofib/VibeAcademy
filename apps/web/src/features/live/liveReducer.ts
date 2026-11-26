@@ -2,12 +2,10 @@
  * Live-Kanal (SSE, E-15): Ereignisse `snapshot | run | attendance | questions | polls` auf den Query-Cache anwenden.
  * Reine Funktion – getestet in __tests__/liveReducer.test.ts.
  */
-import type { LiveSnapshot } from './api';
-
 export const LIVE_EVENTS = ['snapshot', 'run', 'attendance', 'questions', 'polls'] as const;
 export type LiveEventType = (typeof LIVE_EVENTS)[number];
 
-type AnySnapshot = LiveSnapshot<unknown, unknown, unknown>;
+type AnySnapshot = { run: unknown; attendance: unknown; questions: unknown; polls: unknown };
 
 /**
  * Wendet ein Ereignis an. `snapshot` ersetzt alles (auch nach Wiederverbindung); Teilstücke ersetzen nur ihren

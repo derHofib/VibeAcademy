@@ -1,7 +1,9 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { FileUp, Pencil, Search, UserPlus, Users } from 'lucide-react';
+import { Award, FileUp, Pencil, Search, UserPlus, Users } from 'lucide-react';
+import { PersonQualificationsSheet } from '@/features/matrix/PersonQualificationsSheet';
+import { tx } from '@/i18n/external';
 import { get } from '@/lib/api';
 import { adm } from '@/i18n/admin';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -37,6 +39,7 @@ export default function PersonsPage() {
   const [open, setOpen] = useState(false);
   const [sheetKey, setSheetKey] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
+  const [qualFor, setQualFor] = useState<Person | null>(null);
 
   const all = useQuery({ queryKey: qk.persons(), queryFn: () => get<Person[]>('/persons') });
   const filtered = useQuery({
@@ -86,17 +89,27 @@ export default function PersonsPage() {
       {
         id: 'actions',
         header: () => <span className="sr-only">{p.colActions}</span>,
-        cell: ({ row }) =>
-          manage ? (
+        cell: ({ row }) => (
+          <span className="flex justify-end gap-1">
             <IconButton
               variant="ghost"
-              aria-label={p.editNamed(row.original.name)}
-              onClick={() => openSheet(row.original)}
+              aria-label={tx.matrix.personSheet.actionNamed(row.original.name)}
+              onClick={() => setQualFor(row.original)}
             >
-              <Pencil aria-hidden="true" />
+              <Award aria-hidden="true" />
             </IconButton>
-          ) : null,
-        meta: { className: 'w-[64px] text-right' },
+            {manage && (
+              <IconButton
+                variant="ghost"
+                aria-label={p.editNamed(row.original.name)}
+                onClick={() => openSheet(row.original)}
+              >
+                <Pencil aria-hidden="true" />
+              </IconButton>
+            )}
+          </span>
+        ),
+        meta: { className: 'w-[112px] text-right' },
       },
     ],
     [manage],
@@ -191,6 +204,9 @@ export default function PersonsPage() {
                         .join(' · ')}
                     </p>
                   </div>
+                  <IconButton variant="ghost" aria-label={tx.matrix.personSheet.actionNamed(x.name)} onClick={() => setQualFor(x)}>
+                    <Award aria-hidden="true" />
+                  </IconButton>
                   {manage && (
                     <IconButton variant="ghost" aria-label={p.editNamed(x.name)} onClick={() => openSheet(x)}>
                       <Pencil aria-hidden="true" />
@@ -223,6 +239,17 @@ export default function PersonsPage() {
         />
       )}
       {importOpen && <ImportSheet open={importOpen} onOpenChange={setImportOpen} />}
+      {qualFor && (
+        <PersonQualificationsSheet
+          person={qualFor}
+          manage={manage}
+          onClose={() => setQualFor(null)}
+          onSaved={() => {
+            setQualFor(null);
+            show(tx.matrix.personSheet.saved);
+          }}
+        />
+      )}
     </>
   );
 }

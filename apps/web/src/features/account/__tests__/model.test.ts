@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   EXPIRY_WARN_DAYS,
   canDownload,
+  evidenceKey,
   firstNameOf,
   groupEvidence,
   homePathFor,
@@ -123,5 +124,36 @@ describe('Kontoziele', () => {
     expect(firstNameOf('Lea Wagner')).toBe('Lea');
     expect(firstNameOf('  ')).toBeNull();
     expect(firstNameOf(undefined)).toBeNull();
+  });
+});
+
+describe('Phase 2: externe Nachweise in „Meine Nachweise“', () => {
+  const ext = {
+    invitation_id: null as unknown as string,
+    tenant_name: 'Muster Elektrotechnik GmbH',
+    training_titel: 'Erste-Hilfe-Fortbildung',
+    version_no: null as unknown as number,
+    completed_at: '2026-11-26T10:00:00Z',
+    valid_until: '2028-11-20T00:00:00Z',
+    status: 'abgelaufen' as MyEvidence['status'],
+    nachweis_nr: 'N-2026-00013',
+    verify_code: 'ABCD-EFGH',
+    evidence_status: 'erzeugt' as const,
+    kind: 'extern' as const,
+    record_id: '22222222-2222-4222-8222-222222222222',
+    download_url: '/api/me/external-records/22222222-2222-4222-8222-222222222222/evidence/pdf',
+  };
+
+  it('externe Nachweise gelten immer als erledigt und sind herunterladbar', () => {
+    expect(isDone(ext)).toBe(true);
+    expect(canDownload(ext)).toBe(true);
+    const g = groupEvidence([ext], new Date('2026-11-26T12:00:00Z'));
+    expect(g.open).toHaveLength(0);
+    expect(g.done[0]!.validity.kind).toBe('gueltig');
+  });
+
+  it('Schlüssel je Art (externe ohne Einladung)', () => {
+    expect(evidenceKey(ext)).toBe('extern-22222222-2222-4222-8222-222222222222');
+    expect(evidenceKey({ invitation_id: 'i1', record_id: null, kind: undefined })).toBe('online-i1');
   });
 });
