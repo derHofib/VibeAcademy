@@ -13,7 +13,7 @@ import { SessionService } from './auth/session.service';
 import { StepUpService } from './auth/step-up.service';
 import { Clock } from './common/clock';
 import { RateLimitService } from './common/rate-limit.service';
-import { APP_CONFIG, type AppConfig } from './config';
+import { APP_CONFIG, repoPath, type AppConfig } from './config';
 import { DbService, PG_POOL } from './db/db.service';
 import { HealthController } from './health.controller';
 import { DevNotificationsController } from './notifications/dev.controller';
@@ -75,7 +75,7 @@ export class AppModule implements NestModule {
                   { endpoint: config.S3_ENDPOINT!, region: config.S3_REGION, accessKeyId: config.S3_ACCESS_KEY!, secretAccessKey: config.S3_SECRET_KEY! },
                   { uploads: config.S3_BUCKET_UPLOADS, evidence: config.S3_BUCKET_EVIDENCE },
                 )
-              : new FsStorage(config.STORAGE_DIR),
+              : new FsStorage(repoPath(config.STORAGE_DIR)),
         },
         {
           provide: PDF_RENDERER,
