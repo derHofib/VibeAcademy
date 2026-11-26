@@ -1,6 +1,6 @@
 # Umsetzungsplan – Schulungsnachweis
 
-Status: **Phase 0, 1 und 2 umgesetzt (26.11.2026). Phase 3 nur nach Rücksprache.** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
+Status: **Phase 0–3 umgesetzt (26.11.2026).** Annahmen und Antworten: `docs/ENTSCHEIDUNGEN.md` (E-xx verweist dorthin).
 Spezifikation: `docs/handoff/docs/SPEZIFIKATION.md` · Design: `docs/handoff/docs/DESIGN-UND-SCREENS.md`.
 
 Legende: `[ ]` offen · `[x]` erledigt · **→** Abhängigkeit · **Test:** was den Schritt abnimmt.
@@ -168,16 +168,20 @@ Jeder Schritt endet mit grünen Tests und einem Commit; nach jedem Schritt wird 
 
 Drei parallele Pakete, je Backend + Oberfläche + Tests. Migrationen: A = 015, B = 016, C = 017.
 
-- [ ] **3.1 SSO + SCIM (Paket A)** (E-36)
+- [x] **3.1 SSO + SCIM (Paket A)** (E-36)
+  ✔ `apps/api/src/{sso,scim}`, Migrationen 015 + 018 (Domain-Nachweis, E-41/E-42); Tests `sso*.int.test.ts`, `scim.int.test.ts`, E2E `sso-flow.spec.ts`.
   OIDC-Anmeldung je Mandant (Issuer, Client-ID, Secret verschlüsselt), Zuordnung Konto ↔ IdP-Subjekt, Step-up vor der Unterschrift per OIDC-Re-Auth (`prompt=login`, `max_age`), optional „nur SSO“. SCIM 2.0 (`/scim/v2/Users`, `/Groups`, Bearer-Token je Mandant) → Personen, Org-Einheiten, Mitgliedschaften; Deaktivieren statt Löschen.
   **Test:** Login und Step-up gegen einen Test-IdP (oidc-provider), fremder Issuer abgelehnt; SCIM-Konformität (Filter `userName eq`, PATCH, Paging), Mandantentrennung.
-- [ ] **3.2 REST-API + Webhooks (Paket B)** (E-37)
+- [x] **3.2 REST-API + Webhooks (Paket B)** (E-37)
+  ✔ `apps/api/src/{public-api,webhooks}`, Migration 016 (E-43); Seite `/verwaltung/schnittstellen`; Tests `public-api.int.test.ts`, `webhooks.int.test.ts`.
   Öffentliche, versionierte API `/api/v1` mit API-Schlüsseln je Mandant (Scopes, nur Hash gespeichert), OpenAPI-Beschreibung, Rate-Limit. Webhooks (HMAC-signiert, Wiederholung mit Backoff, Zustellprotokoll) für u. a. `evidence.created`, `invitation.completed`, `external_record.approved`, `compliance.state_changed`.
   **Test:** Scopes, Mandantentrennung, Signaturprüfung, Wiederholung nach Fehler, Idempotenz.
-- [ ] **3.3 Seiten-Diff, Mehrsprachigkeit, FES/QES (Paket C)** (E-38–E-40)
+- [x] **3.3 Seiten-Diff, Mehrsprachigkeit, FES/QES (Paket C)** (E-38–E-40)
+  ✔ `apps/api/src/{diff,i18n,qes}`, Migration 017 (E-44); Tests `diff-i18n-qes.int.test.ts`, `page-diff.test.ts`, E2E `i18n-flow.spec.ts`.
   Seiten-Diff zwischen Versionen (Textvergleich je Seite → Vorschlag „geänderte Seiten“), Neueinladung liest nur geänderte Seiten. Mehrsprachigkeit für Teilnehmer-Oberfläche, Mails und Nachweis-PDF (de/en), Sprache je Person, Schulungsversion je Sprache. Schnittstelle für fortgeschrittene/qualifizierte Signatur (FES/QES) mit Test-Anbieter; Signaturniveau je Schulung.
   **Test:** Diff erkennt geänderte Seiten; Lese-Erfüllung nur für geänderte Seiten; Teilnehmer-Ablauf auf Englisch; FES-Ablauf mit Test-Anbieter.
-- [ ] **3.4 Phasenabschluss** `docs/PHASE-3.md`, E2E in der CI.
+- [x] **3.4 Phasenabschluss** `docs/PHASE-3.md`, E2E in der CI.
+  ✔ `docs/PHASE-3.md`; E2E SSO und Englisch/FES in der CI.
 
 FieldVibe-Anbindung bleibt außen vor (R1: eigenständig); die `PersonDirectory`-Schnittstelle bzw. SCIM deckt die Personenübernahme ab.
 

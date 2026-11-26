@@ -56,7 +56,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     needs: checks
     services:
       postgres:
@@ -116,6 +116,10 @@ jobs:
         run: pnpm --filter @sn/web exec playwright test -c playwright.live.config.ts --trace off
       - name: E2E Externe Nachweise und Pflichtmatrix
         run: pnpm --filter @sn/web exec playwright test -c playwright.external.config.ts --trace off
+      - name: E2E Firmenanmeldung (SSO, eigener Stack)
+        run: pnpm --filter @sn/web exec playwright test -c playwright.sso.config.ts --trace off
+      - name: E2E Englisch und FES-Testanbieter
+        run: pnpm --filter @sn/web exec playwright test -c playwright.i18n.config.ts --trace off
       - name: API-Log bei Fehler
         if: failure()
         run: tail -n 200 api.log
