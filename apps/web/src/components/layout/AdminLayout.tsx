@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Grid3x3,
   LayoutDashboard,
+  LogOut,
   Menu,
   Settings,
   ShieldCheck,
@@ -22,6 +23,8 @@ export interface AdminNavItem {
   label: string;
   icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' }>;
   count?: number;
+  /** Nur bei exakt gleicher URL aktiv (z. B. Dashboard unter `/verwaltung`) */
+  exact?: boolean;
 }
 
 export function adminNavItems(externalCount?: number): AdminNavItem[] {
@@ -36,14 +39,14 @@ export function adminNavItems(externalCount?: number): AdminNavItem[] {
   ];
 }
 
-function isActive(itemPath: string, currentPath: string) {
-  if (itemPath === '/') return currentPath === '/';
+function isActive(itemPath: string, currentPath: string, exact = false) {
+  if (itemPath === '/' || exact) return currentPath === itemPath;
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 
-function Brand({ className }: { className?: string }) {
+function Brand({ className, to = '/' }: { className?: string; to?: string }) {
   return (
-    <Link to="/" className={cn('inline-flex items-center gap-2.5 rounded-pill', className)}>
+    <Link to={to} className={cn('inline-flex items-center gap-2.5 rounded-pill', className)}>
       <span
         aria-hidden="true"
         className="flex size-9 items-center justify-center rounded-full bg-accent text-white shadow-primary"
@@ -67,7 +70,7 @@ function NavList({
   return (
     <ul className="flex flex-col gap-1">
       {items.map((item) => {
-        const active = isActive(item.to, currentPath);
+        const active = isActive(item.to, currentPath, item.exact);
         const Icon = item.icon;
         return (
           <li key={item.to}>
@@ -103,12 +106,22 @@ function NavList({
   );
 }
 
-function TenantBox({ tenantName, userName }: { tenantName?: string; userName?: string }) {
+function TenantBox({
+  tenantName,
+  userName,
+  onLogout,
+  logoutLabel,
+}: {
+  tenantName?: string;
+  userName?: string;
+  onLogout?: () => void;
+  logoutLabel?: string;
+}) {
   if (!tenantName && !userName) return null;
   return (
-    <div className="flex items-center gap-3 rounded-box bg-bg px-3 py-3">
+    <div className="flex items-center gap-3 rounded-box bg-bg py-3 pr-1.5 pl-3">
       {userName && <Avatar name={userName} size="lg" tone="surface" />}
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         {userName && <p className="truncate text-[14px] font-semibold text-ink">{userName}</p>}
         {tenantName && (
           <p className="truncate text-[12.5px] text-muted">
@@ -117,6 +130,11 @@ function TenantBox({ tenantName, userName }: { tenantName?: string; userName?: s
           </p>
         )}
       </div>
+      {onLogout && (
+        <IconButton aria-label={logoutLabel ?? 'Abmelden'} variant="ghost" onClick={onLogout}>
+          <LogOut aria-hidden="true" />
+        </IconButton>
+      )}
     </div>
   );
 }
@@ -129,16 +147,34 @@ export interface AdminLayoutProps {
   userName?: string;
   /** Überschreibt den aktiven Menüpunkt (sonst aus der URL) */
   currentPath?: string;
+  /** Eigene Menüpunkte (Standard: `adminNavItems`) */
+  navItems?: AdminNavItem[];
+  /** Zeigt „Abmelden“ in der Nutzerbox */
+  onLogout?: () => void;
+  logoutLabel?: string;
+  /** Ziel des Logos (Standard „/“) */
+  homeHref?: string;
 }
 
 /**
  * Verwaltungsrahmen im weichen Stil: Desktop mit schwebender weißer Navigation links,
  * mobil/Tablet kompakte Kopfzeile mit Menü als Bottom-Sheet. Keine dunkle Seitenleiste (E-20).
  */
-export function AdminLayout({ children, externalCount, tenantName, userName, currentPath }: AdminLayoutProps) {
+export function AdminLayout({
+  children,
+  externalCount,
+  tenantName,
+  userName,
+  currentPath,
+  navItems,
+  onLogout,
+  logoutLabel,
+  homeHref,
+}: AdminLayoutProps) {
   const location = useLocation();
   const path = currentPath ?? location.pathname;
-  const items = adminNavItems(externalCount);
+  const items = navItems ?? adminNavItems(externalCount);
+  const box = { tenantName, userName, onLogout, logoutLabel };
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -152,16 +188,16 @@ export function AdminLayout({ children, externalCount, tenantName, userName, cur
 
       {/* Desktop: schwebende Navigation */}
       <aside className="fixed inset-y-4 left-4 z-20 hidden w-[264px] flex-col rounded-card-lg bg-surface p-4 shadow-card lg:flex">
-        <Brand className="px-1.5 pt-1 pb-5" />
+        <Brand className="px-1.5 pt-1 pb-5" to={homeHref} />
         <nav aria-label={de.nav.label} className="min-h-0 flex-1 overflow-y-auto">
           <NavList items={items} currentPath={path} />
         </nav>
-        <TenantBox tenantName={tenantName} userName={userName} />
+        <TenantBox {...box} />
       </aside>
 
       {/* Mobil/Tablet: Kopfzeile + Menü-Sheet */}
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 bg-bg/90 px-4 py-3 backdrop-blur-md md:px-7 lg:hidden">
-        <Brand />
+        <Brand to={homeHref} />
         <Sheet
           open={menuOpen}
           onOpenChange={setMenuOpen}
@@ -177,7 +213,7 @@ export function AdminLayout({ children, externalCount, tenantName, userName, cur
             <NavList items={items} currentPath={path} onNavigate={() => setMenuOpen(false)} />
           </nav>
           <div className="mt-4">
-            <TenantBox tenantName={tenantName} userName={userName} />
+            <TenantBox {...box} />
           </div>
         </Sheet>
       </header>

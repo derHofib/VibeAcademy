@@ -1,12 +1,34 @@
 import { createBrowserRouter } from 'react-router';
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { RegisterPage } from '@/pages/auth/RegisterPage';
-import { de } from '@/i18n/de';
+import { LoginRoute } from '@/pages/auth/LoginPage';
+import { RegisterRoute } from '@/pages/auth/RegisterPage';
 
 export const router = createBrowserRouter([
-  { path: '/', element: <main className="p-8">{de.app.name}</main> },
-  { path: '/anmelden', element: <LoginPage /> },
-  { path: '/registrieren', element: <RegisterPage /> },
+  { path: '/', lazy: async () => ({ Component: (await import('@/features/auth/HomeRedirect')).default }) },
+  { path: '/anmelden', element: <LoginRoute /> },
+  { path: '/registrieren', element: <RegisterRoute /> },
+  { path: '/passwort-festlegen', lazy: async () => ({ Component: (await import('@/pages/auth/SetPasswordPage')).default }) },
+  // Verwaltung (Phase 1, Schritte 1.11/1.12) – Anmeldung erforderlich, lazy geladen
+  {
+    path: '/verwaltung',
+    lazy: async () => ({ Component: (await import('@/features/admin/AdminShell')).default }),
+    children: [
+      { index: true, lazy: async () => ({ Component: (await import('@/pages/admin/DashboardPage')).default }) },
+      { path: 'schulungen', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingsPage')).default }) },
+      { path: 'schulungen/neu', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingWizardPage')).default }) },
+      { path: 'schulungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingWizardPage')).default }) },
+      { path: 'durchfuehrungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/RunDetailPage')).default }) },
+      { path: 'nachweise/:invitationId', lazy: async () => ({ Component: (await import('@/pages/admin/EvidenceReportPage')).default }) },
+      { path: 'personen', lazy: async () => ({ Component: (await import('@/pages/admin/PersonsPage')).default }) },
+      { path: 'einstellungen', lazy: async () => ({ Component: (await import('@/pages/admin/SettingsPage')).default }) },
+    ],
+  },
+  // Teilnehmersicht (Phase 1, Schritte 1.13–1.16) und öffentliche Prüfseite, lazy geladen
+  { path: '/s/:token', lazy: async () => ({ Component: (await import('@/pages/participant/OpenLinkPage')).default }) },
+  { path: '/teilnahme/:id', lazy: async () => ({ Component: (await import('@/pages/participant/StartPage')).default }) },
+  { path: '/teilnahme/:id/lesen', lazy: async () => ({ Component: (await import('@/pages/participant/ReaderPage')).default }) },
+  { path: '/teilnahme/:id/wissenscheck', lazy: async () => ({ Component: (await import('@/pages/participant/QuizPage')).default }) },
+  { path: '/teilnahme/:id/abschluss', lazy: async () => ({ Component: (await import('@/pages/participant/SignaturePage')).default }) },
+  { path: '/verify/:code', lazy: async () => ({ Component: (await import('@/pages/verify/VerifyPage')).default }) },
   // Entwicklungsseiten (Design-System), lazy geladen
   {
     path: '/dev/komponenten',

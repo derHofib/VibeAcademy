@@ -9,6 +9,8 @@ const baseURL = `http://127.0.0.1:${PORT}`;
  */
 export default defineConfig({
   testDir: './e2e',
+  // Nur die Design-System-Prüfung; Ablauf-Tests haben eigene Konfigurationen (playwright.participant/admin.config.ts)
+  testMatch: ['design-system.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
