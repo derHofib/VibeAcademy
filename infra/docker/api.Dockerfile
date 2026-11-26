@@ -32,6 +32,8 @@ WORKDIR /app
 COPY --from=build /out/api /app
 COPY infra/seal /app/seal
 COPY apps/web/public/fonts /app/fonts
+# Dateiablage im Volume (STORAGE_DRIVER=fs) – muss dem Benutzer node gehören
+RUN mkdir -p /data/storage && chown node:node /data/storage
 USER node
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

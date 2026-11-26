@@ -1,5 +1,7 @@
 # TLS automatisch (Let's Encrypt bzw. lokale CA für „localhost“). Kamera/QR auf iOS braucht HTTPS.
 {$SITE_ADDRESS} {
+	# Nur im Heimnetz ohne öffentliche Domain: CADDY_TLS="tls internal" (eigene Zertifizierungsstelle)
+	{$CADDY_TLS}
 	encode zstd gzip
 
 	header {
