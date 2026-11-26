@@ -7,7 +7,7 @@
     "dev": "tsc -p tsconfig.build.json && (tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --watch-path=dist dist/main.js)",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts",
+    "test": "vitest run --config vitest.config.ts --passWithNoTests",
     "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 20
+    env:
+      DATABASE_ADMIN_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      DB_MIGRATOR_PASSWORD: ci-migrator
+      DB_APP_PASSWORD: ci-app
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pakete bauen
+        run: pnpm --filter @sn/shared --filter @sn/db build
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit-Tests
+        run: pnpm test
+      - name: Integrationstests (PostgreSQL, Redis)
+        run: pnpm test:int
+      - name: Web-Build
+        run: pnpm --filter @sn/web build
