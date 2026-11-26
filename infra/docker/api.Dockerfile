@@ -23,8 +23,15 @@ CMD ["sh", "-c", "pnpm run bootstrap && pnpm run migrate"]
 
 FROM node:22-bookworm-slim AS api
 ENV NODE_ENV=production
+# poppler-utils: Vorschaubilder; Python + pyHanko: PAdES-Siegel (E-10)
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils python3 python3-venv ca-certificates \
+ && python3 -m venv /opt/seal-venv && /opt/seal-venv/bin/pip install --no-cache-dir "pyhanko==0.29.*" pyhanko-certvalidator \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV SEAL_PYTHON=/opt/seal-venv/bin/python SEAL_SCRIPT=/app/seal/seal.py FONT_DIR=/app/fonts PDF_RENDERER=gotenberg
 WORKDIR /app
 COPY --from=build /out/api /app
+COPY infra/seal /app/seal
+COPY apps/web/public/fonts /app/fonts
 USER node
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
