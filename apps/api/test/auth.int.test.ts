@@ -103,7 +103,10 @@ describe('Mitglieder und Rollen', () => {
     expect(mail.subject).toMatch(/Einladung zu Muster Elektro GmbH/);
     const token = /#token=([A-Za-z0-9_-]+)/.exec(mail.text)![1]!;
     // Outbox protokolliert ohne Geheimnis
-    const outbox = await dozent.get('/api/dev/outbox');
+    const outbox = await waitFor(async () => {
+      const o = await dozent.get('/api/dev/outbox');
+      return o.body[0]?.status === 'sent' && o;
+    });
     expect(outbox.body[0]).toMatchObject({ template: 'member-invite', status: 'sent' });
     expect(JSON.stringify(outbox.body)).not.toContain(token);
 
