@@ -199,6 +199,10 @@ export interface TerminListItem {
   present: number;
   confirmed: number;
   notes_to_review: number;
+  /** E-52/E-53 */
+  delivery?: 'praesenz' | 'live_online' | null;
+  platform?: string | null;
+  backdated_at?: string | null;
 }
 
 /** Gemeinsame Form beider Live-Sichten (SSE-Snapshot, danach Teilstücke). */

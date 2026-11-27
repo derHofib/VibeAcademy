@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, History, Plus } from 'lucide-react';
+import { PLATFORM_LABELS, type Platform } from '@sn/shared';
+import { tb } from '@/i18n/backdated';
 import { get } from '@/lib/api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button, Card, EmptyState, StatusChip, type StatusTone } from '@/components/ui';
@@ -23,13 +25,16 @@ function TerminTitle({ r }: { r: TerminListItem }) {
   return (
     <div className="min-w-0">
       <Link
-        to={livePath.organizer(r.id)}
+        to={r.backdated_at ? `/verwaltung/termine/${r.id}/nachtraeglich` : livePath.organizer(r.id)}
         className="text-[15px] font-semibold text-ink underline-offset-4 hover:text-accent-text hover:underline"
       >
         {r.titel}
       </Link>
       <p className="text-[13px] text-muted">
-        {[r.typ === 'termin' ? tl.typ.terminShort : tl.typ.liveShort, r.provider, r.trainer_name].filter(Boolean).join(' · ')}
+        {[
+          r.typ !== 'termin' ? tl.typ.liveShort : r.delivery === 'live_online' ? `Live-Online${r.platform ? ` · ${PLATFORM_LABELS[r.platform as Platform]}` : ''}` : tl.typ.terminShort,
+          r.provider, r.trainer_name, r.backdated_at ? 'nachträglich erfasst' : null,
+        ].filter(Boolean).join(' · ')}
       </p>
     </div>
   );
@@ -74,10 +79,18 @@ export default function TerminePage() {
         description={t.description}
         actions={
           manage && (
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus aria-hidden="true" className="size-4" />
-              {t.create}
-            </Button>
+            <div className="flex flex-wrap gap-2.5">
+              <Button asChild variant="secondary">
+                <Link to="/verwaltung/termine/nachtraeglich">
+                  <History aria-hidden="true" className="size-4" />
+                  {tb.open}
+                </Link>
+              </Button>
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus aria-hidden="true" className="size-4" />
+                {t.create}
+              </Button>
+            </div>
           )
         }
       />

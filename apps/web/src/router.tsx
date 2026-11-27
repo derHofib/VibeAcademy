@@ -22,6 +22,8 @@ export const router = createBrowserRouter([
       { path: 'durchfuehrungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/RunDetailPage')).default }) },
       { path: 'nachweise/:invitationId', lazy: async () => ({ Component: (await import('@/pages/admin/EvidenceReportPage')).default }) },
       { path: 'termine', lazy: async () => ({ Component: (await import('@/pages/presence/TerminePage')).default }) },
+      { path: 'termine/nachtraeglich', lazy: async () => ({ Component: (await import('@/pages/presence/BackdatedPage')).default }) },
+      { path: 'termine/:id/nachtraeglich', lazy: async () => ({ Component: (await import('@/pages/presence/BackdatedPage')).default }) },
       { path: 'personen', lazy: async () => ({ Component: (await import('@/pages/admin/PersonsPage')).default }) },
       { path: 'einstellungen', lazy: async () => ({ Component: (await import('@/pages/admin/SettingsPage')).default }) },
       // Phase 3 (E-37): REST-API-Schlüssel und Webhooks

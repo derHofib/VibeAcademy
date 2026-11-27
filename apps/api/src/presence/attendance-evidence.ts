@@ -1,4 +1,4 @@
-import { formatDuration, MANUAL_REASON_LABEL, METHOD_LABEL, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason, anlassLine } from '@sn/shared';
+import { formatDuration, MANUAL_REASON_LABEL, METHOD_LABEL, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason, anlassLine, PLATFORM_LABELS, type Platform } from '@sn/shared';
 import type pg from 'pg';
 import { AUTH_LABEL, dt, type CollectedEvidence, type EvidenceHelpers } from '../evidence/evidence.service';
 import { fonts } from '../evidence/evidence-template';
@@ -29,6 +29,9 @@ export interface AttendanceEvidenceData {
   confirmation: { at: string; via: string; text: string; signaturePngBase64: string | null };
   countersign: { required: boolean; name: string | null; at: string | null; method: string | null };
   seal: { label: string };
+  /** E-53: nachträglich erfasst (Vermerk, Belege) */
+  erfassung?: { text: string; belege: Array<{ name: string; sha: string }> } | null;
+  zeitquelle?: string;
 }
 
 const esc = (v: unknown) =>
@@ -76,11 +79,13 @@ export async function collectAttendanceEvidence(
     createdAt: dt(h.now()),
     verifyUrl,
     qrSvg: await h.qrSvg(verifyUrl),
-    heading: run.typ === 'termin' ? 'Nachweis über die Teilnahme an einer Präsenzschulung' : 'Nachweis über die Teilnahme an einer externen Schulung',
+    heading: run.typ !== 'termin' ? 'Nachweis über die Teilnahme an einer externen Schulung'
+      : run.delivery === 'live_online' ? 'Nachweis über die Teilnahme an einer Live-Online-Schulung' : 'Nachweis über die Teilnahme an einer Präsenzschulung',
     training: {
       titel: run.titel, provider: run.provider, rechtsgrundlage: run.rechtsgrundlage, version: run.version_no,
       anlass: anlassLine(run.anlass_typ, run.anlass_text),
-      art: run.typ === 'termin' ? 'Präsenz (intern)' : 'Extern, live erfasst (Start-/Ende-QR)',
+      art: run.typ !== 'termin' ? 'Extern, live erfasst (Start-/Ende-QR)'
+        : run.delivery === 'live_online' ? `Live-Online · ${PLATFORM_LABELS[run.platform as Platform] ?? 'Online-Besprechung'}` : 'Präsenz (intern)',
     },
     termin: {
       datum: ddmmyyyy(run.start_at),
@@ -127,7 +132,8 @@ export async function collectAttendanceEvidence(
     askedQuestion: !!asked,
     confirmation: {
       at: new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(e.confirmed_at)),
-      via: e.confirmed_via === 'kiosk' ? 'am Tablet des Organisators mit Unterschrift' : 'durch die Person selbst (persönlicher Zugang)',
+      via: e.confirmed_via === 'kiosk' ? 'am Tablet des Organisators mit Unterschrift'
+        : e.confirmed_via === 'trainer' ? 'mit der Gegenzeichnung des Dozenten (nachträgliche Erfassung)' : 'durch die Person selbst (persönlicher Zugang)',
       text: ATTENDANCE_CONFIRM_TEXT,
       signaturePngBase64: signature,
     },
@@ -138,6 +144,17 @@ export async function collectAttendanceEvidence(
       method: run.countersign_method ? (AUTH_LABEL[run.countersign_method] ?? run.countersign_method) : null,
     },
     seal: { label: h.sealLabel(run.tenant_name) },
+    erfassung: run.backdated_at
+      ? {
+          text: `Nachträglich erfasst am ${dt(run.backdated_at)} von ${run.backdated_by_name ?? '–'} – „${run.backdated_reason ?? ''}“`,
+          belege: (await c.query(`SELECT file_name, sha256 FROM run_document WHERE run_id = $1 ORDER BY created_at`, [run.id])).rows.map((d) => ({
+            name: d.file_name as string, sha: `${String(d.sha256).slice(0, 6)}…${String(d.sha256).slice(-8)}`,
+          })),
+        }
+      : null,
+    zeitquelle: run.backdated_at
+      ? 'Zeitquelle: Teilnehmerliste bzw. Anwesenheitsbericht (Import), bestätigt durch die Gegenzeichnung.'
+      : 'Zeitquelle: Serverzeit.',
   };
   return { data, austritt: e.austritt_am };
 }
@@ -200,6 +217,7 @@ ${d.training.provider ? `Anbieter: ${esc(d.training.provider)}<br>` : ''}
 ${d.training.rechtsgrundlage ? `Rechtsgrundlage: ${esc(d.training.rechtsgrundlage)}<br>` : ''}
 ${d.training.anlass ? `Anlass: ${esc(d.training.anlass)}<br>` : ''}
 Art: ${esc(d.training.art)}<br>
+${d.erfassung ? `<b>${esc(d.erfassung.text)}</b><br>` : ''}
 Termin: ${esc(d.termin.datum)} · ${esc(d.termin.zeit)}${d.termin.ort ? ` · ${esc(d.termin.ort)}` : ''}<br>
 ${d.termin.trainer ? `Trainer: ${esc(d.termin.trainer)}<br>` : ''}
 Geplante Dauer: ${esc(d.termin.geplant)} · Ende: ${esc(d.termin.ende)}
@@ -215,8 +233,9 @@ ${d.askedQuestion ? '<br>Rückfrage gestellt (Frage an den Trainer während der 
 
 <h2>Ein- und Auschecken</h2>
 <table><thead><tr><th>Eingecheckt</th><th>Methode</th><th>Ausgecheckt</th><th>Methode</th><th class="num">Dauer</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-<div class="m" style="font-size:8pt;margin-top:4px">Zeitquelle: Serverzeit. Gezählt wird nur die Zeit zwischen geplantem Beginn und Ende der Schulung; mehrere Intervalle werden addiert. Keine Standortdaten.</div>
+<div class="m" style="font-size:8pt;margin-top:4px">${esc(d.zeitquelle ?? 'Zeitquelle: Serverzeit.')} Gezählt wird nur die Zeit zwischen geplantem Beginn und Ende der Schulung; mehrere Intervalle werden addiert. Keine Standortdaten.</div>
 ${d.manual ? `<div class="note"><b>Ohne QR-Code ausgeloggt · ${esc(d.manual.reason)}</b><br>Vermerk: „${esc(d.manual.note)}“<br>Prüfung durch den Organisator: ${esc(d.manual.review)}${d.manual.message ? `<br>Rückfrage: „${esc(d.manual.message)}“` : ''}</div>` : ''}
+${d.erfassung?.belege.length ? `<div class="m" style="font-size:8pt;margin-top:4px">Belege: ${d.erfassung.belege.map((b) => `${esc(b.name)} (SHA-256 ${esc(b.sha)})`).join(' · ')}</div>` : ''}
 ${d.autoClosed ? `<div class="note"><b>Auschecken fehlte</b> – beim Ablauf des Zeitfensters mit dem geplanten Ende geschlossen. Prüfung: ${esc(d.autoClosed.review)}</div>` : ''}
 
 <h2>Wissenscheck während der Schulung</h2>

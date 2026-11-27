@@ -34,6 +34,8 @@ export class EvidenceController {
       teilnehmer: r.person_initialen,
       aussteller: r.tenant_name,
       art: r.kind,
+      // E-53: Durchführungsart, tatsächliches Datum, nachträgliche Erfassung (nur bei Terminen)
+      ...(r.details && Object.keys(r.details).length ? { details: r.details } : {}),
     };
   }
 

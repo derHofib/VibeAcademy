@@ -7,3 +7,4 @@ export * from './rules/attendance';
 export * from './rules/page-diff';
 export * from './rules/password';
 export * from './rules/training-meta';
+export * from './rules/attendance-import';

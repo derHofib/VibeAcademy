@@ -6,8 +6,8 @@
  * Vollständigkeit = Dauer / geplante Dauer; Schwelle je Schulung (Standard 90 %), sonst „teilweise“.
  */
 
-export const CHECK_IN_METHODS = ['qr_start', 'kiosk', 'trainer'] as const;
-export const CHECK_OUT_METHODS = ['qr_end', 'manual', 'official_end', 'kiosk', 'trainer'] as const;
+export const CHECK_IN_METHODS = ['qr_start', 'kiosk', 'trainer', 'import'] as const;
+export const CHECK_OUT_METHODS = ['qr_end', 'manual', 'official_end', 'kiosk', 'trainer', 'import'] as const;
 export type CheckInMethod = (typeof CHECK_IN_METHODS)[number];
 export type CheckOutMethod = (typeof CHECK_OUT_METHODS)[number];
 
@@ -18,6 +18,7 @@ export const METHOD_LABEL: Record<CheckInMethod | CheckOutMethod, string> = {
   trainer: 'durch Trainer',
   manual: 'manuell',
   official_end: 'offizielles Ende',
+  import: 'aus Teilnehmerliste',
 };
 
 export const MANUAL_CHECKOUT_REASONS = ['vorzeitig', 'ende_qr_fehlt', 'technik', 'sonstiges'] as const;

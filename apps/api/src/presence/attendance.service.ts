@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import {
   CONFIRM_REMINDER_MS, formatDuration, MANUAL_REASON_LABEL, METHOD_LABEL, summarizeAttendance, validateManualCheckout,
-  type AttendanceSummary, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason,
+  type AttendanceSummary, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason, PLATFORM_LABELS, type Platform,
 } from '@sn/shared';
 import type pg from 'pg';
 import { AuditService } from '../audit/audit.service';
@@ -59,13 +59,23 @@ export interface RunRow {
   countersign_required: boolean;
   anlass_typ: string | null;
   anlass_text: string | null;
+  /** E-52/E-53: Live-Online-Variante und nachträgliche Erfassung */
+  delivery: 'praesenz' | 'live_online' | null;
+  platform: string | null;
+  meeting_url: string | null;
+  backdated_at: Date | null;
+  backdated_by_name: string | null;
+  backdated_reason: string | null;
+  followup_required: boolean;
+  followup_run_id: string | null;
 }
 
 export const RUN_SQL = `
   SELECT r.id, r.tenant_id, r.typ, r.status, coalesce(r.titel, t.titel) AS titel, r.training_id, r.training_version_id, v.version_no,
          coalesce(r.training_snapshot->>'rechtsgrundlage', t.rechtsgrundlage) AS rechtsgrundlage, r.provider, r.ort, r.start_at, r.end_at, r.started_at, r.ended_at, r.auto_ended, r.completeness_pct,
          r.trainer_person_id, tp.name AS trainer_name, r.countersigned_at, r.countersign_name, r.countersign_method, r.qr_mode,
-         r.allow_walk_in, te.name AS tenant_name,
+         r.allow_walk_in, te.name AS tenant_name, r.delivery, r.platform, r.meeting_url, r.backdated_at, r.backdated_by_name,
+         r.backdated_reason, r.followup_required, r.followup_run_id,
          coalesce((r.settings_snapshot->>'countersignRequired')::boolean, true) AS countersign_required,
          coalesce(r.training_snapshot->>'anlass_typ', t.anlass_typ) AS anlass_typ, coalesce(r.training_snapshot->>'anlass_text', t.anlass_text) AS anlass_text
     FROM run r LEFT JOIN training t ON t.id = r.training_id LEFT JOIN training_version v ON v.id = r.training_version_id
@@ -183,7 +193,7 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
     return m;
   }
 
-  private async persistSummary(c: pg.PoolClient, run: RunRow, attendanceId: string) {
+  async persistSummary(c: pg.PoolClient, run: RunRow, attendanceId: string) {
     const iv = (await this.intervalsOf(c, [attendanceId])).get(attendanceId) ?? [];
     const s = this.summarize(run, iv);
     await c.query('UPDATE attendance SET duration_seconds = $2, completeness = $3, completeness_state = $4 WHERE id = $1', [
@@ -679,6 +689,18 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
         [runId, now, m.accountId, name, method],
       );
       if (!r.rowCount) throw new ConflictException('Der Termin ist bereits gegengezeichnet');
+      if (precheck.backdated_at) {
+        // E-53: Nachträglich erfasste Liste – der Dozent bestätigt mit der Gegenzeichnung für alle Personen
+        const pending = await c.query(
+          `UPDATE attendance a SET confirmed_at = $2, confirmed_via = 'trainer'
+            WHERE a.run_id = $1 AND a.confirmed_at IS NULL
+              AND EXISTS (SELECT 1 FROM attendance_interval i WHERE i.attendance_id = a.id) RETURNING a.id`,
+          [runId, now],
+        );
+        for (const p of pending.rows) {
+          await this.audit.record(c, { entity: 'attendance', entityId: p.id, action: 'confirmed', payload: { via: 'trainer', backdated: true } });
+        }
+      }
       const atts = (await c.query('SELECT id FROM attendance WHERE run_id = $1 AND confirmed_at IS NOT NULL', [runId])).rows.map((x) => x.id as string);
       await this.audit.record(c, { entity: 'run', entityId: runId, action: 'countersigned', payload: { method, name, confirmed: atts.length } });
       return { atts, now, name };
@@ -716,7 +738,16 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
         }
         await this.audit.record(c, { entity: 'attendance', entityId: id, action: 'finalized', payload: { credited } });
         await WebhookEmitter.emit(c, tenantId, 'attendance.confirmed', { attendanceId: id }); // E-37
-        return { kind: evidenceKind(run.typ), subject: { titel: run.titel, version: run.version_no, initialen: initials(a.person_name) + '.' } };
+        // Prüfseite (E-53): Art, tatsächliches Datum, nachträgliche Erfassung
+        const art = run.typ !== 'termin' ? 'Extern, live erfasst'
+          : run.delivery === 'live_online' ? `Live-Online · ${PLATFORM_LABELS[run.platform as Platform] ?? 'Online-Besprechung'}` : 'Präsenz';
+        const erfassung = run.backdated_at
+          ? `nachträglich erfasst am ${ddmmyyyy(run.backdated_at)} von ${run.backdated_by_name ?? '–'} (${run.backdated_reason ?? ''})`
+          : undefined;
+        return {
+          kind: evidenceKind(run.typ),
+          subject: { titel: run.titel, version: run.version_no, initialen: initials(a.person_name) + '.', art, datum: ddmmyyyy(run.start_at), erfassung },
+        };
       });
       if (!ready) continue;
       const ev = await this.evidence.create(tenantId, ready.kind, { attendanceId: id }, ready.subject);
@@ -930,7 +961,7 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
       (
         await c.query(
           `SELECT r.id, r.typ, r.status, coalesce(r.titel, t.titel) AS titel, r.provider, r.ort, r.start_at, r.end_at, r.ended_at,
-                  r.trainer_person_id, tp.name AS trainer_name, r.countersigned_at,
+                  r.trainer_person_id, tp.name AS trainer_name, r.countersigned_at, r.delivery, r.platform, r.backdated_at,
                   (SELECT count(*) FROM invitation i WHERE i.run_id = r.id)::int AS invited,
                   (SELECT count(*) FROM attendance a WHERE a.run_id = r.id AND EXISTS (SELECT 1 FROM attendance_interval x WHERE x.attendance_id = a.id))::int AS participated,
                   (SELECT count(*) FROM attendance a WHERE a.run_id = r.id AND EXISTS (SELECT 1 FROM attendance_interval x WHERE x.attendance_id = a.id AND x.out_at IS NULL))::int AS present,

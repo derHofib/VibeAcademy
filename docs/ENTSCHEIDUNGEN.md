@@ -193,7 +193,7 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 
 **E-51 Anlass und Standard-Durchführungsart je Schulung.** `training.anlass_typ` (erst, wiederholung, anlass, sonstige; bei „anlass“ Freitext Pflicht), `training.default_delivery` (online, praesenz, live_online, extern, kombiniert) ersetzt in der Oberfläche das bisher fest gesetzte `format` (das Feld bleibt und wird daraus abgeleitet, damit die Fristen-Engine unverändert arbeitet). Zielgruppe als Standard-Org-Einheiten je Schulung (Vorbelegung beim Einladen). Einstellungen werden beim Anlegen einer Durchführung als Schnappschuss gespeichert; Nachweise lesen den Schnappschuss.
 
-**E-52 Live-Online als eigener Durchführungstyp** `run.typ = 'live_online'` mit Plattform (teams, zoom, meet, sonstige) und optionalem Link; kein Ort, kein QR/Kiosk.
+**E-52 Live-Online als Variante des internen Termins** (`run.typ = 'termin'`, `run.delivery = 'live_online'`) mit Plattform (teams, zoom, meet, sonstige) und optionalem Link; Ort, QR und Kiosk werden ausgeblendet. Ein eigener `run.typ` hätte RLS-Hilfen, Kontoansicht, QR-Zugang und Fristen-SQL berührt; als Variante gelten Gegenzeichnung, Nachweis-Art und Kontoansicht unverändert. In der Schulung heißt die Durchführungsart weiterhin „Live-Online“.
 
 **E-53 Nachträgliche Erfassung.** Nur `admin`/`verantwortlich`, Pflichtbegründung, Status sofort „beendet“, Zeiten aus Import (Quelle `import`), Bestätigung der Liste durch den Dozenten (Gegenzeichnung) statt je Person. Unter Mindestanwesenheit → Nachweis „teilweise“ mit Hinweis. „Kombiniert“: zusätzlich Einladung zur eigenen Bestätigung (Online-Kampagne derselben Schulung); vollständig erst danach.
 
