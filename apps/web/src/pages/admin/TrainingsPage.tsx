@@ -1,3 +1,5 @@
+import { Settings2 } from 'lucide-react';
+import { ts } from '@/i18n/training-settings';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -78,6 +80,20 @@ const trainingColumns: ColumnDef<TrainingListItem, unknown>[] = [
     id: 'created',
     header: t.colCreated,
     cell: ({ row }) => <span className="tabular-nums">{formatDate(row.original.created_at)}</span>,
+  },
+  {
+    id: 'settings',
+    header: () => <span className="sr-only">{ts.open}</span>,
+    cell: ({ row }) => (
+      <Link
+        to={`/verwaltung/schulungen/${row.original.id}/einstellungen`}
+        aria-label={`${ts.open}: ${row.original.titel}`}
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-pill px-3 text-[13px] font-semibold text-accent-text hover:bg-accent-soft"
+      >
+        <Settings2 aria-hidden="true" className="size-4" />
+        {ts.open}
+      </Link>
+    ),
   },
 ];
 

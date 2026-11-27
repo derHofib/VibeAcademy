@@ -1,7 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Settings2 } from 'lucide-react';
+import { ts } from '@/i18n/training-settings';
 import { get } from '@/lib/api';
 import { adm } from '@/i18n/admin';
 import { Button, Panel } from '@/components/ui';
@@ -83,6 +84,20 @@ export default function TrainingWizardPage() {
     noAudience,
   );
 
+  // E-51: Standard-Zielgruppe der Schulung einmal je Sitzung vorauswählen (eigene Auswahl hat Vorrang)
+  const defaultUnits = training.data?.defaultOrgUnits;
+  useEffect(() => {
+    if (!id || !defaultUnits?.length) return;
+    const flag = `sn:zielgruppe-vorbelegt:${id}`;
+    try {
+      if (sessionStorage.getItem(flag)) return;
+      sessionStorage.setItem(flag, '1');
+    } catch {
+      return;
+    }
+    setAudience((a) => (a.personIds.length || a.orgUnitIds.length ? a : { personIds: [], orgUnitIds: defaultUnits }));
+  }, [id, defaultUnits, setAudience]);
+
   const activeQuestions = questions.data?.filter((q) => q.active).length ?? 0;
   const v = version.data ?? null;
   const state = {
@@ -147,7 +162,17 @@ export default function TrainingWizardPage() {
             {title}
           </h1>
         </div>
-        <Stepper current={step} maxReachable={id ? maxStep : 1} hrefFor={hrefFor} />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Stepper current={step} maxReachable={id ? maxStep : 1} hrefFor={hrefFor} />
+          {id && (
+            <Button asChild variant="secondary" size="sm">
+              <Link to={`/verwaltung/schulungen/${id}/einstellungen`}>
+                <Settings2 aria-hidden="true" className="size-4" />
+                {ts.open}
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <NoticeRegion notice={notice} className="mb-4 empty:hidden" />

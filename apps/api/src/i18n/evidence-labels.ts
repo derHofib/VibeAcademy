@@ -10,6 +10,7 @@ export interface EvidenceLabels {
   training: string;
   version: (n: number) => string;
   legalBasis: string;
+  occasion: string;
   format: string;
   pages: (n: number) => string;
   instructor: string;
@@ -71,6 +72,7 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     training: 'Schulung',
     version: (n) => `Version ${n}`,
     legalBasis: 'Rechtsgrundlage',
+    occasion: 'Anlass',
     format: 'Format',
     pages: (n) => `${n} ${plural(n, 'Seite', 'Seiten')}`,
     instructor: 'Unterweisender',
@@ -136,6 +138,7 @@ export const EVIDENCE_LABELS: Record<Lang, EvidenceLabels> = {
     training: 'Training',
     version: (n) => `Version ${n}`,
     legalBasis: 'Legal basis',
+    occasion: 'Occasion',
     format: 'Format',
     pages: (n) => `${n} ${plural(n, 'page', 'pages')}`,
     instructor: 'Instructor',

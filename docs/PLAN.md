@@ -185,6 +185,27 @@ Drei parallele Pakete, je Backend + Oberfläche + Tests. Migrationen: A = 015, B
 
 FieldVibe-Anbindung bleibt außen vor (R1: eigenständig); die `PersonDirectory`-Schnittstelle bzw. SCIM deckt die Personenübernahme ab.
 
+## Phase 4 – Schulungseinstellungen, nachträgliche Erfassung, externe Schulungen
+
+Auftrag 27.11.2026 (Konzept freigegeben, Empfehlungen übernommen; Entscheidungen E-50 bis E-56).
+
+**Lückenliste (Bestand → Lücke):**
+- Titel/Kategorie/Rechtsgrundlage/Ansprechpartner/Bestätigungstext nur im Assistenten → eigene Einstellungsseite.
+- `format` beim Anlegen fest „online“ → Standard-Durchführungsart (Online, Präsenz, Live-Online, Extern, Kombiniert) einstellbar.
+- Anlass fehlt → Anlass-Typ + Freitext, im Nachweis.
+- Zielgruppe nur je Versand → Standard-Org-Einheiten je Schulung.
+- `completenessPct`, Gegenzeichnung, Erinnerungsstufen nicht einstellbar → Felder in den Einstellungen.
+- Nachweis-PDF liest Einstellungen beim Erzeugen → Schnappschuss je Durchführung beim Anlegen.
+- Termine in der Vergangenheit werden automatisch beendet, Check-in nur „jetzt“, Bestätigung je Person → nachträgliche Erfassung mit importierten Zeiten und Bestätigung durch den Dozenten.
+- Kein Import für Termine, kein Teams-Bericht, kein XLSX → Import CSV/XLSX/Teams mit Zuordnung.
+- Live-Online fehlt → Typ `live_online` mit Plattform und Link.
+- Externe Kurse nur rückblickend → Buchung mit Terminen, Anreise, Hotel, Kosten, Status je Person, Einladung mit .ics, Erinnerungen, Abschluss über externen Nachweis.
+
+- [ ] **4.1 Einstellungen** Migration 019, API, Seite „Einstellungen“, Anlass im Nachweis, Schnappschuss.
+- [ ] **4.2 Nachträgliche Erfassung** Migration 020, Live-Online, Import, Zuordnung, Gegenzeichnung, Vermerk in PDF/Prüfseite, Kombiniert.
+- [ ] **4.3 Externe Schulungen** Migration 021, Buchung, Übersicht, Einladung (Mail, .ics, PDF), Teilnehmerseite, Erinnerungen, Freigabe, Kosten.
+- [ ] **4.4 Abschluss** alle Prüfungen, Screenshots `docs/screenshots/phase-4/`, Zusammenfassung `docs/PHASE-4.md`.
+
 ---
 
 ## Reihenfolge auf einen Blick

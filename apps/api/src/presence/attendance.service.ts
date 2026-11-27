@@ -55,13 +55,19 @@ export interface RunRow {
   qr_mode: string | null;
   allow_walk_in: boolean;
   tenant_name: string;
+  /** E-51: Gegenzeichnung bei internen Terminen erforderlich (Einstellung der Schulung, eingefroren) */
+  countersign_required: boolean;
+  anlass_typ: string | null;
+  anlass_text: string | null;
 }
 
 export const RUN_SQL = `
   SELECT r.id, r.tenant_id, r.typ, r.status, coalesce(r.titel, t.titel) AS titel, r.training_id, r.training_version_id, v.version_no,
-         t.rechtsgrundlage, r.provider, r.ort, r.start_at, r.end_at, r.started_at, r.ended_at, r.auto_ended, r.completeness_pct,
+         coalesce(r.training_snapshot->>'rechtsgrundlage', t.rechtsgrundlage) AS rechtsgrundlage, r.provider, r.ort, r.start_at, r.end_at, r.started_at, r.ended_at, r.auto_ended, r.completeness_pct,
          r.trainer_person_id, tp.name AS trainer_name, r.countersigned_at, r.countersign_name, r.countersign_method, r.qr_mode,
-         r.allow_walk_in, te.name AS tenant_name
+         r.allow_walk_in, te.name AS tenant_name,
+         coalesce((r.settings_snapshot->>'countersignRequired')::boolean, true) AS countersign_required,
+         coalesce(r.training_snapshot->>'anlass_typ', t.anlass_typ) AS anlass_typ, coalesce(r.training_snapshot->>'anlass_text', t.anlass_text) AS anlass_text
     FROM run r LEFT JOIN training t ON t.id = r.training_id LEFT JOIN training_version v ON v.id = r.training_version_id
     LEFT JOIN person tp ON tp.id = r.trainer_person_id JOIN tenant te ON te.id = r.tenant_id
    WHERE r.id = $1 AND r.typ IN ('termin','live_extern')`;
@@ -702,7 +708,7 @@ export class AttendanceService implements OnModuleInit, OnModuleDestroy {
         if (a.note_review && a.note_review !== 'akzeptiert') return null;
         if (a.completeness_state === 'teilweise' && !a.release) return null;
         const run = await this.loadRun(c, a.run_id);
-        if (run.typ === 'termin' && !run.countersigned_at) return null;
+        if (run.typ === 'termin' && run.countersign_required && !run.countersigned_at) return null;
         const credited = a.completeness_state === 'vollstaendig' || a.release === 'freigegeben';
         if (a.invitation_id && credited) {
           await c.query(`UPDATE invitation SET status = 'bestaetigt', completed_at = coalesce(completed_at, $2) WHERE id = $1`, [a.invitation_id, a.confirmed_at]);

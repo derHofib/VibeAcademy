@@ -154,11 +154,12 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
 
   // ── 1. Einladungen: Erinnerungen T−7/T−2/T+1, überfällig, Eskalation ──
   private async invitationStages(c: pg.PoolClient, tenantId: string, tenantName: string, now: Date, counts: Counts, queued: Queued[]) {
-    const horizon = new Date(now.getTime() + (Math.max(0, -Math.min(...this.policy.reminderOffsetsDays)) + 1) * DAY);
+    // E-56: Erinnerungsstufen je Schulung (höchstens 30 Tage vor der Frist)
+    const horizon = new Date(now.getTime() + 31 * DAY);
     const rows = (
       await c.query(
         `SELECT i.id, i.person_id, i.status, i.due_at, i.created_at, p.name AS person_name, p.email, p.org_unit_id,
-                t.titel AS titel
+                t.titel AS titel, coalesce(r.settings_snapshot, t.settings) AS settings
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id JOIN person p ON p.id = i.person_id
           WHERE r.typ = 'kampagne' AND r.status <> 'beendet' AND i.status NOT IN ('bestaetigt','befreit')
             AND i.due_at IS NOT NULL AND i.due_at <= $1
@@ -178,7 +179,7 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
           await this.audit.record(c, { entity: 'invitation', entityId: inv.id, action: 'overdue', payload: { dueAt: due.toISOString() } });
         }
       }
-      const stage = dueReminderStage(due, now, new Date(inv.created_at), this.policy);
+      const stage = dueReminderStage(due, now, new Date(inv.created_at), this.policyFor(inv.settings));
       if (stage) {
         const ids = await this.notice(c, now, { key: noticeKey.reminder(inv.id, stage.stage), kind: 'erinnerung', stage: stage.stage, invitationId: inv.id, personId: inv.person_id }, async () => {
           const out: Queued[] = [];
@@ -206,6 +207,13 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
         }
       }
     }
+  }
+
+  /** Erinnerungsstufen aus den Einstellungen der Schulung (E-56); Eskalation wie bisher. */
+  private policyFor(raw: unknown): DeadlinePolicy {
+    const s = parseSettings(raw);
+    const offsets = [...s.reminderDaysBefore.map((d) => -d), ...(s.reminderDaysAfter > 0 ? [s.reminderDaysAfter] : [])];
+    return { ...this.policy, reminderOffsetsDays: offsets.length ? offsets : [] };
   }
 
   /** Vorgesetzte(r): Leitung der eigenen Org-Einheit, sonst der nächsthöheren; ohne Leitung → Schulungsverantwortliche. */

@@ -6,3 +6,4 @@ export * from './rules/qr';
 export * from './rules/attendance';
 export * from './rules/page-diff';
 export * from './rules/password';
+export * from './rules/training-meta';

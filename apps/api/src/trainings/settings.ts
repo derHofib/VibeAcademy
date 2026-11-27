@@ -19,6 +19,11 @@ export const TrainingSettings = z.object({
   quizOnReinvite: z.boolean().default(true),
   /** Signaturniveau (E-40): einfache (EES, Standard), fortgeschrittene (FES) oder qualifizierte (QES) Signatur */
   signatureLevel: z.enum(['ees', 'fes', 'qes']).default('ees'),
+  /** E-51: Gegenzeichnung des Dozenten bei Terminen erforderlich (sonst entstehen Nachweise direkt nach dem Ende) */
+  countersignRequired: z.boolean().default(true),
+  /** E-56: Erinnerungen so viele Tage vor der Frist und nach der Frist (0 = keine) */
+  reminderDaysBefore: z.array(z.number().int().min(1).max(30)).max(4).default([7, 2]),
+  reminderDaysAfter: z.number().int().min(0).max(30).default(1),
 }).refine((s) => s.floorSeconds <= s.capSeconds, { message: 'Minimum je Seite darf das Maximum nicht übersteigen', path: ['floorSeconds'] });
 
 export type TrainingSettings = z.infer<typeof TrainingSettings>;

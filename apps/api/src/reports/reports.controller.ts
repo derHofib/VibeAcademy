@@ -118,7 +118,7 @@ export class ReportsController {
     return this.db.tx(async (c) => {
       const r = (
         await c.query(
-          `SELECT i.*, p.name AS person_name, p.personalnr, o.name AS org_unit, t.titel, t.quiz_required, t.settings,
+          `SELECT i.*, p.name AS person_name, p.personalnr, o.name AS org_unit, t.titel, t.quiz_required, coalesce(r.settings_snapshot, t.settings) AS settings,
                   v.version_no, v.page_count, v.sha256, v.id AS version_id
              FROM invitation i JOIN person p ON p.id = i.person_id LEFT JOIN org_unit o ON o.id = p.org_unit_id
              JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = r.training_version_id

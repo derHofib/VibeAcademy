@@ -186,3 +186,19 @@ Offline-Scan: Der Client speichert Token + Geräteuhrzeit; beim Nachsynchronisie
 **E-48 Passwortregeln und Login-Sperre (Auftrag 26.11.2026).** Mindestlänge 10 Zeichen als `PASSWORD_MIN_LENGTH` in `packages/shared` (API-Zod, Formulare, Texte leiten daraus ab). Sperre je E-Mail-Adresse in Redis (`loginlock:<sha256(normalisierte Mail)>`, auch für unbekannte Adressen – keine Konto-Erkennung): 5 Fehlversuche frei, dann 1, 2, 4 … Minuten bis höchstens 24 h; der Fehlversuch, der die Sperre auslöst, antwortet bereits mit 429. Während der Sperre wird das Passwort nicht geprüft; Antwort 429 mit `Retry-After` und Restzeit, Audit `login_locked` (nur bei existierendem Konto mit Mandant). Erfolgreiche Anmeldung setzt zurück, der Zähler verfällt nach 24 h ohne Fehlversuch. Gilt für Login, Step-up per Passwort und „Passwort ändern“; das IP-Limit beim Login bleibt. Werte per `LOGIN_LOCK_*`; in der Entwicklung 100 freie Versuche, sofern nicht gesetzt (CI-E2E setzt 5). „Passwort ändern“ (`POST /api/auth/password/change`) beendet alle anderen Sitzungen über einen Index `acctsess:<accountId>` (Sitzungen vor diesem Stand sind nicht im Index und laufen regulär nach höchstens 24 h ab). Die Karte erscheint nur für Konten mit Passwort (`me.account.hasPassword`); reine SSO-Konten (JIT, ohne Passwort) sehen sie nicht. Audit `password_changed` nur bei Konten mit Mandant (die Hash-Kette ist je Mandant).
 
 **E-49 Wiederherstellung mit Originaleigentümern.** `scripts/restore.sh` stellt ohne `--no-owner` wieder her: Mit `--no-owner` gehörten die SECURITY-DEFINER-Funktionen `app_migrator` statt `app_definer`, RLS griff und z. B. die Prüfseite fand keine Nachweise mehr. Im Homeserver-Test geprüft: Prüfseite „gültig“, Hash-Kette intakt, PDF-Hash identisch.
+
+## Phase 4 (Konzept vom 27.11.2026, freigegeben mit den Empfehlungen)
+
+**E-50 Reihenfolge.** Einstellungen → nachträgliche Erfassung → externe Schulungen, je Abschnitt mit Tests und Screenshots.
+
+**E-51 Anlass und Standard-Durchführungsart je Schulung.** `training.anlass_typ` (erst, wiederholung, anlass, sonstige; bei „anlass“ Freitext Pflicht), `training.default_delivery` (online, praesenz, live_online, extern, kombiniert) ersetzt in der Oberfläche das bisher fest gesetzte `format` (das Feld bleibt und wird daraus abgeleitet, damit die Fristen-Engine unverändert arbeitet). Zielgruppe als Standard-Org-Einheiten je Schulung (Vorbelegung beim Einladen). Einstellungen werden beim Anlegen einer Durchführung als Schnappschuss gespeichert; Nachweise lesen den Schnappschuss.
+
+**E-52 Live-Online als eigener Durchführungstyp** `run.typ = 'live_online'` mit Plattform (teams, zoom, meet, sonstige) und optionalem Link; kein Ort, kein QR/Kiosk.
+
+**E-53 Nachträgliche Erfassung.** Nur `admin`/`verantwortlich`, Pflichtbegründung, Status sofort „beendet“, Zeiten aus Import (Quelle `import`), Bestätigung der Liste durch den Dozenten (Gegenzeichnung) statt je Person. Unter Mindestanwesenheit → Nachweis „teilweise“ mit Hinweis. „Kombiniert“: zusätzlich Einladung zur eigenen Bestätigung (Online-Kampagne derselben Schulung); vollständig erst danach.
+
+**E-54 Import.** CSV und XLSX (ExcelJS), Teams-Anwesenheitsbericht (de/en, UTF-8/UTF-16) erkannt; Zuordnung per E-Mail, sonst Vorschlag per Name; Unbekannte optional neu anlegen. Original-Datei als Beleg.
+
+**E-55 Externe Schulungen.** Eigene Buchung (`external_booking`) mit Tagen, Teilnehmern (Status je Person), Anhängen, Kosten netto in Euro, Freigabe durch Vorgesetzte je Buchung wählbar. Abschluss über den vorhandenen externen Nachweis. Eigener Menüpunkt „Externe Schulungen“.
+
+**E-56 Erinnerungsstufen je Schulung** (Standard 7 / 2 Tage vor, 1 Tag nach der Frist) und je externer Buchung (Tage vorher, Vortag, Upload-Aufforderung, Eskalation).

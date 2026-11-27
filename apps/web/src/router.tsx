@@ -17,6 +17,7 @@ export const router = createBrowserRouter([
       { index: true, lazy: async () => ({ Component: (await import('@/pages/admin/DashboardPage')).default }) },
       { path: 'schulungen', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingsPage')).default }) },
       { path: 'schulungen/neu', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingWizardPage')).default }) },
+      { path: 'schulungen/:id/einstellungen', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingSettingsPage')).default }) },
       { path: 'schulungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/TrainingWizardPage')).default }) },
       { path: 'durchfuehrungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/RunDetailPage')).default }) },
       { path: 'nachweise/:invitationId', lazy: async () => ({ Component: (await import('@/pages/admin/EvidenceReportPage')).default }) },

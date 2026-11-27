@@ -10,7 +10,7 @@ export interface EvidenceData {
   createdAt: string;
   verifyUrl: string;
   qrSvg: string;
-  training: { titel: string; versionNo: number; rechtsgrundlage: string | null; format: string; pageCount: number; unterweisender: string | null; sha256: string };
+  training: { titel: string; versionNo: number; rechtsgrundlage: string | null; format: string; pageCount: number; unterweisender: string | null; sha256: string; anlass?: string | null };
   person: { name: string; personalnr: string | null; orgUnit: string | null };
   ablauf: { eingeladen: string; bearbeitet: string; sitzungen: number; lesezeitIst: string; lesezeitSoll: string; plausibel: boolean };
   pages: Array<{ pageNo: number; ist: string; soll: string; erstmals: string; erfuellt: boolean; required?: boolean }>;
@@ -140,6 +140,7 @@ h2{font-size:9.5pt;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6
 <h2>${esc(L.training)}</h2>
 <b>${esc(d.training.titel)}</b>, ${esc(L.version(d.training.versionNo))}<br>
 ${d.training.rechtsgrundlage ? `${esc(L.legalBasis)}: ${esc(d.training.rechtsgrundlage)}<br>` : ''}
+${d.training.anlass ? `${esc(L.occasion)}: ${esc(d.training.anlass)}<br>` : ''}
 ${esc(L.format)}: ${esc(d.training.format)} · ${esc(L.pages(d.training.pageCount))}<br>
 ${d.training.unterweisender ? `${esc(L.instructor)}: ${esc(d.training.unterweisender)}<br>` : ''}
 <span class="m">${esc(L.docSha)}: ${esc(short(d.training.sha256))}</span>

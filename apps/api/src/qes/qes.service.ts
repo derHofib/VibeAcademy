@@ -56,7 +56,7 @@ export class QesService implements OnModuleInit {
     const pre = await this.participants.read(p, async (c) =>
       (await c.query(
         `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, v.sha256 AS document_sha256, v.version_no,
-                t.titel, t.settings, p.name AS person_name, p.email, p.sprache, te.name AS tenant_name
+                t.titel, coalesce(r.settings_snapshot, t.settings) AS settings, p.name AS person_name, p.email, p.sprache, te.name AS tenant_name
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id
            JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id)
            JOIN person p ON p.id = i.person_id JOIN tenant te ON te.id = i.tenant_id WHERE i.id = $1`,

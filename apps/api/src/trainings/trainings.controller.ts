@@ -16,17 +16,55 @@ import { OBJECT_STORAGE, type ObjectStorage } from '../storage/storage';
 import { AnalysisService, versionPrefix } from './analysis.service';
 import { isPdf } from './pdf-analysis';
 import { parseSettings, TrainingSettings } from './settings';
+import { ANLASS_TYPES, DELIVERY_TYPES, formatForDelivery, PLATFORMS } from '@sn/shared';
 
-const TrainingInput = z.object({
+/** Felder ohne Standardwerte: In Zod 4 greifen Standardwerte auch in `.partial()` – ein PATCH würde sonst
+ *  nicht genannte Felder (Bestätigungstext, Format, Quiz) zurücksetzen. */
+const TrainingFields = z.object({
   titel: z.string().trim().min(2, 'Bitte einen Titel angeben').max(300),
   kategorie: z.string().trim().max(100).nullish(),
   rechtsgrundlage: z.string().trim().max(300).nullish(),
-  format: z.enum(['online', 'praesenz', 'hybrid', 'extern']).default('online'),
-  quizRequired: z.boolean().default(true),
-  confirmText: z.string().trim().max(2000).default(''),
+  format: z.enum(['online', 'praesenz', 'hybrid', 'extern']),
+  quizRequired: z.boolean(),
+  confirmText: z.string().trim().max(2000),
   ansprechpartner: z.string().trim().max(200).nullish(),
+  /** E-51: Anlass, Standard-Durchführungsart, Live-Online-Vorgaben, Standard-Zielgruppe */
+  anlassTyp: z.enum(ANLASS_TYPES),
+  anlassText: z.string().trim().max(2000).nullish(),
+  defaultDelivery: z.enum(DELIVERY_TYPES),
+  defaultPlatform: z.enum(PLATFORMS).nullish(),
+  defaultMeetingUrl: z
+    .string().trim().max(1000)
+    .refine((v) => v === '' || v.startsWith('https://'), 'Bitte einen Link mit https:// angeben')
+    .transform((v) => (v === '' ? null : v))
+    .nullish(),
+  defaultOrgUnits: z.array(z.uuid()).max(200),
 });
-const TrainingPatch = TrainingInput.partial();
+const TrainingInput = TrainingFields.extend({
+  format: TrainingFields.shape.format.default('online'),
+  quizRequired: TrainingFields.shape.quizRequired.default(true),
+  confirmText: TrainingFields.shape.confirmText.default(''),
+  anlassTyp: TrainingFields.shape.anlassTyp.default('erst'),
+  defaultDelivery: TrainingFields.shape.defaultDelivery.optional(),
+  defaultOrgUnits: TrainingFields.shape.defaultOrgUnits.optional(),
+});
+const TrainingPatch = TrainingFields.partial();
+
+const COLUMNS: Record<string, string> = {
+  titel: 'titel', kategorie: 'kategorie', rechtsgrundlage: 'rechtsgrundlage', format: 'format',
+  quizRequired: 'quiz_required', confirmText: 'confirm_text', ansprechpartner: 'ansprechpartner',
+  anlassTyp: 'anlass_typ', anlassText: 'anlass_text', defaultDelivery: 'default_delivery', defaultPlatform: 'default_platform',
+  defaultMeetingUrl: 'default_meeting_url', defaultOrgUnits: 'default_org_units',
+};
+
+/** Vorher/Nachher je geänderter Eigenschaft fürs Protokoll (E-51). */
+export function changeSet(before: Record<string, unknown>, after: Record<string, unknown>) {
+  const out: Record<string, { from: unknown; to: unknown }> = {};
+  for (const k of Object.keys(after)) {
+    if (JSON.stringify(before[k] ?? null) !== JSON.stringify(after[k] ?? null)) out[k] = { from: before[k] ?? null, to: after[k] ?? null };
+  }
+  return out;
+}
 const SettingsPatch = z.record(z.string(), z.unknown());
 const VersionMeta = z.object({
   changeKind: z.enum(['redaktionell', 'inhaltlich']).optional(),
@@ -88,9 +126,14 @@ export class TrainingsController {
   create(@Body(new ZodBody(TrainingInput)) b: z.infer<typeof TrainingInput>) {
     return this.db.tx(async (c) => {
       const r = await c.query(
-        `INSERT INTO training (titel, kategorie, rechtsgrundlage, format, quiz_required, confirm_text, ansprechpartner, settings)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [b.titel, b.kategorie ?? null, b.rechtsgrundlage ?? null, b.format, b.quizRequired, b.confirmText, b.ansprechpartner ?? null, parseSettings({})],
+        `INSERT INTO training (titel, kategorie, rechtsgrundlage, format, quiz_required, confirm_text, ansprechpartner, settings,
+                               anlass_typ, anlass_text, default_delivery)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+        [
+          b.titel, b.kategorie ?? null, b.rechtsgrundlage ?? null, b.defaultDelivery ? formatForDelivery(b.defaultDelivery) : b.format,
+          b.quizRequired, b.confirmText, b.ansprechpartner ?? null, parseSettings({}), b.anlassTyp, b.anlassText ?? null,
+          b.defaultDelivery ?? ({ online: 'online', praesenz: 'praesenz', hybrid: 'kombiniert', extern: 'extern' } as const)[b.format],
+        ],
       );
       await this.audit.record(c, { entity: 'training', entityId: r.rows[0].id, action: 'created', payload: { titel: b.titel } });
       return { id: r.rows[0].id as string };
@@ -119,6 +162,13 @@ export class TrainingsController {
         quizRequired: t.quiz_required,
         confirmText: t.confirm_text,
         ansprechpartner: t.ansprechpartner,
+        anlassTyp: t.anlass_typ,
+        anlassText: t.anlass_text,
+        defaultDelivery: t.default_delivery,
+        defaultPlatform: t.default_platform,
+        defaultMeetingUrl: t.default_meeting_url,
+        defaultOrgUnits: t.default_org_units ?? [],
+        updatedAt: t.updated_at,
         settings: parseSettings(t.settings),
         versions,
       };
@@ -128,18 +178,35 @@ export class TrainingsController {
   @Patch(':id')
   @Roles(...STAFF)
   update(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(TrainingPatch)) b: z.infer<typeof TrainingPatch>) {
-    const map: Record<string, string> = {
-      titel: 'titel', kategorie: 'kategorie', rechtsgrundlage: 'rechtsgrundlage', format: 'format',
-      quizRequired: 'quiz_required', confirmText: 'confirm_text', ansprechpartner: 'ansprechpartner',
-    };
-    const entries = Object.entries(b).filter(([k, v]) => v !== undefined && map[k]);
+    // Durchführungsart bestimmt das bisherige Format (Fristen-Engine)
+    const patch: Record<string, unknown> = { ...b };
+    if (b.defaultDelivery) patch.format = formatForDelivery(b.defaultDelivery);
+    const entries = Object.entries(patch).filter(([k, v]) => v !== undefined && COLUMNS[k]);
     if (!entries.length) throw new BadRequestException('Keine Änderungen');
     return this.db.tx(async (c) => {
-      const sets = entries.map(([k], i) => `${map[k]} = $${i + 2}`).join(', ');
-      const r = await c.query(`UPDATE training SET ${sets} WHERE id = $1`, [id, ...entries.map(([, v]) => v)]);
-      if (!r.rowCount) throw new NotFoundException('Schulung nicht gefunden');
-      await this.audit.record(c, { entity: 'training', entityId: id, action: 'updated', payload: Object.fromEntries(entries) });
-      return { ok: true };
+      const cur = (await c.query('SELECT * FROM training WHERE id = $1 FOR UPDATE', [id])).rows[0];
+      if (!cur) throw new NotFoundException('Schulung nicht gefunden');
+      const before = Object.fromEntries(Object.entries(COLUMNS).map(([k, col]) => [k, cur[col]]));
+      const after = { ...before, ...Object.fromEntries(entries) };
+      if (after.anlassTyp === 'anlass' && String(after.anlassText ?? '').trim().length < 3) {
+        throw new BadRequestException({
+          message: 'Eingaben unvollständig oder ungültig',
+          fields: [{ path: 'anlassText', message: 'Bitte den Anlass bzw. das Ereignis beschreiben' }],
+        });
+      }
+      if (b.defaultOrgUnits?.length) {
+        const n = (await c.query('SELECT count(*)::int AS n FROM org_unit WHERE id = ANY($1::uuid[])', [b.defaultOrgUnits])).rows[0].n;
+        if (n !== new Set(b.defaultOrgUnits).size) {
+          throw new BadRequestException({ message: 'Unbekannte Org-Einheit', fields: [{ path: 'defaultOrgUnits', message: 'Unbekannte Org-Einheit' }] });
+        }
+      }
+      const sets = entries.map(([k], i) => `${COLUMNS[k]} = $${i + 2}`).join(', ');
+      await c.query(`UPDATE training SET ${sets} WHERE id = $1`, [id, ...entries.map(([, v]) => v)]);
+      const changes = changeSet(before, after);
+      if (Object.keys(changes).length) {
+        await this.audit.record(c, { entity: 'training', entityId: id, action: 'updated', payload: { changes } });
+      }
+      return { ok: true, changed: Object.keys(changes) };
     });
   }
 
@@ -156,9 +223,13 @@ export class TrainingsController {
           fields: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
         });
       }
+      const before = parseSettings(t.settings);
       await c.query('UPDATE training SET settings = $2 WHERE id = $1', [id, parsed.data]);
       await AnalysisService.recomputeTMin(c, id, parsed.data);
-      await this.audit.record(c, { entity: 'training', entityId: id, action: 'settings_changed', payload: patch });
+      const changes = changeSet(before as unknown as Record<string, unknown>, parsed.data as unknown as Record<string, unknown>);
+      if (Object.keys(changes).length) {
+        await this.audit.record(c, { entity: 'training', entityId: id, action: 'settings_changed', payload: { changes } });
+      }
       return parsed.data;
     });
   }

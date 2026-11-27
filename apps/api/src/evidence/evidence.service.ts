@@ -1,3 +1,4 @@
+import { anlassLine } from '@sn/shared';
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import QRCode from 'qrcode';
@@ -187,7 +188,11 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
         await c.query(
           `SELECT e.id, e.verify_code, e.nachweis_nr, e.created_at, i.id AS invitation_id, i.sent_at, i.created_at AS invited_at,
                   i.completed_at, i.reading_time_factor, p.name AS person_name, p.personalnr, p.austritt_am, o.name AS org_unit,
-                  t.titel, t.rechtsgrundlage, t.format, t.ansprechpartner, t.quiz_required, t.settings,
+                  coalesce(r.training_snapshot->>'titel', t.titel) AS titel, coalesce(r.training_snapshot->>'rechtsgrundlage', t.rechtsgrundlage) AS rechtsgrundlage,
+                  CASE WHEN r.typ = 'kampagne' AND coalesce(r.training_snapshot->>'format', t.format) IN ('praesenz','extern') THEN 'online'
+                       ELSE coalesce(r.training_snapshot->>'format', t.format) END AS format, coalesce(r.training_snapshot->>'ansprechpartner', t.ansprechpartner) AS ansprechpartner, t.quiz_required,
+                  coalesce(r.settings_snapshot, t.settings) AS settings, coalesce(r.training_snapshot->>'anlass_typ', t.anlass_typ) AS anlass_typ,
+                  coalesce(r.training_snapshot->>'anlass_text', t.anlass_text) AS anlass_text,
                   v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name,
                   s.image_key, s.signed_at, s.auth_method, s.user_agent, s.ip_hash, s.confirm_text, s.confirm_text_sha256,
                   p.sprache, i.changed_pages, s.typ AS signature_typ, s.provider, s.provider_transaction_id, s.signed_document_key,
@@ -253,6 +258,7 @@ export class EvidenceService implements OnModuleInit, OnModuleDestroy {
         training: {
           titel: r.titel, versionNo: r.version_no, rechtsgrundlage: r.rechtsgrundlage, format: L.formats[r.format] ?? r.format,
           pageCount: r.page_count, unterweisender: r.ansprechpartner, sha256: r.sha256,
+          anlass: anlassLine(r.anlass_typ, r.anlass_text, lang),
         },
         person: { name: r.person_name, personalnr: r.personalnr, orgUnit: r.org_unit },
         ablauf: {

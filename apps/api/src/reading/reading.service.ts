@@ -47,7 +47,7 @@ export class ReadingService {
     const inv = (
       await c.query(
         `SELECT i.status, i.reading_time_factor, coalesce(i.training_version_id, r.training_version_id) AS training_version_id,
-                i.changed_pages, t.settings
+                i.changed_pages, coalesce(r.settings_snapshot, t.settings) AS settings
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id WHERE i.id = $1`,
         [invitationId],
       )
@@ -170,7 +170,7 @@ export class ReadingService {
       if (d.newlyFulfilled.length && isComplete(next.pages, next.progress)) {
         const upd = await c.query(
           `UPDATE invitation i SET status = CASE WHEN t.quiz_required AND (coalesce(cardinality(i.changed_pages), 0) = 0
-                                     OR coalesce((t.settings->>'quizOnReinvite')::boolean, true)) THEN 'gelesen' ELSE 'bestanden' END,
+                                     OR coalesce((coalesce(r.settings_snapshot, t.settings)->>'quizOnReinvite')::boolean, true)) THEN 'gelesen' ELSE 'bestanden' END,
                   read_completed_at = $2
              FROM run r JOIN training t ON t.id = r.training_id
             WHERE i.id = $1 AND r.id = i.run_id AND i.status IN ('offen','geoeffnet','ueberfaellig') RETURNING i.id`,

@@ -104,7 +104,7 @@ export class ParticipantController {
       const r = (
         await c.query(
           `SELECT i.id, i.status, i.due_at, i.opened_at, i.read_completed_at, i.completed_at, i.reading_time_factor,
-                  p.name AS person_name, p.email AS person_email, t.titel, t.kategorie, t.rechtsgrundlage, t.ansprechpartner, t.quiz_required, t.settings,
+                  p.name AS person_name, p.email AS person_email, t.titel, t.kategorie, t.rechtsgrundlage, t.ansprechpartner, t.quiz_required, coalesce(r.settings_snapshot, t.settings) AS settings,
                   v.id AS version_id, v.version_no, v.page_count, v.sha256, te.name AS tenant_name,
                   v.sprache AS version_sprache, p.sprache AS person_sprache, i.changed_pages
              FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id

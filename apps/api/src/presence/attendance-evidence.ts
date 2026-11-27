@@ -1,4 +1,4 @@
-import { formatDuration, MANUAL_REASON_LABEL, METHOD_LABEL, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason } from '@sn/shared';
+import { formatDuration, MANUAL_REASON_LABEL, METHOD_LABEL, type CheckInMethod, type CheckOutMethod, type ManualCheckoutReason, anlassLine } from '@sn/shared';
 import type pg from 'pg';
 import { AUTH_LABEL, dt, type CollectedEvidence, type EvidenceHelpers } from '../evidence/evidence.service';
 import { fonts } from '../evidence/evidence-template';
@@ -16,7 +16,7 @@ export interface AttendanceEvidenceData {
   verifyUrl: string;
   qrSvg: string;
   heading: string;
-  training: { titel: string; provider: string | null; rechtsgrundlage: string | null; art: string; version: number | null };
+  training: { titel: string; provider: string | null; rechtsgrundlage: string | null; art: string; version: number | null; anlass?: string | null };
   termin: { datum: string; zeit: string; ort: string | null; trainer: string | null; geplant: string; ende: string; autoEnded: boolean };
   person: { name: string; personalnr: string | null; orgUnit: string | null };
   intervals: Array<{ in: string; inMethod: string; out: string; outMethod: string; dauer: string; offline: boolean }>;
@@ -79,6 +79,7 @@ export async function collectAttendanceEvidence(
     heading: run.typ === 'termin' ? 'Nachweis über die Teilnahme an einer Präsenzschulung' : 'Nachweis über die Teilnahme an einer externen Schulung',
     training: {
       titel: run.titel, provider: run.provider, rechtsgrundlage: run.rechtsgrundlage, version: run.version_no,
+      anlass: anlassLine(run.anlass_typ, run.anlass_text),
       art: run.typ === 'termin' ? 'Präsenz (intern)' : 'Extern, live erfasst (Start-/Ende-QR)',
     },
     termin: {
@@ -131,7 +132,7 @@ export async function collectAttendanceEvidence(
       signaturePngBase64: signature,
     },
     countersign: {
-      required: run.typ === 'termin',
+      required: run.typ === 'termin' && run.countersign_required,
       name: run.countersign_name,
       at: run.countersigned_at ? dt(run.countersigned_at) : null,
       method: run.countersign_method ? (AUTH_LABEL[run.countersign_method] ?? run.countersign_method) : null,
@@ -197,6 +198,7 @@ td{border-bottom:1px solid #EEF1F6;padding:4px 6px;font-variant-numeric:tabular-
 <b>${esc(d.training.titel)}</b>${d.training.version ? `, Version ${d.training.version}` : ''}<br>
 ${d.training.provider ? `Anbieter: ${esc(d.training.provider)}<br>` : ''}
 ${d.training.rechtsgrundlage ? `Rechtsgrundlage: ${esc(d.training.rechtsgrundlage)}<br>` : ''}
+${d.training.anlass ? `Anlass: ${esc(d.training.anlass)}<br>` : ''}
 Art: ${esc(d.training.art)}<br>
 Termin: ${esc(d.termin.datum)} · ${esc(d.termin.zeit)}${d.termin.ort ? ` · ${esc(d.termin.ort)}` : ''}<br>
 ${d.termin.trainer ? `Trainer: ${esc(d.termin.trainer)}<br>` : ''}

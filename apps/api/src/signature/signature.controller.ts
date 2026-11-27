@@ -46,10 +46,10 @@ export class SignatureController {
       const r = (
         await c.query(
           `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, t.quiz_required AND (coalesce(cardinality(i.changed_pages), 0) = 0
-                    OR coalesce((t.settings->>'quizOnReinvite')::boolean, true)) AS quiz_required, p.email IS NOT NULL AS has_email,
+                    OR coalesce((coalesce(r.settings_snapshot, t.settings)->>'quizOnReinvite')::boolean, true)) AS quiz_required, p.email IS NOT NULL AS has_email,
                   (SELECT signed_at FROM signature s WHERE s.invitation_id = i.id) AS signed_at,
                   (SELECT verify_code FROM evidence e WHERE e.invitation_id = i.id) AS verify_code,
-                  (SELECT typ FROM signature s WHERE s.invitation_id = i.id) AS signed_typ, t.settings
+                  (SELECT typ FROM signature s WHERE s.invitation_id = i.id) AS signed_typ, coalesce(r.settings_snapshot, t.settings) AS settings
              FROM invitation i JOIN person p ON p.id = i.person_id JOIN run r ON r.id = i.run_id
              JOIN training t ON t.id = r.training_id JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id) WHERE i.id = $1`,
           [id],
@@ -81,7 +81,7 @@ export class SignatureController {
     // Vorbedingungen zuerst prüfen, damit ein Step-up-Token nicht unnötig verbraucht wird.
     const pre = await this.participants.read(p, async (c) =>
       (await c.query(
-        `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, v.sha256 AS document_sha256, t.settings
+        `SELECT i.status, coalesce(v.confirm_text, t.confirm_text) AS confirm_text, v.sha256 AS document_sha256, coalesce(r.settings_snapshot, t.settings) AS settings
            FROM invitation i JOIN run r ON r.id = i.run_id JOIN training t ON t.id = r.training_id
            JOIN training_version v ON v.id = coalesce(i.training_version_id, r.training_version_id) WHERE i.id = $1`,
         [id],

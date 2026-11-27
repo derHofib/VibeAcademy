@@ -37,7 +37,7 @@ export class QuizController {
       const inv = (
         await c.query(
           `SELECT i.status, t.id AS training_id, t.quiz_required AND (coalesce(cardinality(i.changed_pages), 0) = 0
-                  OR coalesce((t.settings->>'quizOnReinvite')::boolean, true)) AS quiz_required, t.settings FROM invitation i JOIN run r ON r.id = i.run_id
+                  OR coalesce((coalesce(r.settings_snapshot, t.settings)->>'quizOnReinvite')::boolean, true)) AS quiz_required, coalesce(r.settings_snapshot, t.settings) AS settings FROM invitation i JOIN run r ON r.id = i.run_id
              JOIN training t ON t.id = r.training_id WHERE i.id = $1`,
           [p.invitationId],
         )

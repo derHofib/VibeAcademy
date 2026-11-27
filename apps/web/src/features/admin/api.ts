@@ -2,6 +2,7 @@
  * Verwaltungs-API: Typen der Antworten (siehe apps/api/src/**) und Query-Keys.
  * Abrufe laufen über den gemeinsamen Client `@/lib/api` (Cookie-Sitzung + CSRF).
  */
+import type { AnlassTyp, DeliveryType, Platform } from '@sn/shared';
 import { get } from '@/lib/api';
 
 export type InvitationStatus =
@@ -69,6 +70,11 @@ export interface TrainingSettings {
   quizOnReinvite?: boolean;
   /** E-40: Signaturniveau */
   signatureLevel?: 'ees' | 'fes' | 'qes';
+  /** E-51: Gegenzeichnung des Dozenten bei Terminen */
+  countersignRequired?: boolean;
+  /** E-56: Erinnerungen vor/nach der Frist (Tage) */
+  reminderDaysBefore?: number[];
+  reminderDaysAfter?: number;
 }
 
 export interface TrainingVersionSummary {
@@ -99,6 +105,14 @@ export interface Training {
   quizRequired: boolean;
   confirmText: string;
   ansprechpartner: string | null;
+  /** E-51: Anlass, Standard-Durchführungsart, Live-Online-Vorgaben, Standard-Zielgruppe */
+  anlassTyp?: AnlassTyp;
+  anlassText?: string | null;
+  defaultDelivery?: DeliveryType;
+  defaultPlatform?: Platform | null;
+  defaultMeetingUrl?: string | null;
+  defaultOrgUnits?: string[];
+  updatedAt?: string;
   settings: TrainingSettings;
   versions: TrainingVersionSummary[];
 }

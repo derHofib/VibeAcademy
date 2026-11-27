@@ -36,7 +36,7 @@ export class InvitationService {
     const r = (
       await c.query(
         `SELECT i.id, i.tenant_id, i.due_at, i.reading_time_factor, p.name AS person_name, p.email, p.sprache, t.titel, t.ansprechpartner,
-                t.quiz_required, t.settings, v.page_count, te.name AS tenant_name,
+                t.quiz_required, coalesce(r.settings_snapshot, t.settings) AS settings, v.page_count, te.name AS tenant_name,
                 (SELECT array_agg(pm.page_no ORDER BY pm.page_no) FROM page_meta pm WHERE pm.version_id = v.id AND pm.page_no = ANY (i.changed_pages)) AS only_pages,
                 (SELECT sum(coalesce(pm.t_min_manual, pm.t_min_seconds)) FROM page_meta pm WHERE pm.version_id = v.id
                     AND (coalesce(cardinality(i.changed_pages), 0) = 0 OR pm.page_no = ANY (i.changed_pages)
