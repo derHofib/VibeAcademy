@@ -2,10 +2,14 @@
  * Nachrichtenvorlagen (E-12). Alle Texte auf Deutsch. Geheimnisse (Codes, Token-Links) kommen getrennt
  * von den protokollierten Daten herein und werden nie in der Outbox gespeichert.
  */
+import { buildIcs } from '@sn/shared';
+import type { MailAttachment } from './providers';
+
 export interface Rendered {
   subject: string;
   text: string;
   html: string;
+  attachments?: MailAttachment[];
 }
 
 type Data = Record<string, unknown>;
@@ -200,6 +204,91 @@ export const TEMPLATES = {
   }),
   /** Web-Push: Titel und Text kommen fertig herein (Kurzform) */
   'push-message': (d: Data): Rendered => ({ subject: String(d.title ?? ''), text: String(d.body ?? ''), html: '' }),
+
+  // ── Externe Schulungen (E-55): Einladung mit Kalendereintrag, Erinnerungen, Eskalation, Freigabe, Problem ──
+  'external-booking-invitation': (d: Data, s: Secret): Rendered => {
+    const link = s?.link ?? '#';
+    const kind = String(d.method ?? 'REQUEST') === 'CANCEL' ? 'cancel' : d.update ? 'update' : 'invite';
+    const days = (d.days as Array<{ label: string }> | undefined) ?? [];
+    const when = days.map((x) => x.label).join('\n');
+    const rows = (d.rows as Array<[string, string]> | undefined) ?? [];
+    const subject =
+      kind === 'cancel' ? `Abgesagt: ${d.title}` : kind === 'update' ? `Geändert: ${d.title} – bitte Kalender aktualisieren` : `Einladung: ${d.title}`;
+    const intro =
+      kind === 'cancel'
+        ? `die externe Schulung „${d.title}“ wurde abgesagt${d.reason ? ` (${d.reason})` : ''}. Der Kalendereintrag im Anhang entfernt den Termin.`
+        : kind === 'update'
+          ? `die externe Schulung „${d.title}“ hat sich geändert. Bitte übernehmen Sie den aktualisierten Kalendereintrag aus dem Anhang.`
+          : `Sie sind zur externen Schulung „${d.title}“ bei ${d.providerName} angemeldet. Den Kalendereintrag finden Sie im Anhang.`;
+    const ics = buildIcs({
+      method: kind === 'cancel' ? 'CANCEL' : 'REQUEST',
+      sequence: Number(d.sequence ?? 0),
+      now: new Date(String(d.now ?? new Date().toISOString())),
+      organizer: d.organizerEmail ? { name: String(d.tenantName ?? ''), email: String(d.organizerEmail) } : null,
+      attendee: d.personEmail ? { name: String(d.personName ?? ''), email: String(d.personEmail) } : null,
+      events: ((d.icsDays as Array<{ dayNo: number; start: string; end: string }> | undefined) ?? []).map((x) => ({
+        uid: `${d.participantId}-${x.dayNo}@schulungsnachweis`,
+        start: new Date(x.start),
+        end: new Date(x.end),
+        summary: days.length > 1 ? `${d.title} (Tag ${x.dayNo})` : String(d.title),
+        location: (d.location as string | null) ?? (d.onlineUrl as string | null) ?? null,
+        description: `${d.providerName}${d.bookingNo ? ` · Buchung ${d.bookingNo}` : ''}\nDetails: ${link}`,
+        url: (d.onlineUrl as string | null) ?? null,
+      })),
+    });
+    return {
+      subject,
+      text:
+        `Hallo ${d.personName},\n\n${intro}\n\n${when}\n` +
+        rows.map(([k, v]) => `${k}: ${v}`).join('\n') +
+        (kind === 'cancel' ? '\n' : `\n\nAlle Details, Teilnahme bestätigen oder Problem melden: ${link}\n`),
+      html: frame(
+        kind === 'cancel' ? 'Schulung abgesagt' : String(d.title),
+        p(`Hallo ${esc(d.personName)},`) + p(esc(intro)) +
+          `<p style="background:#EAF0FE;color:#223C8F;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 16px">${days.map((x) => esc(x.label)).join('<br>')}</p>` +
+          (rows.length
+            ? `<table style="font-size:14px;color:#3A4456;margin:0 0 16px;border-collapse:collapse">${rows
+                .map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#5F6B7D;vertical-align:top">${esc(k)}</td><td style="padding:3px 0">${esc(v)}</td></tr>`)
+                .join('')}</table>`
+            : '') +
+          (kind === 'cancel' ? '' : button(link, 'Details und Teilnahme bestätigen')),
+        `${d.tenantName} · Dieser Link ist persönlich – bitte nicht weitergeben.`,
+      ),
+      attachments: [{ filename: kind === 'cancel' ? 'absage.ics' : 'termin.ics', contentType: `text/calendar; charset=utf-8; method=${kind === 'cancel' ? 'CANCEL' : 'REQUEST'}`, content: ics }],
+    };
+  },
+  'external-booking-reminder': (d: Data, s: Secret): Rendered => {
+    const link = s?.link ?? '#';
+    const stage = String(d.stage);
+    const subject =
+      stage === 'upload' ? `Bitte Teilnahmebescheinigung hochladen: ${d.title}` : stage === 'vortag' ? `Morgen: ${d.title}` : `Erinnerung: ${d.title} am ${d.firstDay}`;
+    const body =
+      stage === 'upload'
+        ? 'die Schulung ist vorbei. Bitte laden Sie Ihre Teilnahmebescheinigung bzw. Ihr Zertifikat hoch – ein Foto mit dem Handy genügt.'
+        : stage === 'vortag'
+          ? `morgen beginnt „${d.title}“. Bitte denken Sie an: ${d.bring || 'Personalausweis'}.`
+          : `in wenigen Tagen beginnt „${d.title}“ (${d.firstDay}). Anreise: ${d.travel || 'siehe Details'}. Bitte denken Sie an: ${d.bring || 'Personalausweis'}.`;
+    return {
+      subject,
+      text: `Hallo ${d.personName},\n\n${body}\n\n${link}\n`,
+      html: frame(subject, p(`Hallo ${esc(d.personName)},`) + p(esc(body)) + button(link, stage === 'upload' ? 'Bescheinigung hochladen' : 'Details öffnen'), `${d.tenantName} · Dieser Link ist persönlich – bitte nicht weitergeben.`),
+    };
+  },
+  'external-booking-escalation': (d: Data): Rendered => ({
+    subject: `Bescheinigung fehlt: ${d.personName} – ${d.title}`,
+    text: `Für „${d.title}“ (${d.lastDay}) hat ${d.personName} seit ${d.days} Tagen keine Teilnahmebescheinigung hochgeladen.\n\n${d.url}\n`,
+    html: frame('Bescheinigung fehlt', p(`Für „${esc(d.title)}“ (${esc(d.lastDay)}) hat <b>${esc(d.personName)}</b> seit ${esc(d.days)} Tagen keine Teilnahmebescheinigung hochgeladen.`) + button(String(d.url), 'Externe Schulungen öffnen'), String(d.tenantName ?? '')),
+  }),
+  'external-booking-approval': (d: Data): Rendered => ({
+    subject: `Freigabe erbeten: ${d.title}`,
+    text: `Hallo ${d.approverName},\n\nbitte geben Sie die externe Schulung „${d.title}“ (${d.providerName}, ${d.dates}) für ${d.persons} frei. Kosten: ${d.total}.\n\n${d.url}\n`,
+    html: frame('Freigabe erbeten', p(`Hallo ${esc(d.approverName)},`) + p(`bitte geben Sie die externe Schulung „${esc(d.title)}“ (${esc(d.providerName)}, ${esc(d.dates)}) für ${esc(d.persons)} frei. Kosten: <b>${esc(d.total)}</b>.`) + button(String(d.url), 'Zur Freigabe'), String(d.tenantName ?? '')),
+  }),
+  'external-booking-problem': (d: Data): Rendered => ({
+    subject: `Problem gemeldet: ${d.personName} – ${d.title}`,
+    text: `${d.personName} meldet zu „${d.title}“:\n\n${d.note}\n\n${d.url}\n`,
+    html: frame('Problem gemeldet', p(`<b>${esc(d.personName)}</b> meldet zu „${esc(d.title)}“:`) + `<p style="background:#FFF4DF;color:#5A3A00;border-radius:16px;padding:12px 16px;font-size:14px;margin:0 0 16px">${esc(d.note)}</p>` + button(String(d.url), 'Buchung öffnen'), String(d.tenantName ?? '')),
+  }),
 } satisfies Record<string, (d: Data, s: Secret) => Rendered>;
 
 export type TemplateName = keyof typeof TEMPLATES;
@@ -381,6 +470,32 @@ export const SAMPLE_DATA: Record<TemplateName, { data: Data; secret: Secret }> =
   },
   'attendance-note-question': {
     data: { personName: 'Sven Albrecht', trainingTitle: 'Erste-Hilfe-Fortbildung', note: 'Notdienst-Einsatz beim Kunden ab 13 Uhr', message: 'Bitte Einsatzauftrag nachreichen.', organizer: 'Dennis Hofmann' },
+    secret: null,
+  },
+  'external-booking-invitation': {
+    data: {
+      personName: 'Lea Wagner', personEmail: 'lea@example.org', title: 'Elektrofachkraft Hochvolt (HV2)', providerName: 'Hochvolt Akademie Süd GmbH', bookingNo: 'HVA-2026-4471',
+      method: 'REQUEST', update: false, sequence: 0, now: '2026-11-27T10:00:00Z', participantId: 'beispiel', tenantName: 'Muster Elektro GmbH',
+      days: [{ label: 'Di 12.01.2027, 08:30–16:30' }, { label: 'Mi 13.01.2027, 08:00–15:00' }],
+      icsDays: [{ dayNo: 1, start: '2027-01-12T07:30:00Z', end: '2027-01-12T15:30:00Z' }, { dayNo: 2, start: '2027-01-13T07:00:00Z', end: '2027-01-13T14:00:00Z' }],
+      location: 'Industriestr. 14, 70565 Stuttgart', rows: [['Ort', 'Industriestr. 14, 70565 Stuttgart'], ['Hotel', 'Hotel am Park, 11.–13.01.2027']],
+    },
+    secret: { link: 'http://localhost:5173/extern/b/beispiel' },
+  },
+  'external-booking-reminder': {
+    data: { personName: 'Lea Wagner', title: 'Elektrofachkraft Hochvolt (HV2)', stage: 'vorher', firstDay: '12.01.2027', travel: 'Firmenwagen, Abfahrt 11.01. 15:00', bring: 'Sicherheitsschuhe, Personalausweis', tenantName: 'Muster Elektro GmbH' },
+    secret: { link: 'http://localhost:5173/extern/b/beispiel' },
+  },
+  'external-booking-escalation': {
+    data: { personName: 'Lea Wagner', title: 'Elektrofachkraft Hochvolt (HV2)', lastDay: '13.01.2027', days: 7, url: 'http://localhost:5173/verwaltung/externe-schulungen', tenantName: 'Muster Elektro GmbH' },
+    secret: null,
+  },
+  'external-booking-approval': {
+    data: { approverName: 'Marion Krause', title: 'Elektrofachkraft Hochvolt (HV2)', providerName: 'Hochvolt Akademie Süd GmbH', dates: '12.–13.01.2027', persons: 'Lea Wagner, Tobias Meier', total: '3.052,00 €', url: 'http://localhost:5173/verwaltung/externe-schulungen', tenantName: 'Muster Elektro GmbH' },
+    secret: null,
+  },
+  'external-booking-problem': {
+    data: { personName: 'Lea Wagner', title: 'Elektrofachkraft Hochvolt (HV2)', note: 'Ich bin am 12.01. krank geschrieben.', url: 'http://localhost:5173/verwaltung/externe-schulungen', tenantName: 'Muster Elektro GmbH' },
     secret: null,
   },
 };

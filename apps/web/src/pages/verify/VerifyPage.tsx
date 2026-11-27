@@ -65,6 +65,8 @@ export default function VerifyPage() {
           <Fact label={tp.verify.training} value={`${v.schulung} · ${tp.verify.version(v.version)}`} className="sm:col-span-2" />
           <Fact label={tp.verify.participant} value={v.teilnehmer} />
           <Fact label={tp.verify.issuer} value={v.aussteller} />
+          {v.details?.art && <Fact label="Durchführung" value={v.details.datum ? `${v.details.art} · ${v.details.datum}` : v.details.art} />}
+          {v.details?.erfassung && <Fact label="Erfassung" value={v.details.erfassung} className="sm:col-span-2" />}
           {v.sha256 && <Fact label={tp.verify.hash} value={v.sha256} mono className="sm:col-span-2" />}
         </dl>
         <p className="text-[12.5px] text-muted">{tp.verify.privacy}</p>

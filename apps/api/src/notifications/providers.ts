@@ -1,11 +1,18 @@
 import { Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
 
+export interface MailAttachment {
+  filename: string;
+  contentType: string;
+  content: string;
+}
 export interface OutgoingMail {
   to: string;
   subject: string;
   text: string;
   html: string;
+  /** z. B. Kalendereintrag (.ics) zu externen Schulungen (E-55) */
+  attachments?: MailAttachment[];
 }
 export interface MailProvider {
   readonly name: string;
@@ -51,7 +58,10 @@ export class SmtpMailProvider implements MailProvider {
     this.transport = nodemailer.createTransport(url);
   }
   async send(m: OutgoingMail) {
-    const info = await this.transport.sendMail({ from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html });
+    const info = await this.transport.sendMail({
+      from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html,
+      attachments: m.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
+    });
     return { messageId: String(info.messageId) };
   }
 }

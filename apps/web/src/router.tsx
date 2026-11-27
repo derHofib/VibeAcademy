@@ -22,6 +22,8 @@ export const router = createBrowserRouter([
       { path: 'durchfuehrungen/:id', lazy: async () => ({ Component: (await import('@/pages/admin/RunDetailPage')).default }) },
       { path: 'nachweise/:invitationId', lazy: async () => ({ Component: (await import('@/pages/admin/EvidenceReportPage')).default }) },
       { path: 'termine', lazy: async () => ({ Component: (await import('@/pages/presence/TerminePage')).default }) },
+      { path: 'externe-schulungen', lazy: async () => ({ Component: (await import('@/pages/external-bookings/ExternalBookingsPage')).default }) },
+      { path: 'externe-schulungen/:id', lazy: async () => ({ Component: (await import('@/pages/external-bookings/ExternalBookingPage')).default }) },
       { path: 'termine/nachtraeglich', lazy: async () => ({ Component: (await import('@/pages/presence/BackdatedPage')).default }) },
       { path: 'termine/:id/nachtraeglich', lazy: async () => ({ Component: (await import('@/pages/presence/BackdatedPage')).default }) },
       { path: 'personen', lazy: async () => ({ Component: (await import('@/pages/admin/PersonsPage')).default }) },
@@ -52,6 +54,8 @@ export const router = createBrowserRouter([
   // Externen Nachweis mobil einreichen (Phase 2, Screen 10, E-34)
   { path: '/konto/extern/neu', lazy: async () => ({ Component: (await import('@/pages/external/SubmitExternalPage')).default }) },
   { path: '/konto/extern/:id', lazy: async () => ({ Component: (await import('@/pages/external/MyExternalRecordPage')).default }) },
+  // Externe Schulung: persönliche Seite aus der Einladung (Phase 4.3, E-55)
+  { path: '/extern/b/:token', lazy: async () => ({ Component: (await import('@/pages/external-bookings/MyBookingPage')).default }) },
   { path: '/verify/:code', lazy: async () => ({ Component: (await import('@/pages/verify/VerifyPage')).default }) },
   // Entwicklungsseiten (Design-System), lazy geladen
   {

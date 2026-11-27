@@ -1,3 +1,4 @@
+import { ExternalBookingService } from '../external-bookings/bookings.service';
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import {
   berlinDate, DEFAULT_DEADLINE_POLICY, dueReminderStage, escalationDue, isOverdue, noticeKey, reinviteDue, type DeadlinePolicy,
@@ -59,6 +60,7 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
     private readonly notifications: NotificationService,
     private readonly invitations: InvitationService,
     private readonly compliance: ComplianceService,
+    private readonly bookings: ExternalBookingService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -96,7 +98,7 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
 
   /** Ein Mandant in einer Transaktion (Advisory-Lock verhindert parallele Läufe). */
   async runTenant(tenantId: string, now: Date) {
-    const counts = { reminders: 0, escalations: 0, overdue: 0, reinvitations: 0, bookCourse: 0, newVersion: 0, expiredExternal: 0 };
+    const counts = { reminders: 0, escalations: 0, overdue: 0, reinvitations: 0, bookCourse: 0, newVersion: 0, expiredExternal: 0, bookingReminders: 0 };
     const queued: Queued[] = [];
     await this.db.txAs({ tenantId, roles: ['system'] }, async (c) => {
       const lock = await c.query('SELECT pg_try_advisory_xact_lock(hashtextextended($1, 2)) AS ok', [`deadlines:${tenantId}`]);
@@ -105,6 +107,8 @@ export class DeadlineService implements OnModuleInit, OnModuleDestroy {
       await this.invitationStages(c, tenantId, tenantName, now, counts, queued);
       await this.requirementCycles(c, tenantId, tenantName, now, counts, queued);
       await this.newVersions(c, tenantId, now, counts, queued);
+      // E-56: externe Schulungen – teilgenommen, Erinnerungen, Upload-Aufforderung, Eskalation
+      counts.bookingReminders = await this.bookings.stages(c, tenantId, tenantName, now, queued);
       const ex = await c.query(
         `UPDATE external_record SET status = 'abgelaufen' WHERE status = 'freigegeben' AND valid_until IS NOT NULL AND valid_until < $1::date`,
         [berlinDate(now)],

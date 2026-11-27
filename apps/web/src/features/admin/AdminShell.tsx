@@ -7,7 +7,7 @@ import { activeTenantName, hasRole, STAFF_ROLES, useLogout, type Me } from '@/fe
 import { adm } from '@/i18n/admin';
 import { de } from '@/i18n/de';
 import { ta } from '@/i18n/account';
-import { FileInput, Grid3x3 } from 'lucide-react';
+import { Building2, FileInput, Grid3x3 } from 'lucide-react';
 import { Plug } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/lib/api';
@@ -15,6 +15,7 @@ import { qk } from '@/features/admin/api';
 import type { DashboardCompliance } from '@/features/matrix/api';
 import { useAdminLang } from '@/i18n/lang';
 import { tx } from '@/i18n/external';
+import { teb } from '@/i18n/external-bookings';
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/verwaltung', label: adm.nav.dashboard, icon: LayoutDashboard, exact: true },
@@ -23,6 +24,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { to: '/verwaltung/personen', label: adm.nav.people, icon: Users },
   { to: '/verwaltung/pflichtmatrix', label: tx.nav.matrix, icon: Grid3x3 },
   { to: '/verwaltung/extern', label: tx.nav.external, icon: FileInput },
+  { to: '/verwaltung/externe-schulungen', label: teb.nav, icon: Building2 },
   { to: '/verwaltung/schnittstellen', label: 'Schnittstellen', icon: Plug },
   // Eigene Nachweise als Teilnehmer anderer Schulungen (E-25)
   { to: '/konto', label: ta.nav.myEvidence, icon: FileCheck2 },

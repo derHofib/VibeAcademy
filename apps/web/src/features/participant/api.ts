@@ -152,6 +152,8 @@ export interface VerifyResult {
   teilnehmer: string;
   aussteller: string;
   art?: string;
+  /** E-53: Durchführungsart, tatsächliches Datum, nachträgliche Erfassung (Termine) */
+  details?: { art?: string; datum?: string; erfassung?: string };
 }
 
 export const participantKeys = {

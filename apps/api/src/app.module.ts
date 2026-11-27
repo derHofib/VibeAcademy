@@ -58,6 +58,8 @@ import { CheckinController } from './presence/checkin.controller';
 import { PresenceController } from './presence/presence.controller';
 import { BackdatedController } from './presence/backdated.controller';
 import { BackdatedService } from './presence/backdated.service';
+import { ExternalBookingsController, PublicExternalBookingsController } from './external-bookings/bookings.controller';
+import { ExternalBookingService } from './external-bookings/bookings.service';
 import { QrService } from './presence/qr.service';
 import { RunAccess } from './presence/run-access.service';
 import { LiveBus } from './live/live-bus.service';
@@ -80,7 +82,7 @@ export class AppModule implements NestModule {
       module: AppModule,
       controllers: [
         HealthController, AuthController, AuditController, MembersController, DevNotificationsController,
-        PresenceController, BackdatedController, CheckinController, LiveController,
+        PresenceController, BackdatedController, ExternalBookingsController, PublicExternalBookingsController, CheckinController, LiveController,
         PersonsController, TrainingsController, RunsController, ParticipantController, ReadingController, QuizController, SignatureController, EvidenceController, ReportsController, MyAccountController,
         MatrixController, DeadlinesController, PushController, ExternalController, MyExternalController, ExternalImportController, NachweismappeController,
         ...DIFF_QES_CONTROLLERS,
@@ -142,7 +144,7 @@ export class AppModule implements NestModule {
         ReadingService,
         RetentionService,
         EvidenceService,
-        RunAccess, QrService, LiveBus, AttendanceService, BackdatedService, LiveService,
+        RunAccess, QrService, LiveBus, AttendanceService, BackdatedService, ExternalBookingService, LiveService,
         ComplianceService, DeadlineService, ExternalService,
         ...DIFF_QES_PROVIDERS,
         ...SSO_PROVIDERS,

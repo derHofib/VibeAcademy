@@ -462,6 +462,8 @@ export class ExternalService implements OnModuleInit, OnModuleDestroy {
       );
       if (!u.rowCount) throw new ForbiddenException('Keine Berechtigung für diesen Nachweis');
       await this.audit.record(c, { entity: 'external_record', entityId: t.id, action: 'approved', payload: { validUntil, proposed: p.validUntil, personId: t.person_id } });
+      // E-55: Buchung einer externen Schulung abschließen
+      await c.query(`UPDATE external_booking_participant SET status = 'freigegeben', status_at = $2 WHERE external_record_id = $1 AND status = 'eingereicht'`, [t.id, now]);
       await WebhookEmitter.emit(c, t.tenant_id, 'external_record.approved', { externalRecordId: t.id }); // E-37
       queued.push(...(await this.notifyPerson(c, t, 'external-approved', { validUntil: de(validUntil) })));
       results.push({ id: t.id, validUntil });

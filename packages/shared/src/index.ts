@@ -8,3 +8,5 @@ export * from './rules/page-diff';
 export * from './rules/password';
 export * from './rules/training-meta';
 export * from './rules/attendance-import';
+export * from './rules/ics';
+export * from './rules/external-booking';
