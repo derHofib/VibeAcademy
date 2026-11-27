@@ -201,10 +201,10 @@ Auftrag 27.11.2026 (Konzept freigegeben, Empfehlungen übernommen; Entscheidunge
 - Live-Online fehlt → Typ `live_online` mit Plattform und Link.
 - Externe Kurse nur rückblickend → Buchung mit Terminen, Anreise, Hotel, Kosten, Status je Person, Einladung mit .ics, Erinnerungen, Abschluss über externen Nachweis.
 
-- [ ] **4.1 Einstellungen** Migration 019, API, Seite „Einstellungen“, Anlass im Nachweis, Schnappschuss.
-- [ ] **4.2 Nachträgliche Erfassung** Migration 020, Live-Online, Import, Zuordnung, Gegenzeichnung, Vermerk in PDF/Prüfseite, Kombiniert.
-- [ ] **4.3 Externe Schulungen** Migration 021, Buchung, Übersicht, Einladung (Mail, .ics, PDF), Teilnehmerseite, Erinnerungen, Freigabe, Kosten.
-- [ ] **4.4 Abschluss** alle Prüfungen, Screenshots `docs/screenshots/phase-4/`, Zusammenfassung `docs/PHASE-4.md`.
+- [x] **4.1 Einstellungen** Migration 019, API, Seite „Einstellungen“, Anlass im Nachweis, Schnappschuss.
+- [x] **4.2 Nachträgliche Erfassung** Migration 020, Live-Online, Import, Zuordnung, Gegenzeichnung, Vermerk in PDF/Prüfseite, Kombiniert.
+- [x] **4.3 Externe Schulungen** Migration 021, Buchung, Übersicht, Einladung (Mail, .ics, PDF), Teilnehmerseite, Erinnerungen, Freigabe, Kosten.
+- [x] **4.4 Abschluss** alle Prüfungen, Screenshots `docs/screenshots/phase-4/`, Zusammenfassung `docs/PHASE-4.md`.
 
 ---
 
